@@ -1,58 +1,51 @@
-# System.CommandLine (2.0 GA)
+# System.CommandLine 3.x
 
-Guidance for **System.CommandLine 2.0** (stable GA). The 2.0 API differs from
-`2.0.0-beta*` and from `McMaster.Extensions.CommandLineUtils`. Use when creating or
-migrating a CLI app targeting System.CommandLine.
+Guidance for **System.CommandLine 3.x**, the current major line. Use when creating,
+updating, or migrating a .NET CLI that uses System.CommandLine.
 
 ```xml
-<PackageReference Include="System.CommandLine" Version="2.0.0" />
+<!-- 3.0 has no GA yet; this is the latest 3.x preview -->
+<PackageReference Include="System.CommandLine" Version="3.0.0-preview.5.26302.115" />
 ```
 
-## Core types
+3.0 ships `net10.0` + `netstandard2.0`. The in-box `net8.0` lib from 2.x is gone, so
+net8/net9 apps now bind the `netstandard2.0` assembly.
 
-| Concept        | Type / member |
-| -------------- | ------------- |
-| Root / sub     | `RootCommand`, `Command` (add via collection init or `command.Subcommands.Add`) |
-| Option / arg   | `Option<T>`, `Argument<T>` (aliases are extra ctor args: `new Option<int>("--times","-t")`) |
-| Handler        | `command.SetAction(parseResult => { ... })` |
-| Read a value   | `parseResult.GetValue(option)` / `GetValue(argument)` |
-| Run            | `rootCommand.Parse(args).Invoke()` |
+## What's new in 3.x
 
-```csharp
-using System.CommandLine;
-var nameArg = new Argument<string>("name");
-var timesOpt = new Option<int>("--times", "-t") { DefaultValueFactory = _ => 1 };
-var greet = new Command("greet", "Print a greeting.") { nameArg, timesOpt };
-greet.SetAction(pr =>
-{
-    for (var i = 0; i < pr.GetValue(timesOpt); i++)
-        Console.WriteLine($"Hello, {pr.GetValue(nameArg)}.");
-    return 0;
-});
-return new RootCommand("Sample app") { greet }.Parse(args).Invoke();
-```
+3.x is **additive over 2.x with no breaking API changes**. New opt-in members:
 
-## Migrate from `2.0.0-beta4`
+| Member | Use |
+| ------ | --- |
+| `Argument<T>.CaptureRemainingTokens` | greedy arg that captures all remaining tokens |
+| `Option<T>` / `Argument<T>` `.AcceptOnlyFromAmong(StringComparer, params string[])` | case-insensitive constrained values (the `params string[]` overload already existed in 2.x) |
+| `RootCommand.HelpName` | custom name for the root command in help output |
 
-| Beta4 | 2.0 GA |
-| ----- | ------ |
-| `AddOption` / `AddArgument` / `AddCommand` | collection init or `.Subcommands.Add` |
+## 2.x to 3.x migration
+
+**Drop-in.** Bump the version; no code changes are needed. Then optionally adopt the new
+members above. The only consumer-visible shift is the dropped in-box `net8.0` target.
+
+## 2.x-beta to 2.x migration
+
+Unlike 2 to 3, **beta4 to 2.0 GA was a large breaking redesign**: the old invocation and
+binding stack was removed. Core mappings:
+
+| 2.0.0-beta4 | 2.x / 3.x GA |
+| ----------- | ------------ |
+| `AddOption` / `AddArgument` / `AddCommand` | `Options.Add` / `Arguments.Add` / `Subcommands.Add` |
+| `AddGlobalOption(o)` | `o.Recursive = true;` then `Options.Add(o)` |
 | `SetHandler(...)` | `SetAction(parseResult => ...)` |
-| `context.ParseResult.GetValueForOption(o)` | `parseResult.GetValue(o)` |
-| `IConsole` / `InvocationContext` | use `Console`; action receives `ParseResult` |
-| `new Option<T>("--n","desc")` | `new Option<T>("--n") { Description = "desc" }` |
-
-## Migrate from `McMaster.Extensions.CommandLineUtils`
-
-| McMaster | System.CommandLine 2.0 |
-| -------- | ---------------------- |
-| `CommandLineApplication` / `app.Command(...)` | `RootCommand` / `new Command(...)` |
-| `command.Argument` / `command.Option<T>` | `Argument<T>` / `Option<T>` |
-| `option.HasValue()` / `ParsedValue` | `parseResult.GetValue(option)` |
-| `OnExecute(() => 0)` / `app.Execute(args)` | `SetAction(pr => 0)` / `Parse(args).Invoke()` |
-| `app.Out` / `app.Error` | write to `Console`; in tests use `Console.SetOut/SetError` |
+| `command.Invoke` / `InvokeAsync` | `command.Parse(args).Invoke()` / `.InvokeAsync()` |
+| `IsRequired` | `Required` |
+| `ExistingOnly()` | `AcceptExistingOnly()` |
+| `SetDefaultValue` / `SetDefaultValueFactory` | `DefaultValueFactory` |
+| `ArgumentHelpName` | `HelpName` |
+| `new Option<T>("--n", "desc")` (2nd arg = description) | `new Option<T>("--n") { Description = "desc" }` (2nd ctor arg is now an **alias**) |
+| binding: `BinderBase<T>` / `BindingContext` / `IValueDescriptor` | `parseResult.GetValue(option)` |
+| `IConsole` / `HelpBuilder` | removed; use `Console`, customize help via `HelpAction` |
 
 ## Gotchas
-- Options/args are referenced by **identity** — keep the instance to pass to `GetValue`.
-- Defaults use `DefaultValueFactory`, not a plain default parameter.
-- There is no `IConsole` in GA; don't reintroduce it.
+- Options and args are referenced by **identity**: keep the instance to pass to `GetValue`.
+- The 2nd positional ctor arg is an **alias**, not a description (a silent shift since beta4).
+- Bumping 2.x to 3.x needs no code edits; do not "modernize" working 2.x patterns.
