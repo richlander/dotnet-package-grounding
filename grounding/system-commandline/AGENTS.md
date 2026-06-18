@@ -1,19 +1,19 @@
 # System.CommandLine 3.x
 
-Guidance for **System.CommandLine 3.x**, the current major line. Use when creating,
+Guidance for **System.CommandLine 3.x**, currently in preview. Use when creating,
 updating, or migrating a .NET CLI that uses System.CommandLine.
 
-```xml
-<!-- 3.0 has no GA yet; this is the latest 3.x preview -->
-<PackageReference Include="System.CommandLine" Version="3.0.0-preview.5.26302.115" />
-```
+System.CommandLine is most often used with command line or TUI apps. It supports Native AOT publishing and trimming.
 
-3.0 ships `net10.0` + `netstandard2.0`. The in-box `net8.0` lib from 2.x is gone, so
-net8/net9 apps now bind the `netstandard2.0` assembly.
+You can install the System.CommandLine package via:
+
+```bash
+dotnet add package System.CommandLine --prerelease
+```
 
 ## What's new in 3.x
 
-3.x is **additive over 2.x with no breaking API changes**. New opt-in members:
+3.x is **additive** over 2.x with **no breaking API changes**. New opt-in members:
 
 | Member | Use |
 | ------ | --- |
@@ -24,7 +24,7 @@ net8/net9 apps now bind the `netstandard2.0` assembly.
 ## 2.x to 3.x migration
 
 **Drop-in.** Bump the version; no code changes are needed. Then optionally adopt the new
-members above. The only consumer-visible shift is the dropped in-box `net8.0` target.
+members above. The only consumer-visible shift is the dropped in-box `net8.0` target. The new package includes `net10.0` and `netstandard2.0` targets.
 
 ## 2.x-beta to 2.x migration
 
@@ -46,6 +46,7 @@ binding stack was removed. Core mappings:
 | `IConsole` / `HelpBuilder` | removed; use `Console`, customize help via `HelpAction` |
 
 ## Gotchas
+
 - Options and args are referenced by **identity**: keep the instance to pass to `GetValue`.
 - The 2nd positional ctor arg is an **alias**, not a description (a silent shift since beta4).
 - Bumping 2.x to 3.x needs no code edits; do not "modernize" working 2.x patterns.
