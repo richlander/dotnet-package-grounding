@@ -1,83 +1,58 @@
-# System.CommandLine (2.0 GA) — agent grounding
+# System.CommandLine (2.0 GA)
 
-This file teaches agents how to use **System.CommandLine 2.0** (the stable GA release).
-The 2.0 API differs substantially from older `2.0.0-beta*` builds and from third-party
-parsers such as `McMaster.Extensions.CommandLineUtils`. Use this guidance when creating
-or migrating a command-line app that targets System.CommandLine.
-
-## Package
+Guidance for **System.CommandLine 2.0** (stable GA). The 2.0 API differs from
+`2.0.0-beta*` and from `McMaster.Extensions.CommandLineUtils`. Use when creating or
+migrating a CLI app targeting System.CommandLine.
 
 ```xml
 <PackageReference Include="System.CommandLine" Version="2.0.0" />
 ```
 
-## Core types (2.0 GA)
+## Core types
 
-| Concept            | Type / member                                   |
-| ------------------ | ----------------------------------------------- |
-| Root command       | `RootCommand`                                   |
-| Subcommand         | `Command` (add via `rootCommand.Subcommands.Add` or `command.Add`) |
-| Named option       | `Option<T>` (e.g. `new Option<int>("--times")`) |
-| Positional arg     | `Argument<T>` (e.g. `new Argument<string>("name")`) |
-| Attach handler     | `command.SetAction(parseResult => { ... })`     |
-| Read a value       | `parseResult.GetValue(option)` / `GetValue(argument)` |
-| Parse + invoke     | `rootCommand.Parse(args).Invoke()`              |
-
-Key shape of a 2.0 program:
+| Concept        | Type / member |
+| -------------- | ------------- |
+| Root / sub     | `RootCommand`, `Command` (add via collection init or `command.Subcommands.Add`) |
+| Option / arg   | `Option<T>`, `Argument<T>` (aliases are extra ctor args: `new Option<int>("--times","-t")`) |
+| Handler        | `command.SetAction(parseResult => { ... })` |
+| Read a value   | `parseResult.GetValue(option)` / `GetValue(argument)` |
+| Run            | `rootCommand.Parse(args).Invoke()` |
 
 ```csharp
 using System.CommandLine;
-
-var nameArg = new Argument<string>("name") { Description = "Name to greet." };
-var timesOpt = new Option<int>("--times", "-t") { Description = "How many times.", DefaultValueFactory = _ => 1 };
-
+var nameArg = new Argument<string>("name");
+var timesOpt = new Option<int>("--times", "-t") { DefaultValueFactory = _ => 1 };
 var greet = new Command("greet", "Print a greeting.") { nameArg, timesOpt };
-greet.SetAction(parseResult =>
+greet.SetAction(pr =>
 {
-    var name = parseResult.GetValue(nameArg);
-    var times = parseResult.GetValue(timesOpt);
-    for (var i = 0; i < times; i++)
-        Console.WriteLine($"Hello, {name}.");
+    for (var i = 0; i < pr.GetValue(timesOpt); i++)
+        Console.WriteLine($"Hello, {pr.GetValue(nameArg)}.");
     return 0;
 });
-
-var root = new RootCommand("Sample app") { greet };
-return root.Parse(args).Invoke();
+return new RootCommand("Sample app") { greet }.Parse(args).Invoke();
 ```
 
-## Migrating FROM `2.0.0-beta4` (breaking changes)
+## Migrate from `2.0.0-beta4`
 
-| Beta4                                          | 2.0 GA                                  |
-| ---------------------------------------------- | --------------------------------------- |
-| `command.AddOption(opt)` / `AddArgument(arg)`  | collection initializer or `command.Add` |
-| `command.AddCommand(sub)`                       | `command.Subcommands.Add(sub)` / `Add`  |
-| `command.SetHandler(...)`                       | `command.SetAction(parseResult => ...)` |
-| `context.ParseResult.GetValueForOption(opt)`    | `parseResult.GetValue(opt)`             |
-| `IConsole` / `InvocationContext`                | use `Console` directly; action receives `ParseResult` |
-| `new Option<T>("--name", "desc")`               | `new Option<T>("--name") { Description = "desc" }` |
-| Aliases as constructor string `"-t\|--times"`   | pass aliases as extra ctor params: `new Option<int>("--times", "-t")` |
+| Beta4 | 2.0 GA |
+| ----- | ------ |
+| `AddOption` / `AddArgument` / `AddCommand` | collection init or `.Subcommands.Add` |
+| `SetHandler(...)` | `SetAction(parseResult => ...)` |
+| `context.ParseResult.GetValueForOption(o)` | `parseResult.GetValue(o)` |
+| `IConsole` / `InvocationContext` | use `Console`; action receives `ParseResult` |
+| `new Option<T>("--n","desc")` | `new Option<T>("--n") { Description = "desc" }` |
 
-## Migrating FROM `McMaster.Extensions.CommandLineUtils`
+## Migrate from `McMaster.Extensions.CommandLineUtils`
 
-| McMaster                                        | System.CommandLine 2.0                  |
-| ----------------------------------------------- | --------------------------------------- |
-| `CommandLineApplication`                        | `RootCommand`                           |
-| `app.Command("greet", c => { ... })`            | `new Command("greet", ...)` added to root |
-| `command.Argument("name", "desc")`              | `new Argument<string>("name")`          |
-| `command.Option<int>("-t\|--times", ...)`       | `new Option<int>("--times", "-t")`      |
-| `option.HasValue()` / `option.ParsedValue`      | `parseResult.GetValue(option)`          |
-| `command.OnExecute(() => 0)`                    | `command.SetAction(pr => 0)`            |
-| `app.Execute(args)`                             | `rootCommand.Parse(args).Invoke()`      |
-| `app.Out` / `app.Error` (TextWriter injection)  | write to `Console`; for tests redirect `Console.SetOut`/`SetError`, or inject a `TextWriter` through your own action |
-
-### Testing note
-McMaster apps commonly expose a `Build(TextWriter out, TextWriter err)` seam and call
-`app.Execute(...)`. With System.CommandLine, keep behavior identical and update the test
-seam to parse+invoke: capture output via an injected `TextWriter` passed into your actions,
-or via `Console.SetOut`/`Console.SetError` around `root.Parse(args).Invoke()`.
+| McMaster | System.CommandLine 2.0 |
+| -------- | ---------------------- |
+| `CommandLineApplication` / `app.Command(...)` | `RootCommand` / `new Command(...)` |
+| `command.Argument` / `command.Option<T>` | `Argument<T>` / `Option<T>` |
+| `option.HasValue()` / `ParsedValue` | `parseResult.GetValue(option)` |
+| `OnExecute(() => 0)` / `app.Execute(args)` | `SetAction(pr => 0)` / `Parse(args).Invoke()` |
+| `app.Out` / `app.Error` | write to `Console`; in tests use `Console.SetOut/SetError` |
 
 ## Gotchas
-- Options are referenced by **identity** (the `Option<T>`/`Argument<T>` instance), not by
-  name string — keep references to pass to `parseResult.GetValue(...)`.
-- Default values use `DefaultValueFactory`, not a plain default parameter.
-- There is no `IConsole` in GA; don't reintroduce it during migration.
+- Options/args are referenced by **identity** — keep the instance to pass to `GetValue`.
+- Defaults use `DefaultValueFactory`, not a plain default parameter.
+- There is no `IConsole` in GA; don't reintroduce it.

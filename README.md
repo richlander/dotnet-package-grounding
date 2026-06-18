@@ -46,10 +46,15 @@ tests/<slug>/
   eval.yaml     # scenarios: prompt + setup.copy_test_files + assertions
   <fixtures>    # sample project(s) copied into the agent workdir; gated by `dotnet test`
 eng/
-  skill-validator.sha  # pinned dotnet/skills commit we build the validator from
-  sync-skill.sh        # AGENTS.md (+ meta.yaml) -> SKILL.md   (--check for CI)
-  run-evals.sh         # builds skill-validator from the pinned SHA, then runs evaluate
+  skill-validator.sha    # pinned dotnet/skills commit we build the validator from
+  agents-line-limit.txt  # max lines allowed in any AGENTS.md (start: 60)
+  sync-skill.sh          # AGENTS.md (+ meta.yaml) -> SKILL.md; enforces the line limit (--check for CI)
+  run-evals.sh           # builds skill-validator from the pinned SHA, then runs evaluate
 ```
+
+Grounding `AGENTS.md` files must stay **concise**: `eng/sync-skill.sh` fails if any exceeds the
+budget in `eng/agents-line-limit.txt` (currently **60** lines). Keep content tight and prefer a
+short "see also" link over inlining depth. Raise the limit deliberately, not casually.
 
 The grounding folder name must match the tests folder name and the skill `name` (e.g.
 `system-commandline`); the

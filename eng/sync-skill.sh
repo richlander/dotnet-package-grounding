@@ -12,6 +12,9 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 check_mode="${1:-}"
 status=0
 
+# Grounding AGENTS.md files must stay tight. Limit is configurable; start at 60.
+line_limit="$(tr -d '[:space:]' < "$repo_root/eng/agents-line-limit.txt")"
+
 extract_meta() { # $1=meta.yaml $2=key  -> prints folded scalar value
   awk -v key="$2" '
     $0 ~ "^"key":" {
@@ -36,6 +39,13 @@ while IFS= read -r -d '' agents; do
   meta="$dir/meta.yaml"
   skill="$dir/SKILL.md"
   [ -f "$meta" ] || { echo "WARN: $dir has AGENTS.md but no meta.yaml; skipping"; continue; }
+
+  # Enforce the line-count budget on the source-of-truth AGENTS.md.
+  lines="$(grep -c '' "$agents")"
+  if [ "$lines" -gt "$line_limit" ]; then
+    echo "TOO LONG: $agents has $lines lines (limit $line_limit). Trim it or raise eng/agents-line-limit.txt."
+    status=1
+  fi
 
   name="$(extract_meta "$meta" name)"
   description="$(extract_meta "$meta" description)"
