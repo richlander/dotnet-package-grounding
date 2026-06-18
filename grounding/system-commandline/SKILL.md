@@ -1,6 +1,6 @@
 ---
-name: system-commandline-grounding
-description: Guidance for using System.CommandLine 2.0 (GA): core types (RootCommand, Command, Option<T>, Argument<T>, SetAction, ParseResult.GetValue) and how to migrate to it from System.CommandLine 2.0.0-beta or from McMaster.Extensions.CommandLineUtils. Use when creating, updating, or migrating a .NET command-line application that uses System.CommandLine.
+name: system-commandline
+description: "Guidance for using System.CommandLine 2.0 (GA): core types (RootCommand, Command, Option<T>, Argument<T>, SetAction, ParseResult.GetValue) and how to migrate to it from System.CommandLine 2.0.0-beta or from McMaster.Extensions.CommandLineUtils. Use when creating, updating, or migrating a .NET command-line application that uses System.CommandLine."
 ---
 
 <!-- GENERATED from AGENTS.md by eng/sync-skill.sh. Do not edit. -->

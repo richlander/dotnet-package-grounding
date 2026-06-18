@@ -1,7 +1,8 @@
 name: update-harness
 
-# Periodically bump the pinned skill-validator version so we "take updates from
-# dotnet/skills" without vendoring its source. Opens a PR with the new version.
+# Periodically bump the pinned dotnet/skills commit so we "take updates from
+# dotnet/skills" without vendoring its source. We build skill-validator from
+# this commit (see eng/run-evals.sh). Opens a PR with the new SHA.
 on:
   schedule:
     - cron: '0 6 * * 1'   # Mondays 06:00 UTC
@@ -17,35 +18,31 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Resolve latest skill-validator nightly tag
+      - name: Resolve dotnet/skills main HEAD
         id: latest
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # The nightly release publishes the Microsoft.DotNet.SkillValidator
-          # nupkg/tarball. Capture its published version for pinning.
-          tag=$(gh release view skill-validator-nightly \
-                  --repo dotnet/skills --json tagName -q .tagName)
-          echo "version=$tag" >> "$GITHUB_OUTPUT"
+          sha=$(gh api repos/dotnet/skills/commits/main -q .sha)
+          [ -n "$sha" ] || { echo "Could not resolve SHA"; exit 1; }
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "short=${sha:0:8}" >> "$GITHUB_OUTPUT"
 
-      - name: Update tool-version.txt
-        run: |
-          new='${{ steps.latest.outputs.version }}'
-          [ -n "$new" ] || { echo "Could not resolve version"; exit 1; }
-          echo "$new" > eng/tool-version.txt
+      - name: Update eng/skill-validator.sha
+        run: echo "${{ steps.latest.outputs.sha }}" > eng/skill-validator.sha
 
       - name: Open PR if changed
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if git diff --quiet eng/tool-version.txt; then
+          if git diff --quiet eng/skill-validator.sha; then
             echo "Already up to date."; exit 0
           fi
-          branch="bump-skill-validator-${{ steps.latest.outputs.version }}"
+          branch="bump-skill-validator-${{ steps.latest.outputs.short }}"
           git config user.name  'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
           git checkout -b "$branch"
-          git commit -am "Bump skill-validator to ${{ steps.latest.outputs.version }}"
+          git commit -am "Bump skill-validator to dotnet/skills@${{ steps.latest.outputs.short }}"
           git push -u origin "$branch"
-          gh pr create --fill --title "Bump skill-validator to ${{ steps.latest.outputs.version }}" \
-            --body "Automated harness update from dotnet/skills nightly release."
+          gh pr create --fill --title "Bump skill-validator to dotnet/skills@${{ steps.latest.outputs.short }}" \
+            --body "Automated harness update: rebuild skill-validator from the latest dotnet/skills main commit."

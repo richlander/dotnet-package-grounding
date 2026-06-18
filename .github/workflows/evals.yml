@@ -10,9 +10,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-dotnet@v4
+      - name: Read pinned skill-validator commit
+        id: pin
+        run: echo "sha=$(tr -d '[:space:]' < eng/skill-validator.sha)" >> "$GITHUB_OUTPUT"
+
+      # Build the validator from the pinned dotnet/skills commit, mirroring how
+      # dotnet/skills builds it in-repo (dotnet publish SkillValidator.csproj).
+      - name: Checkout dotnet/skills @ pinned SHA
+        uses: actions/checkout@v4
         with:
-          dotnet-version: '10.0.x'
+          repository: dotnet/skills
+          ref: ${{ steps.pin.outputs.sha }}
+          path: .tools/skills-src
+
+      - name: Setup .NET (matches dotnet/skills global.json)
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: .tools/skills-src/global.json
+
+      - name: Build skill-validator
+        run: |
+          dotnet publish .tools/skills-src/eng/skill-validator/src/SkillValidator.csproj \
+            -c Release -o .tools/skill-validator
 
       # The GitHub Copilot SDK that skill-validator uses picks up gh credentials.
       - name: Authenticate gh
@@ -24,7 +43,7 @@ jobs:
         run: ./eng/sync-skill.sh --check
 
       - name: Run package-grounding evals
-        run: ./eng/run-evals.sh
+        run: .tools/skill-validator/skill-validator evaluate --tests-dir ./tests ./grounding
 
       - name: Upload results
         if: always()

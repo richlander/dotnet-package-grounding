@@ -39,12 +39,15 @@ while IFS= read -r -d '' agents; do
 
   name="$(extract_meta "$meta" name)"
   description="$(extract_meta "$meta" description)"
+  # YAML-escape the description: it routinely contains ': ', '<', '>' etc.,
+  # which are invalid in an unquoted (plain) scalar. Emit a double-quoted scalar.
+  esc_description="$(printf '%s' "$description" | sed 's/\\/\\\\/g; s/"/\\"/g')"
 
   tmp="$(mktemp)"
   {
     echo "---"
     echo "name: $name"
-    echo "description: $description"
+    echo "description: \"$esc_description\""
     echo "---"
     echo
     echo "<!-- GENERATED from AGENTS.md by eng/sync-skill.sh. Do not edit. -->"
