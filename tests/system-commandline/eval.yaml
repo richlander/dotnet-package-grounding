@@ -1,40 +1,242 @@
 config:
-  # Migrations are stateful; keep one scenario at a time for clean signal.
-  max_parallel_scenarios: 1
+  # Each scenario is self-contained; run a couple in parallel to save wall-clock.
+  max_parallel_scenarios: 2
 
 scenarios:
-  - name: "Migrate CommandLineDemo from McMaster to System.CommandLine 2.0 GA"
+  # ---------------------------------------------------------------------------
+  # Section "What's new in 3.x" — these lean on members that did not exist before
+  # System.CommandLine 3.0, so a baseline agent cannot know them from training data.
+  # ---------------------------------------------------------------------------
+
+  - name: "S1: case-insensitive constrained option (AcceptOnlyFromAmong comparer overload)"
     prompt: |
-      The CommandLineDemo project uses McMaster.Extensions.CommandLineUtils.
-      Migrate it to the latest stable System.CommandLine (2.0 GA), updating the
-      project reference and the code. Preserve the exact behavior of the `greet`
-      and `sum` commands so that the existing tests in CommandLineDemo.Tests
-      continue to pass. Update the test project as needed to drive the migrated
-      app, but do not change the asserted output strings or exit codes.
+      The `myapp` CLI in this directory is built on System.CommandLine 3.x.
+      Add a new option `--log-level` to the existing `greet` command that accepts
+      ONLY the values `quiet`, `normal`, and `verbose`, matched case-INsensitively
+      (so `QUIET`, `Quiet`, and `quiet` are all accepted). Use the built-in
+      System.CommandLine API for constraining the allowed values — do not hand-write
+      validation logic in the action. Any other value must be rejected with a
+      non-zero exit code. The project must still build.
     setup:
-      # Copies everything beside this eval.yaml (the fixture projects) into the
-      # agent's working directory. Applies to BOTH the baseline and enriched arms.
-      copy_test_files: true
-    # Prove the grounding earned its keep: a grounded agent should not need to
-    # research the API online. Reject BOTH web tools — otherwise the baseline
-    # just substitutes web_fetch for web_search and the quality gap disappears.
+      files:
+        - path: Cli.csproj
+          source: fixtures/cli/Cli.csproj
+        - path: Program.cs
+          source: fixtures/cli/Program.cs
     reject_tools:
       - web_search
       - web_fetch
     assertions:
       - type: run_command_and_assert
         command_to_run: "dotnet"
-        command_arguments: "test CommandLineDemo.Tests/CommandLineDemo.Tests.csproj"
+        command_arguments: "build"
         expected_exit_code: 0
-      - type: file_not_contains
-        path: "CommandLineDemo/CommandLineDemo.csproj"
-        value: "McMaster"
-      - type: file_contains
-        path: "CommandLineDemo/CommandLineDemo.csproj"
-        value: "System.CommandLine"
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- greet --log-level QUIET"
+        expected_exit_code: 0
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- greet --log-level bogus"
+        expected_exit_code: 1
+        expected_std_error_contains: "bogus"
     rubric:
-      - "The project builds and all CommandLineDemo.Tests pass"
-      - "Uses System.CommandLine 2.0 GA APIs (RootCommand, Command, Option<T>, Argument<T>, SetAction, ParseResult.GetValue)"
-      - "No remaining reference to McMaster.Extensions.CommandLineUtils"
-      - "greet and sum behavior (output text and exit codes) is unchanged"
+      - "Adds a --log-level option to the greet command accepting only quiet/normal/verbose"
+      - "Matching is case-insensitive, so QUIET is accepted"
+      - "Uses the built-in AcceptOnlyFromAmong overload that takes a StringComparer (no hand-written validation)"
+      - "Invalid values are rejected with a non-zero exit code"
+      - "Project still builds on System.CommandLine 3.x"
+    timeout: 600
+
+  - name: "S2: capture all remaining tokens (Argument.CaptureRemainingTokens)"
+    prompt: |
+      The `myapp` CLI in this directory uses System.CommandLine 3.x.
+      Add a trailing argument named `passthrough` to the `greet` command that
+      captures ALL remaining command-line tokens — including tokens that look like
+      options (for example `--name` or `-x`). These trailing tokens must be captured
+      literally into `passthrough`, NOT parsed as the command's own options. Use the
+      System.CommandLine 3.x feature designed for this (not just a greedy arity).
+      In the greet action, print the captured tokens (for example
+      `passthrough=[token1,token2]`). The existing `--name` option must still work
+      when it appears before any passthrough token. The project must build.
+    setup:
+      files:
+        - path: Cli.csproj
+          source: fixtures/cli/Cli.csproj
+        - path: Program.cs
+          source: fixtures/cli/Program.cs
+    reject_tools:
+      - web_search
+      - web_fetch
+    assertions:
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "build"
+        expected_exit_code: 0
+      # Discriminator: `--name` after a positional must be CAPTURED (printed),
+      # not consumed as the option. A plain ZeroOrMore arity would consume it.
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- greet first --name Bob"
+        expected_exit_code: 0
+        expected_std_output_contains: "--name"
+      # The existing option must still work when used before passthrough tokens.
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- greet --name Alice"
+        expected_exit_code: 0
+        expected_std_output_contains: "Alice"
+    rubric:
+      - "Adds a passthrough trailing argument to greet that captures all remaining tokens"
+      - "Uses Argument<T>.CaptureRemainingTokens (the 3.x feature), not just ZeroOrMore arity"
+      - "Option-like trailing tokens such as --name are captured literally, not parsed as options"
+      - "The existing --name option still works when used before passthrough tokens"
+      - "Project builds on System.CommandLine 3.x"
+    timeout: 600
+
+  - name: "S3: custom root help name (RootCommand.HelpName)"
+    prompt: |
+      The `myapp` CLI in this directory uses System.CommandLine 3.x. The executable
+      is `myapp`, but the help output (`myapp --help`) shows the root command using
+      the assembly name. Change ONLY the name shown for the root command in help
+      output to `widget`, using the System.CommandLine 3.x API for this. Do NOT
+      rename the assembly or change the executable name. The project must build.
+    setup:
+      files:
+        - path: Cli.csproj
+          source: fixtures/cli/Cli.csproj
+        - path: Program.cs
+          source: fixtures/cli/Program.cs
+    reject_tools:
+      - web_search
+      - web_fetch
+    assertions:
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "build"
+        expected_exit_code: 0
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- --help"
+        expected_exit_code: 0
+        expected_std_output_contains: "widget"
+      # Guardrail: the help name must come from the API, not from renaming the assembly.
+      - type: file_not_contains
+        path: "Cli.csproj"
+        value: "widget"
+    rubric:
+      - "Help output for the root command shows 'widget'"
+      - "Uses RootCommand.HelpName (the 3.x API) to set the help name"
+      - "The assembly/executable name is unchanged (still myapp)"
+      - "Project builds on System.CommandLine 3.x"
+    timeout: 600
+
+  # ---------------------------------------------------------------------------
+  # Section "2.x to 3.x migration" — the key insight is that this upgrade is
+  # drop-in / additive-only (zero breaking API changes), so the correct migration
+  # is a one-line package-version bump with NO source edits. A baseline agent
+  # (web blocked) cannot know the exact latest preview version, nor that no code
+  # changes are required, so it tends to either guess a wrong version (restore
+  # fails) or defensively rewrite source (fails the minimal-diff gate).
+  #
+  # Fixture: the real dotnet-inspect repo at commit 91b728c (pins System.CommandLine
+  # 2.0.5), materialized via setup.commands. NOTE: this uses an absolute path on the
+  # author's machine and is therefore local-only (not portable to CI).
+  # ---------------------------------------------------------------------------
+
+  - name: "S4: drop-in 2.x to 3.x upgrade of a real codebase (minimal diff)"
+    prompt: |
+      This directory contains the `dotnet-inspect` codebase, which currently pins
+      `System.CommandLine` version `2.0.5` in `Directory.Packages.props`.
+      Upgrade it to the latest System.CommandLine 3.x release. Make the SMALLEST
+      change that achieves a clean build — do not refactor or rewrite source files
+      that do not need to change. After your change, `dotnet build` of
+      `src/dotnet-inspect/dotnet-inspect.csproj` must succeed.
+    setup:
+      # Materialize a clean source tree at the pinned commit, then establish a git
+      # baseline so the minimal-diff gate can measure exactly what the agent changed.
+      commands:
+        - "git -C /Users/rich/git/dotnet-inspect archive 91b728c | tar -x"
+        - "git init -q && git add -A && git -c user.email=base@example.com -c user.name=base commit -qm base"
+    reject_tools:
+      - web_search
+      - web_fetch
+    assertions:
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "build src/dotnet-inspect/dotnet-inspect.csproj -c Debug"
+        expected_exit_code: 0
+        command_timeout: 600
+      - type: file_contains
+        path: "Directory.Packages.props"
+        value: "3.0.0-preview"
+      # Minimal-diff gate: the ONLY tracked file that may differ from the baseline
+      # commit is Directory.Packages.props. `git diff --quiet` exits non-zero if any
+      # other tracked file changed (build artifacts are gitignored, so untracked).
+      - type: run_command_and_assert
+        command_to_run: "/bin/sh"
+        command_arguments: "-c \"git diff --quiet -- . ':(exclude)Directory.Packages.props'\""
+        expected_exit_code: 0
+    rubric:
+      - "Bumps System.CommandLine to the latest 3.x preview (3.0.0-preview.5.26302.115) in Directory.Packages.props"
+      - "Recognizes that 2.x to 3.x is additive-only/drop-in and changes NO source files"
+      - "The build of src/dotnet-inspect/dotnet-inspect.csproj succeeds on 3.x"
+      - "The change is minimal: only the package version line is modified"
+    timeout: 900
+
+  # ---------------------------------------------------------------------------
+  # Section "2.x-beta to 2.x/3.x migration" — the large breaking redesign.
+  # Fixture: ZeroDaySearch, a real beta4 CLI (Handler.SetHandler, AddOption,
+  # getDefaultValue, beta ctors, rootCommand.InvokeAsync(args)).
+  # ---------------------------------------------------------------------------
+
+  - name: "S5: migrate a System.CommandLine 2.0.0-beta4 CLI to 3.x"
+    prompt: |
+      This project (ZeroDaySearch) targets System.CommandLine `2.0.0-beta4.22272.1`,
+      which uses an API that was removed before the 2.0 GA release. Migrate it to the
+      latest System.CommandLine 3.x so it builds against the current API:
+      set the System.CommandLine package version in the .csproj to
+      `3.0.0-preview.5.26302.115`, and update Program.cs to the current API.
+      Preserve every existing command (list, search, severity, product, platform,
+      date, summary), their options and arguments, and their behavior. The migrated
+      project must compile.
+    setup:
+      files:
+        - path: ZeroDaySearch.csproj
+          source: fixtures/zeroday/ZeroDaySearch.csproj
+        - path: Program.cs
+          source: fixtures/zeroday/Program.cs
+        - path: CveDataSource.cs
+          source: fixtures/zeroday/CveDataSource.cs
+        - path: CveFormatter.cs
+          source: fixtures/zeroday/CveFormatter.cs
+        - path: Models.cs
+          source: fixtures/zeroday/Models.cs
+    reject_tools:
+      - web_search
+      - web_fetch
+    assertions:
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "build"
+        expected_exit_code: 0
+      - type: file_contains
+        path: "ZeroDaySearch.csproj"
+        value: "3.0.0-preview"
+      - type: file_not_contains
+        path: "Program.cs"
+        value: "SetHandler"
+      - type: file_not_contains
+        path: "Program.cs"
+        value: "AddOption"
+      - type: file_not_contains
+        path: "Program.cs"
+        value: "getDefaultValue"
+    rubric:
+      - "Bumps System.CommandLine to 3.x in the .csproj"
+      - "Replaces Handler.SetHandler with command.SetAction reading values via ParseResult.GetValue"
+      - "Replaces AddOption/AddArgument/AddCommand with Options.Add/Arguments.Add/Subcommands.Add"
+      - "Replaces getDefaultValue: with DefaultValueFactory and updates the option/argument constructors"
+      - "Replaces rootCommand.InvokeAsync(args) with rootCommand.Parse(args).Invoke() or InvokeAsync()"
+      - "All seven commands and their options/arguments are preserved; the project compiles"
     timeout: 900
