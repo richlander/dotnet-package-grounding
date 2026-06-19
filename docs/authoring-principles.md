@@ -21,11 +21,17 @@ baseline on a scenario, the model already knew it — cut it.
 | --- | --- | --- | --- |
 | S1: `AcceptOnlyFromAmong` comparer overload | 5.0 → 5.0 | **−2.2%** | A "new in 3.x" member with a guessable name is model-resident. No signal. |
 | G1: greenfield CLI on 3.x | 5.0 → 5.0 | **+1.1%** | The model writes correct current-API CLIs from scratch (2.0 GA API == 3.x). Greenfield authoring is model-resident. No signal. |
-| M1: migrate a real 2.0.0-beta4 CLI to 3.x | 4.0 → 5.0 | **+5.3%** | Transforming code written against a **removed** API requires the specific member mapping the model lacks. Signal. |
+| M1: migrate a real 2.0.0-beta4 CLI to 3.x (compile-error gates) | 5.0 → 5.0 | **+6.4%** | After behavior gates gave the judge ground truth, the baseline migrates **correctly** (compile errors + reflection recover the member mapping). Residual signal is efficiency-only — below the 10% bar. |
+| M1 + silent-break trap (`new Option<T>("--n","desc")`: 2nd arg = alias in 3.x) | 4.7 → 5.0 | **+13.9%** | A migration that *compiles but behaves wrong* defeats the compile-error safety net. Only the documented gotcha avoids it, so grounding moves the **quality** dimension — the one that dominates the bar. Signal clears 10% (noisy, CV=65%). |
 
 **Takeaway:** signal comes from *transforming code written against an API the model can
-no longer rely on* (migration), not from greenfield authoring or guessable members. The
-grounding's value is the migration mapping table, not "how to write a CLI."
+no longer rely on* (migration) — and specifically from the parts a model **cannot recover
+locally**. A version-bump or removed-API migration is largely recoverable via compile
+errors + reflection (model-resident, efficiency-only signal). The durable signal is a
+**silent behavioral break**: code that compiles but is wrong, where only the grounding's
+gotcha prevents the defect. The improvement metric is quality-dominated (Quality 0.40 +
+OverallJudgment 0.30 = 70%; all efficiency dimensions only 10%), so clearing the bar
+requires moving *correctness*, not tokens.
 
 ## 2. Optimize for RAG retrieval, not prose coherence
 
