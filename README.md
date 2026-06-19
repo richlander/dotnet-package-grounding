@@ -59,7 +59,9 @@ short "see also" link over inlining depth. Raise the limit deliberately, not cas
 A grounding doc records **only what an agent is proven to lack** (by eval signal) and is written
 for **section-based RAG retrieval**, not top-to-bottom reading — unlike a README. See
 [docs/authoring-principles.md](docs/authoring-principles.md) for the principles and the empirical
-evidence behind them.
+evidence behind them. For a per-package writeup suitable for an upstream PR, see the reports
+under [docs/reports/](docs/reports/) (e.g.
+[System.CommandLine](docs/reports/system-commandline.md)).
 
 The grounding folder name must match the tests folder name and the skill `name` (e.g.
 `system-commandline`); the
