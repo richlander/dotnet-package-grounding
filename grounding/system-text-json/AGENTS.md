@@ -40,3 +40,21 @@ package**. Remove the `Newtonsoft.Json` package reference and `using Newtonsoft.
 - Duplicate JSON property names are **rejected** (previously last-one-wins); opt out with
   `AllowDuplicateProperties = true`.
 - A member whose name collides with a metadata property (`$type`/`$id`/`$ref`) now throws.
+
+## Native AOT / trimming: source generation is required
+Reflection-based `JsonSerializer.Serialize<T>` / `Deserialize<T>(string)` is **disabled under
+Native AOT** (`PublishAot=true`) and trimming. It still **compiles** (only an `IL3050`/`IL2026`
+warning) but **throws `InvalidOperationException` at run time**: *"Reflection-based serialization
+has been disabled… use the source generator APIs."* Do **not** fix this by removing `PublishAot`
+or setting `JsonSerializerIsReflectionEnabledByDefault=true` — that reintroduces the AOT break.
+Fix with **source generation**:
+
+```csharp
+[JsonSerializable(typeof(List<Advisory>))]   // one entry per root type to (de)serialize
+internal partial class AppJsonContext : JsonSerializerContext { }
+var items = JsonSerializer.Deserialize(json, AppJsonContext.Default.ListAdvisory);
+JsonSerializer.Serialize(items, AppJsonContext.Default.ListAdvisory);
+```
+The context's generated property is named after the type (`List<Advisory>` → `ListAdvisory`);
+pass it via the `JsonTypeInfo`/`JsonSerializerContext` overload (or set
+`options.TypeInfoResolver = AppJsonContext.Default`). Configure case-insensitivity/naming via `[JsonSourceGenerationOptions]`.

@@ -56,12 +56,22 @@ top-to-bottom by a human.
 | Scenario | Baseline → Grounded | Improvement | Lesson |
 | --- | --- | --- | --- |
 | N1: migrate a Newtonsoft.Json CLI to System.Text.Json; silent break = STJ is case-sensitive by default (Newtonsoft is case-insensitive) | 5.0 → 4.8 (isolated) / 4.0 (plugin) | **−12.5%** (runs=5; isolated −6.9%) | The baseline reliably adds `PropertyNameCaseInsensitive = true` on its own — STJ case-insensitivity is **the most-cited STJ gotcha, so it is model-resident**. Grounding adds no value (slightly negative). A *silent* break is necessary but **not sufficient**: it must also be *obscure* (under-documented) to be non-resident. |
+| N2: make a reflection-based STJ tool Native AOT compatible (`PublishAot=true` → reflection serialization disabled → throws at run time; fix = `JsonSerializerContext` source-gen) | 5.0 → 5.0 (quality tied) | **+7.9%** (runs=5; isolated +9.4%, plugin +7.9%) — under the bar | **Baseline objectively *fails* the task** (task-completion ✗ → ✓ with grounding): this content has real value. But the break is **LOUD** — it throws `InvalidOperationException` whose message literally says *"use the source generator APIs"* — so the model recovers to **equal final quality** (judge tie). The only durable, bar-relevant win is the 0.15-weighted task-completion delta, which nets +7.9% after discovery overhead. **A loud, self-describing break caps below the bar even when it genuinely improves task completion.** |
 
 The contrast with the SCL silent-break win is the key lesson: SCL's alias-vs-description
 shift earned signal because it is **both silent and obscure** (a rarely-discussed beta-era
 constructor change). STJ case-insensitivity is silent but **famous**, so the model already
-guards against it. When probing a package, target gotchas that are silent **and** rarely
-written about.
+guards against it. And STJ × Native AOT is **non-resident but loud**: it announces its own
+fix at run time, so even though the baseline fails the task, it recovers to equal quality and
+the measured gain stays under threshold. When probing a package, target gotchas that are
+**silent (compile- and run-clean but wrong), obscure (rarely written about), AND not
+self-correcting at run time.** Drop any one and the signal collapses:
+
+| Property | SCL alias-vs-description | STJ case-insensitivity | STJ × Native AOT |
+| --- | --- | --- | --- |
+| Silent (no error) | ✅ | ✅ | ❌ throws |
+| Obscure (non-resident) | ✅ | ❌ famous | ✅ post-training |
+| Result | **+15.1% (clears bar)** | −12.5% | +7.9% (real value, under bar) |
 
 ## Practical consequences
 

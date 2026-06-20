@@ -60,8 +60,10 @@ A grounding doc records **only what an agent is proven to lack** (by eval signal
 for **section-based RAG retrieval**, not top-to-bottom reading — unlike a README. See
 [docs/authoring-principles.md](docs/authoring-principles.md) for the principles and the empirical
 evidence behind them. For a per-package writeup suitable for an upstream PR, see the reports
-under [docs/reports/](docs/reports/) (e.g.
-[System.CommandLine](docs/reports/system-commandline.md)).
+under [docs/reports/](docs/reports/)
+([System.CommandLine](docs/reports/system-commandline.md) — needs grounding for a narrow set
+of topics; [System.Text.Json](docs/reports/system-text-json.md) — does not need general
+grounding).
 
 The grounding folder name must match the tests folder name and the skill `name` (e.g.
 `system-commandline`); the

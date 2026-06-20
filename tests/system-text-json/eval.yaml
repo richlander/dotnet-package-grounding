@@ -65,3 +65,68 @@ scenarios:
       - "Preserves case-insensitive property matching (e.g. PropertyNameCaseInsensitive, JsonSerializerDefaults.Web, a camelCase naming policy, or [JsonPropertyName]) so the camelCase JSON still binds to the PascalCase model"
       - "The migrated project compiles and prints the same output as the original"
     timeout: 900
+
+  # ---------------------------------------------------------------------------
+  # N2 — Native AOT requires System.Text.Json source generation.
+  #
+  # The fixture is a console tool with <PublishAot>true</PublishAot> that uses the
+  # reflection-based JsonSerializer.Deserialize<T>(json) API. Under AOT the SDK sets
+  # JsonSerializerIsReflectionEnabledByDefault=false, so this COMPILES (IL3050 is only
+  # a warning) but throws InvalidOperationException at run time: reflection-based
+  # serialization is disabled. The fix is non-mechanical: author a JsonSerializerContext
+  # partial class with [JsonSerializable(typeof(List<Advisory>))] and call the
+  # JsonTypeInfo/context overload (e.g. JsonSerializer.Deserialize(json,
+  # AppJsonContext.Default.ListAdvisory)). The behavior gate runs the app and asserts the
+  # advisories print; the cheat guards forbid disabling AOT or re-enabling reflection.
+  # ---------------------------------------------------------------------------
+
+  - name: "N2: make a System.Text.Json tool Native AOT compatible"
+    prompt: |
+      This console tool ships as a Native AOT executable — `<PublishAot>true</PublishAot>`
+      is set in the project and must stay enabled. It currently fails when run. Fix it so it
+      runs correctly as-is, without disabling Native AOT and without re-enabling
+      reflection-based serialization. Preserve behavior exactly: the same console output.
+      After your change, build the project and run it to confirm it produces the expected
+      output with no warnings.
+    setup:
+      files:
+        - path: AdvisoryReport.csproj
+          source: fixtures/aot-sourcegen/AdvisoryReport.csproj
+        - path: Program.cs
+          source: fixtures/aot-sourcegen/Program.cs
+        - path: Advisory.cs
+          source: fixtures/aot-sourcegen/Advisory.cs
+    reject_tools:
+      - web_search
+      - web_fetch
+    assertions:
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "build"
+        expected_exit_code: 0
+        command_timeout: 600
+      # Cheat guards: Native AOT must remain enabled and reflection must not be re-enabled.
+      - type: file_contains
+        path: "AdvisoryReport.csproj"
+        value: "<PublishAot>true</PublishAot>"
+      - type: file_not_contains
+        path: "AdvisoryReport.csproj"
+        value: "JsonSerializerIsReflectionEnabledByDefault"
+      # The fix must use System.Text.Json source generation.
+      - type: file_contains
+        path: "Program.cs"
+        value: "JsonSerializerContext"
+      # Behavior gate: under AOT the reflection path throws at run time; only a
+      # source-generated context produces output. Assert the advisories actually print.
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build"
+        expected_exit_code: 0
+        expected_std_output_matches: "(?=[\\s\\S]*Contoso\\.Data 1\\.2\\.3 \\[High\\] CVE-2025-0001)(?=[\\s\\S]*Contoso\\.Web 4\\.5\\.6 \\[Critical\\] CVE-2025-0002)"
+        command_timeout: 120
+    rubric:
+      - "Keeps Native AOT enabled (PublishAot stays true) and does not re-enable reflection-based serialization"
+      - "Adds a JsonSerializerContext partial class annotated with [JsonSerializable(typeof(List<Advisory>))]"
+      - "Calls a source-generation overload of JsonSerializer (JsonTypeInfo or JsonSerializerContext) instead of the reflection-based Deserialize<T>(string) API"
+      - "The tool builds without IL2026/IL3050 trim/AOT warnings and prints the same output as before"
+    timeout: 900
