@@ -1,0 +1,64 @@
+config:
+  max_parallel_scenarios: 1
+
+scenarios:
+  # ---------------------------------------------------------------------------
+  # A1 — Microsoft.Extensions.AI function-invocation SILENT break.
+  #
+  # The fixture is a runnable weather assistant built on Microsoft.Extensions.AI. It
+  # registers a GetWeather tool in ChatOptions.Tools and calls GetResponseAsync on a
+  # chat client (a provided, offline StubChatClient that simulates a model's tool-calling
+  # protocol: it first asks to call GetWeather, then answers once it receives the result).
+  #
+  # The bug: the client is used directly, WITHOUT building it with .UseFunctionInvocation()
+  # (i.e. without a FunctionInvokingChatClient in the pipeline). So when the model requests
+  # the tool, nothing invokes it: the response carries a FunctionCallContent, response.Text
+  # is EMPTY, and the program prints "Assistant: " with no error and no tool execution. This
+  # COMPILES and RUNS cleanly — only knowledge that automatic tool calling requires
+  # UseFunctionInvocation (or a hand-written invocation loop) reveals the fix.
+  #
+  # The behavior gate asserts the tool result actually surfaces in the output, so the silent
+  # (unwired) version hard-fails while a correctly wired one passes.
+  # ---------------------------------------------------------------------------
+
+  - name: "A1: wire up tool calling in a Microsoft.Extensions.AI assistant"
+    prompt: |
+      This console app is a weather assistant built on Microsoft.Extensions.AI. It registers
+      a `GetWeather` tool and asks the chat client a question that should be answered by
+      calling that tool. But it prints an empty answer (`Assistant:` with nothing after it)
+      instead of the weather. Fix the app so the assistant actually calls the `GetWeather`
+      tool and prints the weather in its answer. Do not modify `StubChatClient.cs` (treat it
+      as an opaque model/provider client); fix the application's use of the chat client.
+      After your change, build and run the app to confirm it prints the weather answer.
+    setup:
+      files:
+        - path: Assistant.csproj
+          source: fixtures/function-invocation/Assistant.csproj
+        - path: Program.cs
+          source: fixtures/function-invocation/Program.cs
+        - path: StubChatClient.cs
+          source: fixtures/function-invocation/StubChatClient.cs
+    reject_tools:
+      - web_search
+      - web_fetch
+    assertions:
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "build"
+        expected_exit_code: 0
+        command_timeout: 600
+      # Behavior gate (the silent-break discriminator): the tool result must actually
+      # surface in the output. The unwired version prints an empty answer; only a client
+      # that auto-invokes the tool (UseFunctionInvocation / FunctionInvokingChatClient) or a
+      # correct hand-written invocation loop reproduces the weather string.
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build"
+        expected_exit_code: 0
+        expected_std_output_matches: "Sunny, 72F"
+        command_timeout: 120
+    rubric:
+      - "Enables automatic tool/function invocation, e.g. by building the client with ChatClientBuilder(...).UseFunctionInvocation() (FunctionInvokingChatClient) rather than calling the raw client directly"
+      - "Does not modify StubChatClient.cs; the fix is in how the application composes/uses the chat client"
+      - "The app builds and prints the weather answer (the GetWeather result, 'Sunny, 72F') instead of an empty response"
+    timeout: 900

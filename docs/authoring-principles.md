@@ -67,11 +67,24 @@ the measured gain stays under threshold. When probing a package, target gotchas 
 **silent (compile- and run-clean but wrong), obscure (rarely written about), AND not
 self-correcting at run time.** Drop any one and the signal collapses:
 
-| Property | SCL alias-vs-description | STJ case-insensitivity | STJ × Native AOT |
+| Property | SCL alias-vs-description | STJ case-insensitivity | STJ × Native AOT | M.E.AI function-invocation |
+| --- | --- | --- | --- | --- |
+| Silent (no error) | ✅ | ✅ | ❌ throws | ✅ empty output |
+| Obscure (non-resident) | ✅ | ❌ famous | ✅ post-training | ❌ famous |
+| Result | **+15.1% (clears bar)** | −12.5% | +7.9% (real value, under bar) | −1.0% |
+
+### Cross-package data point (Microsoft.Extensions.AI unit)
+
+| Scenario | Baseline → Grounded | Improvement | Lesson |
 | --- | --- | --- | --- |
-| Silent (no error) | ✅ | ✅ | ❌ throws |
-| Obscure (non-resident) | ✅ | ❌ famous | ✅ post-training |
-| Result | **+15.1% (clears bar)** | −12.5% | +7.9% (real value, under bar) |
+| A1: wire up tool calling in an `IChatClient` assistant; silent break = tools in `ChatOptions.Tools` are never invoked unless the client is built with `.UseFunctionInvocation()` (`FunctionInvokingChatClient`). Without it the call succeeds, `response.Text` is empty, the tool never runs, no exception. | 5.0 → 5.0 (quality tied) | **−1.0%** (runs=5; CI [−1.6%, −1.0%], low variance) | The baseline agent **immediately** diagnoses the missing `UseFunctionInvocation` and fixes it in one edit, every run. Despite *not* being labeled a "pitfall" in Microsoft docs, the pattern is so heavily represented in examples that it is **model-resident**. Same profile as STJ case-insensitivity: **silent but famous → no signal.** A reproducible, low-variance −1.0% is a clean "the model already knows this" result. |
+
+This is the **third** package where the most prominent silent gotcha turned out to be
+model-resident (STJ case-insensitivity, M.E.AI function invocation). The pattern is now
+robust: a gotcha being *silent* and even *undocumented-as-a-pitfall* is not enough — if it is
+**demonstrated frequently** (every tutorial wires `UseFunctionInvocation`; every STJ migration
+guide mentions case-insensitivity), strong models absorb it. The winning SCL case was obscure
+precisely because it is a **transient beta-era detail** that mostly washed out of the corpus.
 
 ## Practical consequences
 
