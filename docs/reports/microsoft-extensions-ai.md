@@ -16,19 +16,28 @@ never run unless the client pipeline includes `.UseFunctionInvocation()` — and
 - **Agent = Opus 4.6** (judge = Opus 4.6): **−1.0%** (runs=5, CI [−1.6%, −1.0%], significant).
   The strong agent diagnoses the missing `UseFunctionInvocation` and fixes it in one edit every
   run. *Silent but resident → no signal.*
+- **Agent = Sonnet 4.5** (judge = Opus 4.6): **+50.7%** (runs=5, CI [+33.3%, +63.1%]). Baseline
+  quality 2.4/5 — even this strong, current model thrashes (25 tool calls) on a brittle manual
+  tool loop. *Non-resident → large signal.*
 - **Agent = Haiku 4.5** (judge = Opus 4.6): **+63.3%** (runs=5, CI [+39.7%, +74.0%],
   significant, g=+100%). The weaker agent's baseline picks the wrong fix (a hand-written tool
   loop), fails to compile, and never produces a working app (quality 1.6/5); with grounding it
   adds `.UseFunctionInvocation()`, builds, runs, and finishes correctly — **and ~3× cheaper**
   (281k→87k tokens, 20→7 tool calls). *Silent and—for this model—obscure → large signal.*
 
+Three agent models, one judge → a **capability curve**: grounding value (ΔQuality +68% → +52% →
++0%) declines monotonically as the agent gets stronger and crosses zero at the frontier. Notably
+**even Sonnet 4.5 is non-resident** — the "model already knows it" set is narrower than tier
+intuition suggests.
+
 **The gotcha did not change; the agent did.** "Model-resident" is a property of the
 *model*, not the *package*. A cheap closed-book residency pre-probe predicted the split: asked
 the gotcha cold, Haiku 4.5 said *"I don't know,"* while Opus knows it cold.
 
 **Recommendation:** ship M.E.AI grounding for the function-calling footgun **if the target is a
-mid/low-tier agent** (the common production case) — it converts task failure into success and
-cuts cost ~3×. For a frontier agent it is redundant. Always state the target agent model.
+mid/low-tier agent** (the common production case — Sonnet-class and below) — it converts task
+failure into success and cuts cost ~3×. For a frontier agent it is redundant (a small cost tax).
+Always state the target agent model.
 
 ## Why measure instead of assert
 
@@ -75,18 +84,44 @@ time) total only **10%**; task completion is **0.15**. Clearing the bar requires
 The prompt includes the **"build and run to confirm"** instruction so both arms verify their
 own work, leveling the verification-visibility confound observed in the System.Text.Json unit.
 
-## Scenario and result
+## Scenario and result: the capability curve
 
-| # | Scenario | Agent model | Improvement | Interpretation |
-| --- | --- | --- | --- | --- |
-| A1 | Fix a weather assistant that prints an empty answer because its `IChatClient` is used directly, without `.UseFunctionInvocation()` in the pipeline (silent break = tools in `ChatOptions.Tools` are never invoked; `response.Text` is empty, no exception) | **Opus 4.6** | **−1.0%** (runs=5; iso −0.6%, plugin −1.0%; CI [−1.6%, −1.0%], significant) | Baseline (quality 5.0/5) identifies the missing `UseFunctionInvocation` and adds it in one edit. Judge winner: **tie**. Gotcha is **resident** for this model. No signal. |
-| A1′ | *Same scenario, same grounding, same Opus judge — only the agent model changed* | **Haiku 4.5** | **+63.3%** (runs=5; iso +63.3%, plugin +65.1%; CI [+39.7%, +74.0%], significant, g=+100%) | Baseline (quality **1.6/5**) chooses the wrong fix (manual tool loop), hits 4 compile errors, never builds a working app. Grounded → adds `.UseFunctionInvocation()`, builds, runs, **5.0/5**, in 7 tool calls. Judge: **MuchBetter**. Gotcha is **non-resident** for this model → large signal. |
+One scenario (A1 — fix a weather assistant that prints an empty answer because its `IChatClient`
+is used directly, without `.UseFunctionInvocation()` in the pipeline; tools in `ChatOptions.Tools`
+are silently never invoked, `response.Text` is empty, no exception), run with **three agent
+models** and the **judge held fixed at Opus 4.6**, same grounding content and fixture throughout:
 
-(A1 effective score `min(iso=−0.6%, plugin=−1.0%) = −1.0%`; A1′ `min(iso=+63.3%, plugin=+65.1%)
-= +63.3%`. Under Opus the grounded arms spent **more** tokens (+29%/+35%) restating known
-content; under Haiku the grounded arms spent **far fewer** (−69%/−64% tokens, −65%/−60% tool
-calls, −61%/−62% time) by going straight to the fix instead of thrashing. Same content, opposite
-economics — because residency differs. Full artifacts in the appendix.)
+| Agent model | Baseline quality | ΔQuality | Cost vs baseline¹ | Harness score | Our score² |
+| --- | --- | --- | --- | --- | --- |
+| **Haiku 4.5** | 1.6/5 | **+68%** | **−58%** (cheaper) | **+63.3%** (CI [+39.7, +74.0]) | **+65.0%** |
+| **Sonnet 4.5** | 2.4/5 | **+52%** | **−69%** (cheaper) | **+50.7%** (CI [+33.3, +63.1]) | **+57.1%** |
+| **Opus 4.6** | 5.0/5 | **+0%** | **+9%** (a tax) | **−1.0%** (CI [−1.6, −1.0]) | **−2.7%** |
+
+¹ Real-dollar cost (output priced ~5× input, cache-read 0.1×) via `eng/rescore.py`.
+² Our grounding-specific score: `0.70·ΔQuality + 0.30·costReduction`, cost in real dollars — see
+[authoring-principles.md §4](../authoring-principles.md). All runs `--runs 5`.
+
+**Grounding value is a monotonically declining function of agent capability, crossing zero at the
+frontier.** The weaker the agent, the more it flails without the fact (Haiku: 20 tool calls,
+quality 1.6; Sonnet: 25 tool calls, quality 2.4 — both pick a brittle hand-written tool loop and
+thrash on the API), and the more grounding rescues *both* correctness and cost. Opus knows it
+cold (5.0/5 unaided), so grounding is pure dead-weight — a ~9% cost tax for loading a doc it
+doesn't need.
+
+Two findings stand out:
+
+- **Even Sonnet 4.5 — a strong, current model — is non-resident here** (baseline 2.4/5). The
+  "resident" set is *narrower* than tier intuition suggests; only the frontier-most model has
+  this cold. The modal production agent (Sonnet-class and below, especially router-selected
+  cheap models) benefits hugely.
+- Our cost-weighted score **penalizes the frontier tax more** than the harness (−2.7% vs −1.0%)
+  because output dollars are weighted and cost carries 0.30 (not 0.10). On the weak tiers it is
+  ~in line with the harness because quality dominates there.
+
+**Pareto verdict (grounding is auto-installed and un-removable):** SHIP — it materially helps the
+tiers that need it (Haiku, Sonnet) and does no meaningful harm to the frontier (the ~9% Opus tax
+is a yellow flag that good retrieval — not loading the doc when the model doesn't need it — keeps
+contained).
 
 ## Analysis
 
