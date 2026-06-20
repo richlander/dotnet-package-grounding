@@ -15,9 +15,11 @@ time using pairwise LLM judging with confidence intervals.
 ## Start here: the recommendation
 
 **[`docs/recommendation.md`](docs/recommendation.md)** — the executive summary for the NuGet
-v-team. It walks one progression (raw package → NuGet MCP → shipped `AGENTS.md` → resident-index
-MCP) measured across **2 real tasks × 5 delivery channels × 2 model tiers**, with raw data in
-[`data/`](data/) and a concrete design recommendation. The supporting deep-dives are
+v-team. It answers two team decisions — **(1) should we author grounding content for packages?**
+and **(2) should the NuGet MCP change?** — backing each with one progression (raw package → NuGet
+MCP → shipped `AGENTS.md` → resident-index MCP) measured across **2 real tasks × 5 delivery
+channels × 2 model tiers**, with raw data in [`data/`](data/) and worked `AGENTS.md` examples for
+four real packages. The supporting deep-dives are
 [`docs/authoring-principles.md`](docs/authoring-principles.md) (*what* to write),
 [`docs/delivery-and-retrieval.md`](docs/delivery-and-retrieval.md) (*how* it reaches the agent),
 and the per-package reports in [`docs/reports/`](docs/reports/).

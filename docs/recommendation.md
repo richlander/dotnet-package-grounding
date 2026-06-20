@@ -1,11 +1,12 @@
-# Recommendation: should a NuGet package ship grounding, and how should agents receive it?
+# Recommendation: should we author package grounding, and should the NuGet MCP change?
 
 **Audience:** NuGet v-team. **Date:** 2026-06-20. **Status:** Findings complete (2 tasks × 5
 channels × 2 tiers, runs=3).
 
-This is the executive summary of the package-grounding study. It walks one progression —
-from the status-quo baseline to a recommended design — measured on **two real tasks**, across
-**four delivery channels**, on **two model tiers**. Detailed per-package findings live in
+This is the executive summary of the package-grounding study. It answers **two team decisions**
+— *(1) do we write grounding content for packages?* and *(2) does the NuGet MCP need to change?*
+— then backs each with one measured progression from the status-quo baseline to a recommended
+design, across **four delivery channels** and **two model tiers**. Per-package findings live in
 [`docs/reports/`](reports/); the *what to write* guidance is in
 [`docs/authoring-principles.md`](authoring-principles.md); the delivery/retrieval mechanics are
 in [`docs/delivery-and-retrieval.md`](delivery-and-retrieval.md). Raw `results.json` for every
@@ -13,18 +14,48 @@ cell is in [`data/`](../data/).
 
 ---
 
-## Recommendation (TL;DR)
+## Two questions for the team
 
-1. **Ship a small, _complete_ `AGENTS.md` in the package.** A lean targeted doc (~3.5 KB) is
-   **size-invariant** and beats a README of any realistic size by 3–4× at equal quality; for
-   weak models it is the difference between a failing and a passing run.
-2. **Don't rely on the package README as the agent's grounding.** It is a **liability**: a
-   high-variance, high-ceiling exploration regime for weak models and an efficiency tax for
-   strong ones. (And shipping `AGENTS.md` is *not enough* on its own — see Step 2.)
-3. **Deliver grounding through one `get_package_context` MCP tool, paired with a _resident
-   index_ built from the project file.** The agent self-gates on its own uncertainty (declines
-   when it knows the package, retrieves when it doesn't), and the resident index is the only
-   channel that surfaces **silent, compile-clean gotchas** the agent would otherwise miss.
+This study exists to answer two decisions. Both answers are **yes**, and the data says *why*.
+
+### Q1 — Should we author and ship grounding content (`AGENTS.md`) in NuGet packages? **Yes.**
+
+A small, *complete* `AGENTS.md` (~3.5 KB) is **size-invariant** and, delivered through the MCP,
+beats serving the README on **both** model tiers — and flips the weak tier from a failing run to
+a passing one (Markout Haiku: README path passes but costs more; `AGENTS.md` path is leaner; the
+README *without* MCP **fails**). Conversely, the README is a **liability**: high-variance and
+high-ceiling for weak models, an efficiency tax for strong ones.
+
+We have **worked examples for four real packages**, each with a backing report:
+
+| Package | Authored grounding | Why it was written that way (report) |
+|---------|--------------------|--------------------------------------|
+| Markout | [`grounding/markout/AGENTS.md`](../grounding/markout/AGENTS.md) | [`reports/markout.md`](reports/markout.md) — non-resident; a no-reflection-fallback trap |
+| System.CommandLine | [`grounding/system-commandline/AGENTS.md`](../grounding/system-commandline/AGENTS.md) | [`reports/system-commandline.md`](reports/system-commandline.md) — beta4→3.x migration breakage |
+| System.Text.Json | [`grounding/system-text-json/AGENTS.md`](../grounding/system-text-json/AGENTS.md) | [`reports/system-text-json.md`](reports/system-text-json.md) — model-resident; what the model *lacks* |
+| Microsoft.Extensions.AI | [`grounding/microsoft-extensions-ai/AGENTS.md`](../grounding/microsoft-extensions-ai/AGENTS.md) | [`reports/microsoft-extensions-ai.md`](reports/microsoft-extensions-ai.md) — function-invocation surface |
+
+The authoring rule (only write what the model *provably* lacks) is in
+[`authoring-principles.md`](authoring-principles.md). **Caveat — content alone is not enough:**
+an `AGENTS.md` shipped without a delivery channel is **invisible** (raw lookup reads the README
+anyway, and Haiku fails — Channel A′, Step 2). Writing it only pays off when the MCP delivers it.
+
+### Q2 — Should the NuGet MCP change? **Yes — one addition, and one non-feature to avoid.**
+
+The current `NuGet.Mcp.Server` is already most of the way there: we **verified by direct call**
+that `get_package_context` prefers `AGENTS.md` over the README when present
+(`nuget-context://…/AGENTS.md` vs `nuget-readme://…/README.md`). **Keep that.** What should change:
+
+- **Add a resident, per-direct-dependency index to the `get_package_context` tool description,
+  built from the project file the host already knows.** This is Channel **D** — the cheapest
+  channel on *every* cell measured (Markout Opus 91k vs 104k MCP/397k raw; multi-package Opus
+  203k vs 723k raw, **−72%**), and the **only** channel that surfaces silent, compile-clean
+  gotchas. The agent self-gates: it declines when it already knows the package and retrieves when
+  it doesn't, at **zero** extra tool calls. Treat discovery as an input; **abstain to on-demand
+  when no project file is given** — one narrow rule, never a heuristic stack.
+- **Do *not* add a separate `summarize_package_context` tool.** Gating the index behind an agent
+  call makes peeking either an on-ramp (frontier pulls everything) or dead weight (weak models
+  ignore it). The resident index gives costless selection and decline-by-default for free.
 
 ---
 
