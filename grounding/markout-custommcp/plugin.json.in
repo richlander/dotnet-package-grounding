@@ -1,0 +1,12 @@
+{
+  "name": "markout-custommcp",
+  "version": "0.1.0",
+  "description": "Delivery-channel unit: registers our controlled grounding MCP (get_package_context, gate via GROUNDING_GATE) on the Markout task so the agent self-selects retrieval of curated grounding.",
+  "skills": ["./"],
+  "mcpServers": {
+    "package-grounding": {
+      "command": "python3",
+      "args": ["__REPO_ROOT__/grounding/_mcp/grounding_mcp.py"]
+    }
+  }
+}

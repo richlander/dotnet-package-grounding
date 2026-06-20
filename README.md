@@ -12,6 +12,16 @@ time using pairwise LLM judging with confidence intervals.
 > This repo is for **package grounding content**, not `plugin.json` marketplace skills. It has
 > no marketplace/plugin distribution machinery — only the grounding files and their evals.
 
+## Start here: the recommendation
+
+**[`docs/recommendation.md`](docs/recommendation.md)** — the executive summary for the NuGet
+v-team. It walks one progression (raw package → NuGet MCP → shipped `AGENTS.md` → resident-index
+MCP) measured across **2 real tasks × 5 delivery channels × 2 model tiers**, with raw data in
+[`data/`](data/) and a concrete design recommendation. The supporting deep-dives are
+[`docs/authoring-principles.md`](docs/authoring-principles.md) (*what* to write),
+[`docs/delivery-and-retrieval.md`](docs/delivery-and-retrieval.md) (*how* it reaches the agent),
+and the per-package reports in [`docs/reports/`](docs/reports/).
+
 ## How it relates to dotnet/skills
 
 We follow the same pattern `dotnet/skills` uses for its own evals: **build** the

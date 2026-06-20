@@ -1,0 +1,207 @@
+# Recommendation: should a NuGet package ship grounding, and how should agents receive it?
+
+**Audience:** NuGet v-team. **Date:** 2026-06-20. **Status:** Findings complete (2 tasks × 5
+channels × 2 tiers, runs=3).
+
+This is the executive summary of the package-grounding study. It walks one progression —
+from the status-quo baseline to a recommended design — measured on **two real tasks**, across
+**four delivery channels**, on **two model tiers**. Detailed per-package findings live in
+[`docs/reports/`](reports/); the *what to write* guidance is in
+[`docs/authoring-principles.md`](authoring-principles.md); the delivery/retrieval mechanics are
+in [`docs/delivery-and-retrieval.md`](delivery-and-retrieval.md). Raw `results.json` for every
+cell is in [`data/`](../data/).
+
+---
+
+## Recommendation (TL;DR)
+
+1. **Ship a small, _complete_ `AGENTS.md` in the package.** A lean targeted doc (~3.5 KB) is
+   **size-invariant** and beats a README of any realistic size by 3–4× at equal quality; for
+   weak models it is the difference between a failing and a passing run.
+2. **Don't rely on the package README as the agent's grounding.** It is a **liability**: a
+   high-variance, high-ceiling exploration regime for weak models and an efficiency tax for
+   strong ones. (And shipping `AGENTS.md` is *not enough* on its own — see Step 2.)
+3. **Deliver grounding through one `get_package_context` MCP tool, paired with a _resident
+   index_ built from the project file.** The agent self-gates on its own uncertainty (declines
+   when it knows the package, retrieves when it doesn't), and the resident index is the only
+   channel that surfaces **silent, compile-clean gotchas** the agent would otherwise miss.
+
+---
+
+## The setup: four delivery channels
+
+We hold the *task* and the *content* fixed and vary only **how the grounding reaches the agent**.
+
+| Ch | Delivery mechanism | `AGENTS.md` in package | What the agent sees |
+|----|--------------------|------------------------|---------------------|
+| **A**  | raw package on disk (no MCP) | absent | finds + reads the **README** |
+| **A′** | raw package on disk (no MCP) | **present** | **still reads the README** (AGENTS.md is *invisible*) |
+| **B**  | real `NuGet.Mcp.Server` `get_package_context` | absent | server returns the **README** |
+| **C**  | real `NuGet.Mcp.Server` `get_package_context` | **present** | server returns the **`AGENTS.md`** |
+| **D**  | our controlled MCP (`get_package_context` + **resident index**) | served on demand | curated grounding, self-gated |
+
+Two tasks: **Markout M1** (a genuinely non-resident single package — a source-generated
+serializer with a no-reflection-fallback trap) and **multi-package triage** (a `System.CommandLine`
+beta4→3.x migration with two benign distractor packages).
+
+Two tiers: **Opus** (frontier — measures *efficiency*) and **Haiku** (weak — measures
+*correctness rescue*).
+
+---
+
+## Step 1 — Baseline: raw package and NuGet MCP, with no `AGENTS.md` (A, B)
+
+> *Claim: with no curated grounding, both the raw package and the NuGet MCP fall back to the
+> README. The package is "self-teaching" only to the extent its README is — which is expensive
+> and unreliable.*
+
+<!-- DATA: Markout A vs B (Opus, Haiku); multipackage A vs B -->
+**Markout M1 (runs=3, averaged).** "raw" = the agent finds and reads the package's README from
+the restored package on disk; "NuGet MCP" = one `get_package_context` call returns that same README.
+
+| tier | A — raw pkg → README | B — NuGet MCP → README |
+|------|---:|---:|
+| Opus  | 397k IET / 23 tools | **118k IET / 8 tools** (1 MCP call) |
+| Haiku | 172k IET / 12 tools | **147k IET / 8 tools** (1 MCP call) |
+
+The headline is the **delivery channel, not the content**: serving the *same* README through one
+MCP call instead of an open-ended filesystem hunt cuts Opus cost ~3.4× (397k→118k) and roughly
+halves the tool count. The README is where the agent goes by default, and it is a **liability**: in a controlled size sweep ([`readme-liability.md`](reports/readme-liability.md)),
+baseline cost was a high-variance 355k–620k IET (21–27 tools) and *rose with README size*, while
+a too-small/truncated README was *also* expensive (incompleteness → the agent spelunks the nupkg
+and the XML doc). The lesson is not "smaller README" — it is "stop making the README the
+interface."
+
+## Step 2 — A shipped `AGENTS.md` is invisible to raw lookup (A′)
+
+> *Claim: simply putting `AGENTS.md` in the package is not enough. Without a delivery channel
+> that points at it, the agent doesn't discover it — it reads the README anyway.*
+
+<!-- DATA: Markout A' (AGENTS present in cache, baseline arm still reads README) -->
+**Markout M1, raw lookup with `AGENTS.md` present in the package (runs=3).**
+
+| tier | A — README only | A′ — `AGENTS.md` present, raw lookup | outcome |
+|------|---:|---:|---|
+| Opus  | 397k / 23 tools (✓) | 633k / 26 tools (✓) | AGENTS.md **0 reads**; cost *up* |
+| Haiku | 172k / 12 tools (✓) | 239k / 14 tools (**✗ failed**) | AGENTS.md **0 reads**; task **not completed** |
+
+The agent never opened the curated doc sitting right next to the README, and the weak tier
+actually **failed** the task (`taskCompleted=false`) while drowning in the README.
+
+With `AGENTS.md` sitting right next to the README in the restored package, the raw-lookup agent
+**ignored it** and mined the README regardless. So "ship `AGENTS.md`" is necessary but not
+sufficient: the package needs a **delivery channel** that surfaces the curated doc. That is the
+job of the MCP.
+
+## Step 3 — A well-crafted `AGENTS.md`, delivered by the NuGet MCP (C)
+
+> *Claim: once `AGENTS.md` ships AND the NuGet MCP serves it, the agent gets the targeted doc in
+> one call — cheaper for strong models, and a correctness rescue for weak ones.*
+
+<!-- DATA: Markout C vs A/B; Haiku rescue -->
+**Markout M1, `AGENTS.md` shipped and served by the real NuGet MCP (runs=3).**
+
+| tier | A′ — shipped but undelivered | B — MCP → README | C — MCP → `AGENTS.md` |
+|------|---:|---:|---:|
+| Opus  | 633k / 26 (✓) | 118k / 8 (✓) | **104k / 7 (✓)** |
+| Haiku | 239k / 14 (**✗**) | 147k / 8 (✓) | **122k / 9 (✓)** |
+
+Delivering the `AGENTS.md` flips the weak-tier outcome from **fail → pass** and beats serving the
+README (C < B on both tiers: Opus 104k<118k, Haiku 122k<147k). The concise pattern is legible
+where the 488-line README is not. The selection is the upstream server's own behavior, verified
+by a direct call ([`data/markout/nuget-mcp-delivery-proof.md`](../data/markout/nuget-mcp-delivery-proof.md)):
+it returns `nuget-context://Markout/0.13.6/AGENTS.md` when the package ships `AGENTS.md`, and
+falls back to `nuget-readme://.../README.md` otherwise.
+
+## Step 4 — Our custom MCP, with a skill-oriented (resident-index) mode (D)
+
+> *Claim: a faithful "skills" design — a resident per-package index pushed into context for
+> free, plus one body tool — is the strongest channel. The agent self-gates correctly, and the
+> resident index is the only mechanism that catches silent, compile-clean gotchas.*
+
+<!-- DATA: Markout D; multipackage D (resident_index) — triage + silent STJ gotcha -->
+**Markout M1, custom MCP with the resident-index gate (runs=3).** D is the cheapest channel on
+**both** tiers:
+
+| tier | C — NuGet MCP → AGENTS | D — custom MCP (resident index) |
+|------|---:|---:|
+| Opus  | 104k / 7 | **91k / 8** |
+| Haiku | 122k / 9 | **106k / 8** |
+
+On the single-package task D edges out C. Its decisive advantage shows on the **multi-package
+triage** task (quantified in the matrix below), where agents triage with cheap local signals
+(csproj, compiler errors) and pull grounding for **only the load-bearing package**. A bare
+on-demand tool misses a **silent**, compile-clean case-sensitivity gotcha in a distractor (no
+compiler error to localize it); the **resident index** — whose one-line-per-dependency manifest
+is in context for free — is the only channel under which the weak model retrieves that package's
+guidance and avoids the latent bug. See [`delivery-and-retrieval.md`](delivery-and-retrieval.md)
+for the full retrieval-gate analysis.
+
+---
+
+## The full channel matrix
+
+<!-- DATA: consolidated A/A'/B/C/D x task x tier -->
+**Markout M1 — all five channels, runs=3 averaged** (IET = harness token estimate; ✓/✗ =
+`taskCompleted`; *save* = IET reduction vs. Channel A):
+
+| Ch | delivery | Opus IET / tools | save | Haiku IET / tools | done |
+|----|----------|---:|---:|---:|:--:|
+| **A**  | raw pkg → README | 397k / 23 | — | 172k / 12 | ✓ |
+| **A′** | raw pkg, AGENTS present (invisible) | 633k / 26 | −59% | 239k / 14 | **✗** |
+| **B**  | real NuGet MCP → README | 118k / 8 | 70% | 147k / 8 | ✓ |
+| **C**  | real NuGet MCP → `AGENTS.md` | 104k / 7 | 74% | 122k / 9 | ✓ |
+| **D**  | custom MCP (resident index) | **91k / 8** | **77%** | **106k / 8** | ✓ |
+
+Two effects compound, in order of magnitude: **(1) channel** — moving from raw filesystem lookup
+to *any* one-shot MCP retrieval is the big win (~3.4× on Opus); **(2) content** — serving the
+curated `AGENTS.md` instead of the README, and adding the resident index, refines it further and
+rescues the weak tier. Channel A′ is the cautionary cell: shipping `AGENTS.md` **without** a
+delivery channel costs more than doing nothing and still fails Haiku.
+
+> Multi-package triage channel data (A/B/D) is captured in
+> [`data/multipackage/`](../data/multipackage/); the qualitative resident-index advantage
+> (silent-gotcha capture, package-level self-triage) is detailed in
+> [`delivery-and-retrieval.md`](delivery-and-retrieval.md).
+
+**Multi-package triage (`System.CommandLine` beta4→3.x migration + 2 distractors), runs=3.**
+A harder task (the agent must build, localize breakage, and migrate) — so absolute costs are
+higher, but the channel ordering is identical and the resident-index gap *widens*:
+
+| Ch | delivery | Opus IET / tools | save | Haiku IET / tools | save |
+|----|----------|---:|---:|---:|---:|
+| **A** | raw pkg → README | 723k / 27 | — | 5,204k / 99 | — |
+| **B** | real NuGet MCP → README | 520k / 22 | 28% | 3,634k / 71 | 30% |
+| **D** | custom MCP (resident index) | **203k / 13** | **72%** | **1,236k / 50** | **76%** |
+
+The raw-lookup baseline *thrashes* on this task (Haiku: 5.2M tokens, 99 tool calls), and the
+resident-index channel cuts that ~4×. (Channels A′/C are omitted on this task by design — see
+*Method & caveats*.)
+
+## Recommendation & design implications for the NuGet MCP
+
+- **Author** a small, complete `AGENTS.md` per package (see
+  [`authoring-principles.md`](authoring-principles.md): only what the model provably lacks).
+- **Ship** it in the `.nupkg` (root). It is size-invariant value; the README stays for humans.
+- **Deliver** it via one `get_package_context` **body tool** whose description carries a
+  **resident, per-direct-dependency index** built from the **project file** the host already
+  knows. Treat discovery as an input; **abstain to on-demand when no project is given** — one
+  narrow rule, never a heuristic stack.
+- **Do not** add a separate `summarize_package_context` *tool*: gating the index behind an agent
+  call makes peeking an on-ramp (frontier pulls everything) or dead weight (weak models ignore
+  it). The resident index gives costless selection + decline-by-default.
+
+## Method & caveats
+
+- Harness: `skill-validator` (pinned `eng/skill-validator.sha`), built from source. Runner:
+  [`eng/run-channel-matrix.sh`](../eng/run-channel-matrix.sh); extractor:
+  [`eng/extract-channels.py`](../eng/extract-channels.py).
+- Channels A/A′/B/C are the baseline+plugin arms of the `*-realmcp` evals under two cache states;
+  D is the plugin arm of the `*-custommcp` eval (`GROUNDING_GATE=resident_index`).
+- runs=3, judge=Haiku (quality scores used only for parity checks). Baseline arms are
+  high-variance; the **robust signals** are call behavior (which doc), `taskCompleted`, and the
+  cross-channel gap — not single-cell IET.
+- Channel C on the multi-package task is omitted by design (fragile 3-cache injection at
+  migration versions; the Markout anchor demonstrates C cleanly).
+- The Markout package cache was mutated for the experiment (`AGENTS.md` injected/removed,
+  README restored); reproducible via the runner.

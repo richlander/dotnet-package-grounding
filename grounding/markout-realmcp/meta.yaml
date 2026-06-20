@@ -1,0 +1,13 @@
+# External-validity unit for the delivery-channel comparison (Markout task).
+# Registers the REAL upstream NuGet.Mcp.Server (run via `dnx NuGet.Mcp.Server`).
+# Its get_package_context returns the INSTALLED package's AGENTS.md if present, else
+# the README. We toggle the package cache (AGENTS.md present/absent) to measure both:
+#   * AGENTS absent  -> baseline=raw README on disk (Ch A); plugin=NuGet MCP -> README (Ch B)
+#   * AGENTS present -> baseline=raw README, AGENTS ignored (Ch A'); plugin=NuGet MCP -> AGENTS (Ch C)
+# Single-tool, task-type gated. Not a content unit (ships no AGENTS.md).
+name: markout-realmcp
+package: Markout
+description: >-
+  Inert shell unit that attaches the real NuGet MCP server to the Markout M1 report
+  task. Measures the upstream server's actual delivery (README vs AGENTS.md) and the
+  agent's call behavior, against a raw package-on-disk baseline. Not a content unit.

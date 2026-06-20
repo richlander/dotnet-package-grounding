@@ -11,4 +11,4 @@ obj/
 *.swp
 
 # Generated MCP plugin manifests (see eng/gen-plugins.sh; templates are *.in)
-grounding/*-mcp/plugin.json
+grounding/*mcp/plugin.json
