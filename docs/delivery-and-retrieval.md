@@ -43,10 +43,13 @@ behavior** across packages and model tiers. Findings:
   noisy than pass/fail deltas, which flip run-to-run at small n.
 
 **Design implication for the NuGet MCP:** expose grounding as **one `get_package_context` body
-tool**, and pair it with a **resident index** — push a one-line-per-installed-package manifest
-(the `AGENTS.md` frontmatter) into context from the known package set. **Ship `AGENTS.md` in the
-package.** Do *not* add a separate `summarize_package_context` *tool*: gating the index behind a
-call makes peeking an on-ramp (frontier models pull everything) or dead weight (weak models
+tool**, and pair it with a **resident index built from a project file** — a
+`get_project_grounding_index(projectPath)` the *host* calls and pushes into context (a
+one-line-per-direct-dependency manifest from each `AGENTS.md` frontmatter). Treat discovery as an
+**input**: build the index only from a project the host already knows, and **abstain to on-demand
+when none is given** — one narrow rule, never a heuristic stack. **Ship `AGENTS.md` in the
+package.** Do *not* add a separate `summarize_package_context` *tool*: gating the index behind an
+agent call makes peeking an on-ramp (frontier models pull everything) or dead weight (weak models
 ignore it). The resident index gives costless selection + decline-by-default, and is the only
 channel that surfaces silent gotchas the compiler can't flag.
 
@@ -389,33 +392,103 @@ for weak models on silent bugs** (it surfaces compile-clean gotchas the compiler
 The good end of the spectrum is the **resident index + one body tool**; the two-tool
 progressive is the broken middle.
 
+## Discovery & feasibility: how a resident index ships
+
+The lab result (§8) assumes the host *already knows* the installed package set. In production
+that is the hard part — and the trap is solving it with a pile of fragile heuristics (parse CI
+YAML, detect `OutputType=Exe`, walk the project graph, exclude test projects…). Such a stack is
+untestable and behaves wildly across repos. The discipline is the opposite:
+
+> **Discovery is an *input*, not an *inference*. Use exactly one narrow rule, and make it
+> *abstain* under ambiguity** — fall back to the on-demand tool rather than guess.
+
+Every real host already *holds* an authoritative target: an IDE knows the active/startup
+project (or the project owning the open file); a CLI/agent runs `dotnet build|run|test <target>`
+which *names* it. Consume that. The only rule is:
+
+```
+host provides a target project?
+  ├─ yes → read its direct PackageReferences → build the resident manifest → push it
+  └─ no  → abstain → on-demand get_package_context (today's NuGet MCP)
+```
+
+This is trivially testable (`project path → manifest` is deterministic; absence → on-demand) and
+cannot sprawl, because ambiguity routes to the design that needs no discovery. It also matches
+reality: the contexts where you'd *want* the proactive manifest (editing in an IDE, an agent
+told to build `src/dotnet-inspect`) are exactly the ones where the target is already known.
+
+**A concrete tool shape — "a skill system, given a project file."** Expose two tools:
+
+1. `get_project_grounding_index(projectPath)` — the **host** calls this once when a project is
+   targeted (project open / build command), and **pushes the returned manifest into context**.
+   The manifest is one line per direct dependency that ships grounding (its `AGENTS.md`
+   frontmatter). Because the *host* drives this call deterministically — not the agent on a
+   judgement call — it sidesteps the under-firing we measured against the real server (§6): the
+   index becomes resident the same way skills' frontmatter is, without relying on the agent to
+   decide to fetch it.
+2. `get_package_context(packageName, version)` — the body tool the **agent** calls on demand for
+   a package the manifest (or the code) flags. Unchanged from today.
+
+That is the faithful skills mechanic delivered over MCP: tool 1 is the resident index (pushed by
+the host), tool 2 is the gated body. Abstention is built in — if the host has no project to pass
+to tool 1, you are simply back to on-demand.
+
+**The index read is restore-free.** For a target project, both halves are plain text:
+`PackageReference Include=…` says *which* packages; `Directory.Packages.props` (Central Package
+Management) says the versions — no `dotnet restore` required. Concretely, `dotnet-inspect`'s
+`src/dotnet-inspect/dotnet-inspect.csproj` yields five direct packages
+(`MarkdownTable.Formatting`, `Markout`, `NuGet.Versioning`, `ShellComplete`,
+`System.CommandLine`), versioned centrally (`System.CommandLine` pinned to a **3.x preview**) —
+exactly the kind of post-training version the agent should be warned about *before* it writes
+beta-style code. (The authoritative MSBuild query, `msbuild -getItem:PackageReference`, also
+works but forces a restore of the project graph and is slow — prefer the text read.)
+
+**The one residual NuGet-side ask.** Text tells you *which* packages and versions, but not
+*whether* a package ships an `AGENTS.md` or *what* its summary line is. That needs either the
+package restored into the global-packages folder (read the frontmatter locally) or — the clean
+enabler — **NuGet exposing `AGENTS.md` frontmatter as service-side metadata** (registration leaf
+or a dedicated grounding resource), so `get_project_grounding_index` can build the manifest from
+the csproj alone, pre-restore. This is the same restore boundary that already exists today:
+NuGet's own `get_package_context` serves `AGENTS.md` only for locally-installed packages and
+falls back to a remote README otherwise (§6). So the resident index adds **no new restore
+dependency for content** — only a desire to read frontmatter cheaply, which a small metadata
+addition solves.
+
 ## Implications for NuGet MCP design
 
 1. **Ship grounding as one `get_package_context` body tool — *not* a `summarize` + `get`
    pair.** A separate summary *tool* gates the index behind a call, which makes peeking an
    on-ramp (frontier models pull everything) or dead weight (weak models ignore it). It never
    beat the single tool across M1/R1/T1/T2b.
-2. **Pair the body tool with a *resident* index — push it, don't gate it.** Push a
-   one-line-per-installed-package manifest (the `AGENTS.md` frontmatter) into context from the
-   known package set; keep the single `get_package_context` for bodies. This is the actual
-   skills mechanic. Validated in §8: it strictly dominates the two-tool progressive and is the
-   **only** delivery that surfaces a silent, compile-clean gotcha to a weak model (which
-   otherwise triages on the compiler alone and never looks at the offending package).
-3. **Make `AGENTS.md` self-contained with YAML frontmatter** (`name` + `description`). It is the
+2. **Pair the body tool with a *resident* index — push it, don't gate it.** Add a
+   `get_project_grounding_index(projectPath)` tool the **host** calls once per targeted project
+   and pushes into context: a one-line-per-direct-dependency manifest from each `AGENTS.md`
+   frontmatter. The agent then calls the single `get_package_context` for bodies. This is the
+   actual skills mechanic — "a skill system, given a project file." Validated in §8: it strictly
+   dominates the two-tool progressive and is the **only** delivery that surfaces a silent,
+   compile-clean gotcha to a weak model (which otherwise triages on the compiler alone and never
+   looks at the offending package). Host-driven (not agent-judged) calling sidesteps the §6
+   under-firing.
+3. **Make discovery an input, not an inference.** Build the manifest only from a project the
+   host already knows (IDE active project, or a `dotnet build|run` target); **abstain to
+   on-demand when none is provided.** One narrow, testable rule — never a heuristic stack
+   (CI-YAML parsing, exe-root detection, graph walking). See *Discovery & feasibility*.
+4. **Make `AGENTS.md` self-contained with YAML frontmatter** (`name` + `description`). It is the
    shipped artifact and the resident-summary channel; it should not depend on harness-only
-   metadata.
-4. **Don't engineer the WHEN-TO-CALL string.** Across permissive and strict gates the retrieval
+   metadata. To let the index be built pre-restore, expose that frontmatter as **service-side
+   package metadata**.
+5. **Don't engineer the WHEN-TO-CALL string.** Across permissive and strict gates the retrieval
    decision was the same — the model gates on its own confidence and the package name. The one
    place wording demonstrably *hurts* is the real server's **task-type** gate ("call when the
    user asks about a package"), which **under-fires on coding tasks** (§6) — the dominant
    grounding case. Prefer an uncertainty/version-delta framing.
-5. **Keep agent instructions clean.** No "use the NuGet MCP" prompt. Register the tool / push
+6. **Keep agent instructions clean.** No "use the NuGet MCP" prompt. Register the tool / push
    the manifest; the model self-selects from normal context.
-6. **Auto-delivered grounding is Pareto-safe** *because* the model only pays for the body when
+7. **Auto-delivered grounding is Pareto-safe** *because* the model only pays for the body when
    it pays off: it declines on resident tasks (where taking it would only cost) and retrieves on
    non-resident tasks (where it rescues correctness). This is the strongest argument for
    shipping `AGENTS.md` in core packages by default.
-7. **Log call behavior in production.** P(full) per package and per model tier is a cheap,
+8. **Log call behavior in production.** P(full) per package and per model tier is a cheap,
    continuous read on whether a package's grounding is earning its cost.
 
 ## Threats to validity
