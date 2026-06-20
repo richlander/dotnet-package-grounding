@@ -63,7 +63,8 @@ evidence behind them. For a per-package writeup suitable for an upstream PR, see
 under [docs/reports/](docs/reports/)
 ([System.CommandLine](docs/reports/system-commandline.md) — needs grounding for a narrow set
 of topics; [System.Text.Json](docs/reports/system-text-json.md) — does not need general
-grounding).
+grounding; [Microsoft.Extensions.AI](docs/reports/microsoft-extensions-ai.md) — headline
+function-invocation gotcha is model-resident).
 
 The grounding folder name must match the tests folder name and the skill `name` (e.g.
 `system-commandline`); the
