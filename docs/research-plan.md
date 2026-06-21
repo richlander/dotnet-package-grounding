@@ -43,9 +43,35 @@ We have a few prompts per package, and the **metric (IET weights) and thresholds
 same prompts we report on**. That is hypothesis-generating, not confirming. Fixing believability is a
 **methodology** problem first, a **volume** problem second.
 
+## The big-README liability is *conditional*, not absolute (honest caveat + metric requirement)
+
+A fair pushback: a single 50 kB (~13k-token) README is **input-side and cacheable**, so in a *long,
+stable, single session* it is read fresh once (1×) then cache-read (~0.1×) — genuinely cheap next to
+output (5×). On a pure per-token-price basis, in that one regime, the liability is small. We concede
+that and must **not** lead with "big README = expensive." The cost is real only under conditions the
+"it's cached" framing quietly assumes away:
+
+- **Non-amortizing workloads** pay the fresh 13k (1×) — and cache *writes* are 1.25× — every time:
+  short/one-shot tasks, **CI fan-out (thousands of independent runs)**, parallel sub-agents, cold
+  cache. At fleet scale "it's cached" evaporates.
+- **Aggregation:** a restore pulls dozens of transitive deps; five fat READMEs ≈ 65k resident tokens.
+  Per-package is fine; the **aggregate is the context budget** — the scale argument.
+- **The binding constraint is the context *window*, not the price:** those tokens are space not
+  available for the code/task, and they crowd it out worst on the **weak/cheap models we target**.
+- **The path to output cost is indirect but real:** irrelevant context degrades attention
+  ("lost in the middle") → higher **error rate** → re-prompts/re-runs = **more output downstream**.
+  The README emits no output; the *mistakes it causes* do.
+
+**Consequences:** (1) lead the value case with **correctness on weak models + aggregate/cold-start
+cost**, not byte-avoidance (see pushback #6). (2) This is a test of our **own metric**: a single-
+session *cached* IET measurement will **understate** the cost (misses retries/errors) and is sensitive
+to the cache assumption — so we must measure under **non-amortizing conditions** (cold cache, short
+tasks) and **capture error/retry effects**, or we will "prove" the liability is small in exactly the
+regime where it is.
+
 ---
 
-## Phase 0 — trim large in-package READMEs (no-regrets first move)
+
 
 Before (and independent of) any `AGENTS.md` adoption: **find large in-package READMEs and trim them**,
 moving human-onboarding prose to docs/Learn. This is the lowest-controversy intervention — it stands
@@ -226,8 +252,10 @@ an engineering task — because the model doesn't only learn your syntax/APIs/wo
    → promote to a principle in `authoring-principles.md`.
 
 6. **"Is the problem big enough?"** Lead with **correctness on weak/cheap models** (the gotcha delta),
-   not README-byte avoidance — our own survey shows typical in-package READMEs are small. But the
-   **24 kB tail is a real liability**, which is exactly Phase 0.
+   not README-byte avoidance — our own survey shows typical in-package READMEs are small, and a single
+   cached README is cheap in a long session (see *"The big-README liability is conditional"* above).
+   The cost case rests instead on **aggregate/cold-start/CI-fanout regimes + context-window crowding +
+   error-induced retries**; the **24 kB tail** is the clearest single-package case, which is Phase 0.
 
    *The counterfactual is not "nothing changes" — it is "README gets degraded anyway, badly."* If
    model economics and capacity stay constrained, a **myopic** response is predictable: since models
