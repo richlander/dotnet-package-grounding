@@ -16,9 +16,13 @@ Several different files get called `AGENTS.md` or `SKILL.md`. They live in diffe
 serve different audiences, and should not be confused. This repo is about exactly one of them —
 the first row.
 
+These definitions are up for debate and may differ by domain or community. We define them a
+particular way here for the purposes of measurement and guidance for the package-grounding
+feature.
+
 | Artifact | Where it lives | Who consumes it | Purpose | In this repo? |
 |----------|----------------|-----------------|---------|---------------|
-| **Package grounding** — `AGENTS.md` in the package | the **NuGet package** root (`.nupkg`), shipped by the package author | an AI agent working in a *consumer's* project that depends on the package, **surfaced on demand by the NuGet MCP** (`get_package_context`) | teach the agent the package's load-bearing, non-obvious usage so it writes correct code against *that dependency* | **Yes — the artifact under test** (`grounding/<slug>/AGENTS.md`) |
+| **Package grounding** — `AGENTS.md` in the package | the **NuGet package** root (`.nupkg`), shipped by the package author | an AI agent working in a *consumer's* project that depends on the package, **surfaced on demand by the NuGet MCP** (`get_package_context`) | assume the model already knows the package's load-bearing, common usage; **target the footguns** — the non-obvious gotchas it is *proven to lack* — so it avoids latent bugs against *that dependency* | **Yes — the artifact under test** (`grounding/<slug>/AGENTS.md`) |
 | **Repo `AGENTS.md`** | the root of a **source repository** | an AI coding agent working *inside that repo* | repo-wide conventions, build/test commands, house style for *this codebase* | No — different concern (a repo may have one for its own contributors) |
 | **Harness `SKILL.md`** | `grounding/<slug>/SKILL.md`, **generated** | the `skill-validator` harness, locally | a *togglable* skill the harness adds/removes between the baseline and enriched arms — an **implementation detail of measurement** | Yes, but generated/internal — see [`docs/harness.md`](docs/harness.md) |
 | **Marketplace `SKILL.md`** | published as a `plugin.json` plugin in a **skills marketplace** (the `dotnet/skills` distribution model) | an agent *host* that installs marketplace plugins globally | a distributable, installable capability/instruction set | **No — explicitly out of scope.** This repo has no `plugin.json` marketplace machinery |
