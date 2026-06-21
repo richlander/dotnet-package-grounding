@@ -56,6 +56,12 @@ Landed (above). Remaining asks — **filed**:
 3. **#953** — scoped markdown output: `--frontmatter`/`--yaml-header` and `--body` (first-N already via
    `--head`). The frontmatter *is* the resident layer, so header-only measures resident-index cost
    directly across a project's direct deps.
+4. **#954** — **file-resolution/search mode (likely the best/most general).** Supply N packages + N
+   requested files; get a `package, version, path` table. Two match semantics: **all-hits** (row per
+   match) and **first-hit ordered** (precedence/fallback — directly encodes "prefer AGENTS.md over
+   README.md"). Opt-in `--skip-empty` (general inverse of #949's preserve-empty default). Resolving
+   to a *path* is the composable primitive — the agent reads/`head`s it from there; content
+   print/scoping (#952/#953) becomes optional. Generalizes the `@readme`/`@agents` tokens.
 
 Expect to discover more gaps as the corpus grows; treat tooling as an ongoing enabler, not a phase.
 
