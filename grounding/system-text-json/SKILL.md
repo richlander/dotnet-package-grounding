@@ -1,6 +1,6 @@
 ---
 name: system-text-json
-description: "System.Text.Json migration and gotchas. Use when migrating serialization code from Newtonsoft.Json to System.Text.Json, and for the silent compile-clean behavioral differences — above all that Newtonsoft deserializes case-insensitively by default while System.Text.Json is case-sensitive by default (camelCase JSON into PascalCase members silently yields null/default with no exception). Covers the JsonConvert/JsonSerializer and attribute mapping (JsonProperty -> JsonPropertyName, settings -> options), ignored public fields and non-public accessors, comment/trailing comma handling, .NET 10 stricter defaults, and Native AOT / trimming (reflection-based JsonSerializer is disabled under PublishAot and throws at run time — source generation with JsonSerializerContext / [JsonSerializable] is required)."
+description: "System.Text.Json migration and gotchas. Use when migrating serialization code from Newtonsoft.Json to System.Text.Json, or for its silent compile-clean behavioral differences — above all that System.Text.Json matches property names case-sensitively by default (camelCase JSON into PascalCase members silently yields null/default with no exception), unlike Newtonsoft. Also covers Native AOT / trimming, where reflection-based JsonSerializer is disabled and source generation (JsonSerializerContext) is required."
 ---
 
 <!-- GENERATED from AGENTS.md by eng/sync-skill.sh. Do not edit. -->
