@@ -73,6 +73,12 @@ and un-removable, two rules follow (full treatment in
    frontier). What you can't opt out of must be judged on its worst case across the fleet, not its
    mean.
 
+> *Pareto* here is the economist's sense: a change is a
+> [**Pareto improvement**](https://en.wikipedia.org/wiki/Pareto_efficiency) only if it makes at
+> least one party better off and **no party worse off**. Applied to grounding, the "parties" are the
+> model tiers — a doc earns its place only if it lifts the tier that needs it without dragging down
+> the tier that doesn't.
+
 ## Start here: the recommendation
 
 **[`docs/recommendation.md`](docs/recommendation.md)** — the executive summary for the NuGet
