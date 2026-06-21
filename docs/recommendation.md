@@ -53,15 +53,24 @@ activation (its body loads when the agent chooses it). The MCP can mirror that:
 
 | Skill layer | NuGet-MCP equivalent (what we recommend) |
 |-------------|-------------------------------------------|
-| `SKILL.md` frontmatter — always loaded, free | a **resident, per-direct-dependency index** in the `get_package_context` tool description (which packages have grounding, one line each) |
+| `SKILL.md` frontmatter — always loaded, free | a **resident index of the project's direct package dependencies** in the `get_package_context` tool description (which of *those* packages have grounding, one line each) |
 | `SKILL.md` body — loaded only on activation | the package's **`AGENTS.md` body**, fetched on demand when the agent self-selects |
 
 The agent thus sees *what grounding exists* for free and pulls *the grounding itself* only when it
-decides it needs it — package-granular progressive disclosure, no always-on context tax. What should
-change concretely:
+decides it needs it — package-granular progressive disclosure, no always-on context tax.
 
-- **Add the resident, per-direct-dependency index to the `get_package_context` tool description,
-  built from the project file the host already knows.** This is Channel **D** — the cheapest
+**The ideal that makes the resident layer cheap: scope it to the *direct package dependencies of
+the restored project*.** Not the full transitive graph, not the package universe — just the handful
+of packages the project directly references, which the host already knows from the project file and
+restored assets. That set is small (typically a few to a few dozen lines, one per direct dependency
+that ships grounding), exactly the packages in play, and free to keep resident. The transitive
+closure would be too large to project and mostly irrelevant; the direct-dependency set is the
+natural, bounded, already-known subset — the whole reason the resident index can sit in the tool
+description at no recurring cost. What should change concretely:
+
+- **Add the resident, direct-dependency index to the `get_package_context` tool description, built
+  from the restored project's direct package references (the project file the host already knows).**
+  This is Channel **D** — the cheapest
   channel on the weak tier and on the harder multi-package task (multi-package Opus **92k IET**
   vs 188k raw-lookup, **−51%**; Haiku **286k** vs 939k, **−70%**), statistically tied with serving
   `AGENTS.md` on the easy strong-tier cell, and the **only** channel that surfaces silent,
