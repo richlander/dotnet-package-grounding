@@ -229,6 +229,17 @@ an engineering task — because the model doesn't only learn your syntax/APIs/wo
    not README-byte avoidance — our own survey shows typical in-package READMEs are small. But the
    **24 kB tail is a real liability**, which is exactly Phase 0.
 
+   *The counterfactual is not "nothing changes" — it is "README gets degraded anyway, badly."* If
+   model economics and capacity stay constrained, a **myopic** response is predictable: since models
+   **already know about `README.md`** and burn tokens reading it for little benefit, and since altering
+   agent behavior at scale is hard, people will go **make `README.md` itself the agentic file** —
+   (A) culling it for size and (B) refactoring it into broken-narrative RAG-style fragments. That
+   **wrecks the human document** to serve agents, exactly the asymmetry-collapse #5 warns about.
+   Establishing `AGENTS.md` now gives the cost pressure its **correct outlet** and teaches the pattern
+   to **developers and models simultaneously** — and buys us the runway to work out the best eval and
+   update practices *as we go*, before that pressure forces a worse, irreversible default. So the
+   forward-looking move is also the **defensive** one: it protects `README.md`-as-`HUMANS.md`.
+
 7. **Standards alignment.** We **align** with the `agents.md` convention — same format, new *location*
    (in-package) and *delivery* (MCP projection). Divergence is minimal-to-none. *Action:* confirm our
    frontmatter fields (esp. `description`, which we use as the resident index) are spec-compliant.
