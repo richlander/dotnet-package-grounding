@@ -104,12 +104,31 @@ and un-removable, two rules follow (full treatment in
 
 ## What we found
 
-The headline results, in weighted [IET](#how-we-measure-cost-iet) (`tEst` = unweighted harness
-estimate, shown for traceability). Full tables, method, and caveats are in
+We authored and measured grounding for four real packages — **System.CommandLine**,
+**System.Text.Json**, **Microsoft.Extensions.AI**, and **Markout** — across two tasks. The
+recognizable packages double as the readable examples; **Markout is a deliberate control** — an
+obscure, source-generated serializer the models genuinely *don't* know, which is exactly why it
+gives a clean grounding signal (a model-resident package like System.Text.Json would mask it). The
+headline results are in weighted [IET](#how-we-measure-cost-iet) (`tEst` = unweighted harness
+estimate, shown for traceability); full tables, method, and caveats are in
 [`docs/recommendation.md`](docs/recommendation.md).
 
-1. **A shipped `AGENTS.md` beats serving the README — on both tiers.** Same task, same content,
-   varying only delivery. Markout single-package, runs=3:
+1. **On a real migration, grounding cuts cost the most.** The flagship task is a **System.CommandLine
+   `beta4` → 3.x migration** (the agent must build, localize the breakage, and migrate) with two
+   distractor packages. runs=3:
+
+   | Channel | what the agent gets | Opus IET | Haiku IET |
+   |---------|---------------------|---------:|----------:|
+   | **A** raw package, no MCP | finds + reads the **README** | 188k | 939k |
+   | **B** NuGet MCP, no `AGENTS.md` | server returns the **README** | 138k | 665k |
+   | **D** MCP + resident index | curated grounding, self-gated | **92k** | **286k** |
+
+   That's **−51% (Opus)** and **−70% (Haiku)**. The raw baseline *thrashes* — Haiku burns 99 tool
+   calls — and the resident-index channel is also the **only** one that surfaces silent, compile-clean
+   gotchas the agent wouldn't know to ask for.
+
+2. **The clean mechanism, isolated.** On the controlled Markout probe we can run all five delivery
+   channels (same task, same content, varying only delivery). runs=3:
 
    | Channel | what the agent gets | Opus IET | Haiku IET |
    |---------|---------------------|---------:|----------:|
@@ -119,20 +138,15 @@ estimate, shown for traceability). Full tables, method, and caveats are in
    | **C** NuGet MCP, `AGENTS.md` present | server returns the **`AGENTS.md`** | **28k** | 39k |
    | **D** MCP + resident index | curated grounding, self-gated | 31k | **31k** |
 
-2. **Content alone is worthless without a delivery channel.** Channel A′ — `AGENTS.md` shipped but
+3. **Content alone is worthless without a delivery channel.** Channel A′ — `AGENTS.md` shipped but
    no MCP — is the *most* expensive cell on both tiers: the agent never sees it and reads the README
    anyway. Writing grounding only pays off when the MCP delivers it.
 
-3. **The README is a measurable liability, and targeted value is size-invariant.** Sweeping the
+4. **The README is a measurable liability, and targeted value is size-invariant.** Sweeping the
    shipped README from 3 KB → 74 KB (24×) while holding `AGENTS.md` at 3.5 KB: the README path
    tracks its own bloat (72k–117k IET, high-variance), while the `AGENTS.md` path stays **flat at
    ~36–42k IET / 9–11 tools** — a **48–69% saving** that *widens* as the README grows. Full sweep:
    [`docs/reports/readme-liability.md`](docs/reports/readme-liability.md).
-
-4. **The win grows with task difficulty.** On a harder multi-package triage task (one relevant
-   package + two distractors), the resident-index channel cuts the most: multi-package Opus **92k vs
-   188k** raw lookup (**−51%**), Haiku **286k vs 939k** (**−70%**). It is also the *only* channel
-   that surfaces silent, compile-clean gotchas the agent wouldn't know to ask for.
 
 5. **For weak models it's correctness, not just cost.** The README-without-MCP path *fails* the weak
    tier; the delivered `AGENTS.md` flips it to a pass. Grounding rescues the tier that needs it
