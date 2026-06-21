@@ -34,7 +34,8 @@ demand**.
 - **dotnet-inspect tooling landed** (used for efficient research): file sizes + `--path` (#875/#882),
   `--path @readme` + numeric `size` + `is_readme` (#889/#891), multi-package args (#898/#930),
   empty-row preservation for multi-package row modes (#946/#949). **Open asks filed**: `@agents`
-  presence (#951), file-content print with separator (#952), frontmatter/body scoping (#953).
+  presence (#951), file-content print with separator (#952), frontmatter/body scoping (#953),
+  file-resolution/search mode (#954, the most general).
 
 ## The core limitation: evidence is shallow, and the method risks overfitting
 
@@ -144,9 +145,9 @@ Cross-cutting requirements:
 
 ## Immediate next steps (resume here)
 
-1. ~~File the three dotnet-inspect asks~~ — **done: #951 (`@agents`), #952 (content print), #953
-   (header/body scoping).** Next: implement/track them, and use `@agents` to survey how many popular
-   packages already ship grounding.
+1. ~~File the dotnet-inspect asks~~ — **done: #951 (`@agents`), #952 (content print), #953
+   (header/body scoping), #954 (file-resolution/search mode).** Next: implement/track them, and use
+   `@agents` / #954 to survey how many popular packages already ship grounding.
 2. Draft the prompt taxonomy into concrete prompts for **one** package (STJ is the richest) as a
    template; establish the dev/test split and the rubric format. Then scale to the 12-package slate.
 3. Generalize the harness to data-driven task definitions (required before 144 prompts × 5 models).
