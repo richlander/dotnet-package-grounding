@@ -203,6 +203,23 @@ authored for the strongest model is mostly redundant; grounding authored for the
 that actually ships is not. Any verdict in this repo should name the agent model, and the
 honest default target is a *mid/low-tier* agent, not the frontier.
 
+#### The generation corollary: author with the strong model, *for* the weak (distillation)
+
+The same circularity that biases *measurement* also dictates *who should write the content*. You
+cannot use a model to author grounding **for itself**: if Opus 4.8 can produce the footgun on
+request, it already holds it, and writing it down only proves the redundancy. So the productive
+generation direction is **asymmetric** — use the strongest model to author grounding for the
+*weaker* tiers (Sonnet, especially Haiku). This is effectively **distillation**: the frontier
+model's resident knowledge is serialized into the shipped context that a weaker, far more commonly
+deployed agent lacks (the Haiku M.E.AI rescue above, −1.0% → +63.3%, is exactly this).
+
+The constraint is the second half of the asymmetry: **the distilled content must not harm the
+strong tier.** Frontier tokens are the most expensive in the fleet, so grounding that bloats or
+misleads Opus to rescue Haiku is a net-negative trade. This is the [Pareto gate](#4-the-right-scoring-model-one-utility-tier-priced-tokens-pareto-gate)
+expressed as a generation rule: **help the tier that needs it, no harm to the tier that doesn't** —
+judged on the worst case across the fleet, not the mean. The asymmetry of token cost (Haiku cheap
+to run but in need; Opus expensive but self-sufficient) is what makes the gate non-trivial.
+
 ### 2. The scoring weights are tuned for skills, not grounding
 
 The harness improvement score (documented in `eng/skill-validator/src/README.md` and
