@@ -34,8 +34,11 @@ Agent arms: baseline (no grounding), skilled-isolated, skilled-plugin. Judge: Op
 
 Quality was judged a **tie** at both tiers among produced outputs (parity → do-no-harm holds). The
 harness's quality-weighted improvement score therefore reads ~0/slightly-negative (Opus iso −0.09 /
-plugin +0.07; Haiku iso −0.06 / plugin +0.21, varianceCV 1.7). Per the methodology lesson, the
-**robust signals are `taskCompleted` and call behavior**, not the run-to-run quality delta at n=3.
+plugin +0.07; Haiku iso −0.06 / plugin +0.21, varianceCV 1.7). Per the methodology lesson
+([metrics vs. signals](../harness.md#metrics-vs-signals-what-a-claim-may-rest-on)), the robust
+**normative metric** here is `taskCompleted` (correctness) plus token/cost spend; **call behavior**
+is the corroborating *signal* that explains the spend, not a claim in itself — and either is more
+robust than the run-to-run quality delta at n=3.
 
 ## The reframing: grounding competes with the package's README, not with model ignorance
 

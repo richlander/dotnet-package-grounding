@@ -9,6 +9,35 @@ How this repo **builds and runs** the [`dotnet/skills`](https://github.com/dotne
 > package author ships, and not a marketplace plugin. The only artifact under test is the
 > `AGENTS.md` in each `grounding/<slug>/`.
 
+## Metrics vs. signals: what a claim may rest on
+
+The study reads two epistemically different kinds of data, and we keep them strictly
+separated — the analyzer ([`eng/analyze-6q.py`](../eng/analyze-6q.py)) even prints them in
+two labeled column groups. Conflating them is the easiest way to overclaim.
+
+**Normative metrics** are the quantities we are *allowed to draw conclusions from* — the
+actual value delivered or harm incurred:
+
+- **quality** (judge `overallScore`) and **functional pass** (`taskCompleted` + assertion
+  gates) — the *value* axis (was the task done, and done well?).
+- **tokens**, **cost** (premium-request multiplier), and **wall-clock** — the *harm* axis
+  (what did it cost to get there?).
+
+A headline like "grounding is cheaper and at least as correct" may rest **only** on these.
+
+**Informative signals** are everything about *how* the agent behaved: total tool calls,
+`web_fetch`/`web_search`, `dotnet-inspect` invocations, NuGet-MCP calls, NuGet-cache
+rummaging, and bash retry loops. **A tool call is not itself a cost or a harm** — on its own
+it adds nothing to the bill, and "fewer tool calls" is not a result we claim. Their value is
+**interpretive**: token spend is a single point, but many signal points together trace the
+*narrative arc* — web archaeology, cache-reflection, compile-retry flailing — that **explains
+why** the normative metrics move. Signals corroborate and give shape to a claim; they are
+never the claim.
+
+So when a baseline burns 6× the tokens of a grounded arm, the **tokens** are the finding; the
+20 tool calls, the 25 web fetches, and the cache pokes are the *story* of where those tokens
+went. Cite signals to explain a metric, never in place of one.
+
 ## How it relates to dotnet/skills
 
 We follow the same pattern `dotnet/skills` uses for its own evals: **build** the

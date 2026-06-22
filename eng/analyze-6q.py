@@ -1,19 +1,32 @@
 #!/usr/bin/env python3
-"""Analyze markout / nugetfetch results.json across the 5 study dimensions.
+"""Analyze markout / nugetfetch results.json, separating METRICS from SIGNALS.
 
-Per scenario x arm we report the metrics the study cares about:
+The study draws on two epistemically different kinds of data, and the output
+keeps them in distinct column groups so a claim is never confused with its
+corroboration:
 
-  qual   judge quality, overallScore 1-5 (rubric-weighted)
-  func   functional assertions passed (build + file_contains + run-output regex)
-  web    web_fetch + web_search calls  (the archaeology signal; grounded arms -> 0)
+NORMATIVE METRICS -- the quantities we actually claim as value or harm. These
+are what a conclusion ("grounding is cheaper / better") is allowed to rest on.
+
+  qual   judge quality, overallScore 1-5 (rubric-weighted)   [value]
+  func   functional assertions passed (build + file + run-output regex)  [value]
+  tok    total token estimate (input+output)                  [harm: spend]
+  cost   premium request multiplier (sum)                     [harm: spend]
+  secs   wall seconds                                          [harm: latency]
+
+INFORMATIVE SIGNALS -- corroborating behavioral data. A tool call or web fetch
+is NOT itself a cost or a harm; on its own it adds nothing to the bill. Its
+value is interpretive: many signal points together trace the narrative arc
+(archaeology, cache-reflection, compile-retry loops) that EXPLAINS why the
+normative metrics move. Token spend is a single point; signals give it a shape.
+
+  web    web_fetch + web_search calls  (archaeology; grounded arms -> 0)
          a trailing 'Y' means a reject_tools assertion fired (web was used)
   tools  total tool calls
   di     dotnet-inspect CLI invocations (bash commands calling dotnet-inspect)
   mcp    NuGet MCP calls (nuget-* tools)
+  cache  bash commands rummaging ~/.nuget/packages to reverse-engineer the API
   bash   bash calls (proxy for compile/run retry loops)
-  tok    total token estimate (input+output)
-  cost   premium request multiplier (sum)
-  secs   wall seconds
 
 Usage:
   eng/analyze-6q.py data/markout-6q/*.json
@@ -79,8 +92,10 @@ def arm_row(arm):
     )
 
 
-HDR = (f"{'scenario':28} | {'arm':8} | qual | func | web | tools | di | mcp | cache | bash | "
-       f"{'tok':>6} | cost | secs")
+HDR = (f"{'scenario':28} | {'arm':8} | qual | func | {'tok':>6} | cost | secs "
+       f"\u2016 web | tools | di | mcp | cache | bash")
+GRP = (f"{'':28}   {'':8}   {'<<<<<<<<<< NORMATIVE METRICS':^34} "
+       f"\u2016 {'INFORMATIVE SIGNALS >>>>>>>>>>':<29}")
 
 
 def main(paths):
@@ -94,6 +109,7 @@ def main(paths):
             print(f"!! {f}: {e}"); continue
         for v in d.get("verdicts", []):
             print(f"\n===== {v.get('skillName','?')}   ({f})   model={d.get('model')} =====")
+            print(GRP)
             print(HDR)
             print("-" * len(HDR))
             for sc in v.get("scenarios", []):
@@ -103,9 +119,9 @@ def main(paths):
                     if not r:
                         continue
                     print(f"{name:28} | {label:8} | {str(r['qual']):>4} | {r['func']:>4} | "
-                          f"{str(r['web'])+r['web_flag']:>3} | {str(r['tools']):>5} | "
-                          f"{r['di']:>2} | {r['mcp']:>3} | {r['cache']:>5} | {r['bash']:>4} | "
-                          f"{r['tok']:>6} | {str(r['cost']):>4} | {r['secs']:>4}")
+                          f"{r['tok']:>6} | {str(r['cost']):>4} | {r['secs']:>4} "
+                          f"\u2016 {str(r['web'])+r['web_flag']:>3} | {str(r['tools']):>5} | "
+                          f"{r['di']:>2} | {r['mcp']:>3} | {r['cache']:>5} | {r['bash']:>4}")
                 print("-" * len(HDR))
 
 
