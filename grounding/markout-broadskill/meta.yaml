@@ -1,0 +1,13 @@
+# Broad-skill arm of the markout 6-scenario channel matrix. Ships the FULL Markout
+# coding-agent integration guide (the comprehensive SKILL.md from the markout repo,
+# ~250 lines) as inline grounding — the ceiling/content-rich arm. This is deliberately
+# NOT an AGENTS.md unit (it exceeds the tight AGENTS.md line budget): it represents
+# "hand the agent the broad skill" vs the compact AGENTS.md delivered via MCP / CLI.
+# Compared against the compact-grounding arms, its advantage should be visible only on
+# M6 (advanced attributes documented only here, not in the compact AGENTS.md).
+name: markout-broadskill
+package: Markout
+description: >-
+  Inline broad-skill grounding for Markout: the full coding-agent integration guide
+  (every attribute, shape type, and formatter). The content ceiling for the 6-scenario
+  matrix; contrast with the compact AGENTS.md delivered via NuGet MCP or dotnet-inspect.
