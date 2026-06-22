@@ -8,8 +8,13 @@
 #   B  real NuGet MCP -> README               (plugin arm of *-realmcp, cache AGENTS absent)
 #   C  real NuGet MCP -> AGENTS.md            (plugin arm of *-realmcp, cache AGENTS present)
 #   D  our custom MCP (resident_index)        (plugin arm of *-custommcp)
+#   E  dotnet-inspect CLI -> README            (prefer-dotnet-inspect, cache AGENTS absent)
+#   E' dotnet-inspect CLI -> AGENTS.md         (prefer-dotnet-inspect, cache AGENTS present)
 #
 # One *-realmcp run yields TWO channels (baseline + plugin) for a given cache state.
+# Channels E/E' are the CLI analog of B/C: the agent fetches the package's shipped doc with
+# `dotnet-inspect package <id>@<ver> --readme` (#960) instead of the NuGet MCP. They require a
+# dotnet-inspect with #960 on PATH (>= 0.11.0).
 #
 # Usage:
 #   eng/run-channel-matrix.sh markout            # markout task, both tiers
@@ -50,10 +55,16 @@ agents_off() { rm -f "$CACHE/AGENTS.md"; echo "cache AGENTS.md: OFF"; }
 echo "======== CHANNEL MATRIX: task=$TASK runs=$RUNS models=[$MODELS] ========"
 case "$TASK" in
   markout)
-    # Single-package anchor: full A / A' / B / C / D matrix via cache toggling.
+    # Single-package anchor: full A / A' / B / C / D matrix via cache toggling, plus the
+    # dotnet-inspect CLI channel E / E' (the #960 alternative to the MCPs).
     agents_on;  run "markout-realmcp"   "realmcp-agents"                              # C + A'
     agents_off; run "markout-realmcp"   "realmcp-noagents"                            # B + A
     agents_on;  run "markout-custommcp" "custommcp" GROUNDING_GATE=resident_index     # D
+    # CLI delivery channel: dotnet-inspect --readme (the #960 alternative to the MCPs).
+    # Same cache toggle as realmcp: AGENTS present -> CLI serves AGENTS.md (E', analog of C);
+    # absent -> CLI serves README (E, analog of B). Requires dotnet-inspect >= 0.11.0 on PATH.
+    agents_on;  run "prefer-dotnet-inspect" "inspect-agents"                           # E'
+    agents_off; run "prefer-dotnet-inspect" "inspect-readme"                           # E
     ;;
   multipackage)
     # Triage task: A / B / D. Channel C (inject AGENTS into 3 pkg caches at migration

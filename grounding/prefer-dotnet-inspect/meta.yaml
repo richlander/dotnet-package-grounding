@@ -1,0 +1,18 @@
+# Harness-only metadata. The shipped artifact is AGENTS.md, whose YAML frontmatter
+# is the source of truth for name and description (used to generate SKILL.md).
+# This is a package-AGNOSTIC discovery directive (the dotnet-inspect-delivered
+# alternative to the MCP channels and to prefer-agents-md), not a per-package
+# grounding unit, so it ships in no single package. `package` is intentionally omitted.
+#
+# Delivery mechanism under test: the `dotnet-inspect` CLI (PR richlander/dotnet-inspect#960),
+# `dotnet-inspect package <id>@<version> --readme`, which returns the package's best shipped
+# doc (AGENTS.md > README.md > PACKAGE.md). This is the CLI analog of the NuGet MCP's
+# get_package_context: AGENTS.md present in the package -> channel C; absent -> README (B).
+# Prereq: a dotnet-inspect with #960 on PATH (>= 0.11.0). Which doc was served is confirmable
+# via `--readme --info` provenance (#965): `Readme | <path> (<bytes> B)` on stderr.
+name: prefer-dotnet-inspect
+description: >-
+  Package-agnostic discovery directive: fetch a package's shipped docs with the dotnet-inspect
+  CLI (`--readme`, which prefers AGENTS.md > README.md > PACKAGE.md) instead of guessing.
+  The dotnet-inspect-delivered alternative to the MCP channels. Exercised on the Markout M1
+  task. Carries no package-specific API content.
