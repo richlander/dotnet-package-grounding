@@ -40,6 +40,14 @@ plugin +0.07; Haiku iso −0.06 / plugin +0.21, varianceCV 1.7). Per the methodo
 is the corroborating *signal* that explains the spend, not a claim in itself — and either is more
 robust than the run-to-run quality delta at n=3.
 
+> **Caveat — the baseline is partly self-grounded from the NuGet cache.** `Markout 0.13.8` ships
+> both `README.md` (488 lines) and a packed `AGENTS.md` (68 lines), and `dotnet build` restores them
+> into `~/.nuget/packages`. The web-blocked baseline **read them from disk** (n=3 scenario M6:
+> `AGENTS.md` 9×, `README.md` 16×), so it is not truly ungrounded — meaning the baseline-vs-grounded
+> gap reported here **understates** grounding's value. The clean control is a two-baseline test
+> (cache docs present vs stripped); see
+> [the cache-contamination confound](../harness.md#a-confound-the-baseline-can-read-the-package-from-the-nuget-cache).
+
 ## The reframing: grounding competes with the package's README, not with model ignorance
 
 The decisive observation came from the Opus baseline: it **succeeded by reading Markout's shipped

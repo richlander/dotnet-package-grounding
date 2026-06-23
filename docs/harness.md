@@ -51,6 +51,31 @@ distribution's modes: a compact `AGENTS.md` (~0.8k tok) and a broad skill (~2.6k
 `web→0`, so the compact form buys the same protection at a third of the budget. Grounding tokens
 are not a result either; they are the x-axis the metrics are plotted against.
 
+## A confound: the baseline can read the package from the NuGet cache
+
+The "baseline" arm is meant to be *ungrounded* — model knowledge only, web blocked. But a scenario
+references a real package, so `dotnet build`/`run` restores it into `~/.nuget/packages`, and the
+agent's `bash` can read whatever the package **ships on disk**. That can include the package's
+`README.md`, its **shipped `AGENTS.md`** (the very grounding doc, once we pack it into the nupkg),
+and the `lib/*.dll` (reflectable/decompilable). So the web-blocked baseline is not necessarily
+ungrounded — it can self-serve the grounding straight from the restored package.
+
+This is empirically active, not hypothetical. In the Markout n=3 runs (package `Markout 0.13.8`,
+whose cache entry ships both `README.md` (488 lines) and `AGENTS.md` (68 lines)), the **baseline**
+read those files from the cache — scenario M6 alone shows 9 reads of `AGENTS.md` and 16 of
+`README.md`. The `cache` signal column counts these bash pokes. The consequence: for a package that
+ships groundable artifacts, **the baseline-vs-grounded gap understates grounding's value**, because
+the baseline already had (a fraction of) the grounding on disk. NuGetFetch `0.6.2` ships no docs in
+its cache entry (only the DLL), so its leak is weaker (reflection only) — which is itself a reason
+the NuGetFetch baseline looks stronger relative to grounding than Markout's.
+
+The clean control is a **two-baseline test**: run the same baseline with the package's cache entry
+**carrying** its shipped docs vs **stripped** of them (lib kept, so it still builds). The delta
+isolates the value the package's own shipped artifacts provide to an unaided agent — i.e. the
+README/`AGENTS.md` *delivery* effect, measured rather than assumed. See
+`.tools/baseline-cache-test.sh` for a HOME-isolated harness that does this without mutating the real
+cache.
+
 ## How it relates to dotnet/skills
 
 We follow the same pattern `dotnet/skills` uses for its own evals: **build** the
