@@ -23,18 +23,40 @@ normative metrics move. Token spend is a single point; signals give it a shape.
   web    web_fetch + web_search calls  (archaeology; grounded arms -> 0)
          a trailing 'Y' means a reject_tools assertion fired (web was used)
   tools  total tool calls
+  turns  agent reasoning turns (turnCount) -- iterations of the think->act loop.
+         A turn is not itself a cost; it is the cleanest measure of *flailing*
+         (a baseline retry-loop spikes turns long before tokens fully explain it).
   di     dotnet-inspect CLI invocations (bash commands calling dotnet-inspect)
   mcp    NuGet MCP calls (nuget-* tools)
   cache  bash commands rummaging ~/.nuget/packages to reverse-engineer the API
   bash   bash calls (proxy for compile/run retry loops)
 
+Per-subject header also reports GROUNDING ~tok: the size of the SKILL.md loaded
+into every grounded arm -- the fixed *investment* the payoff is measured against.
+It characterizes the intervention mode (compact AGENTS ~0.8k tok vs a broad skill
+~2.6k tok), so payoff can be read against grounding size across the distribution.
+
 Usage:
   eng/analyze-6q.py data/markout-6q/*.json
   eng/analyze-6q.py .skill-validator-results/m6q-*/**/results.json
 """
-import json, sys, glob
+import json, sys, glob, os
 
 ARMS = [("baseline", "baseline"), ("skilledIsolated", "isolated"), ("skilledPlugin", "plugin")]
+
+
+def grounding_tokens(skill_name):
+    """Estimate the loaded grounding size (~tokens) for a subject.
+
+    The grounded arms load grounding/<skill_name>/SKILL.md (generated from AGENTS.md).
+    Rough estimate at ~4 chars/token. Returns None if the artifact can't be resolved.
+    """
+    root = os.path.join(os.path.dirname(__file__), "..")
+    for art in ("SKILL.md", "AGENTS.md"):
+        p = os.path.join(root, "grounding", skill_name, art)
+        if os.path.exists(p):
+            return round(len(open(p, encoding="utf-8").read()) / 4)
+    return None
 
 
 def count_tool_events(metrics):
@@ -82,6 +104,7 @@ def arm_row(arm):
         web=web,
         web_flag="Y" if web_used else ".",
         tools=m.get("toolCallCount", "?"),
+        turns=m.get("turnCount", "?"),
         di=di,
         mcp=mcp,
         cache=cache,
@@ -93,7 +116,7 @@ def arm_row(arm):
 
 
 HDR = (f"{'scenario':28} | {'arm':8} | qual | func | {'tok':>6} | cost | secs "
-       f"\u2016 web | tools | di | mcp | cache | bash")
+       f"\u2016 web | tools | turn | di | mcp | cache | bash")
 GRP = (f"{'':28}   {'':8}   {'<<<<<<<<<< NORMATIVE METRICS':^34} "
        f"\u2016 {'INFORMATIVE SIGNALS >>>>>>>>>>':<29}")
 
@@ -108,7 +131,10 @@ def main(paths):
         except Exception as e:
             print(f"!! {f}: {e}"); continue
         for v in d.get("verdicts", []):
-            print(f"\n===== {v.get('skillName','?')}   ({f})   model={d.get('model')} =====")
+            sn = v.get("skillName", "?")
+            gtok = grounding_tokens(sn)
+            gnote = f"   grounding=~{gtok} tok (loaded into each grounded arm)" if gtok else ""
+            print(f"\n===== {sn}   ({f})   model={d.get('model')}{gnote} =====")
             print(GRP)
             print(HDR)
             print("-" * len(HDR))
@@ -121,7 +147,8 @@ def main(paths):
                     print(f"{name:28} | {label:8} | {str(r['qual']):>4} | {r['func']:>4} | "
                           f"{r['tok']:>6} | {str(r['cost']):>4} | {r['secs']:>4} "
                           f"\u2016 {str(r['web'])+r['web_flag']:>3} | {str(r['tools']):>5} | "
-                          f"{r['di']:>2} | {r['mcp']:>3} | {r['cache']:>5} | {r['bash']:>4}")
+                          f"{str(r['turns']):>4} | {r['di']:>2} | {r['mcp']:>3} | "
+                          f"{r['cache']:>5} | {r['bash']:>4}")
                 print("-" * len(HDR))
 
 

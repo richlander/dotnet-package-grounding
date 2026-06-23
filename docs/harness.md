@@ -26,17 +26,25 @@ actual value delivered or harm incurred:
 A headline like "grounding is cheaper and at least as correct" may rest **only** on these.
 
 **Informative signals** are everything about *how* the agent behaved: total tool calls,
-`web_fetch`/`web_search`, `dotnet-inspect` invocations, NuGet-MCP calls, NuGet-cache
-rummaging, and bash retry loops. **A tool call is not itself a cost or a harm** — on its own
-it adds nothing to the bill, and "fewer tool calls" is not a result we claim. Their value is
-**interpretive**: token spend is a single point, but many signal points together trace the
+**reasoning turns** (`turnCount` — iterations of the think→act loop, the cleanest measure of
+flailing), `web_fetch`/`web_search`, `dotnet-inspect` invocations, NuGet-MCP calls, NuGet-cache
+rummaging, and bash retry loops. **A tool call (or turn) is not itself a cost or a harm** — on
+its own it adds nothing to the bill, and "fewer tool calls" is not a result we claim. Their value
+is **interpretive**: token spend is a single point, but many signal points together trace the
 *narrative arc* — web archaeology, cache-reflection, compile-retry flailing — that **explains
 why** the normative metrics move. Signals corroborate and give shape to a claim; they are
 never the claim.
 
 So when a baseline burns 6× the tokens of a grounded arm, the **tokens** are the finding; the
-20 tool calls, the 25 web fetches, and the cache pokes are the *story* of where those tokens
+74 reasoning turns, the 25 web fetches, and the cache pokes are the *story* of where those tokens
 went. Cite signals to explain a metric, never in place of one.
+
+A third kind of data is the **experimental parameter** — the size of the intervention itself.
+The analyzer reports **grounding ~tok** (the `SKILL.md` loaded into each grounded arm) per
+subject, so payoff can be read *against* the grounding budget. This is what lets us see the
+distribution's modes: a compact `AGENTS.md` (~0.8k tok) and a broad skill (~2.6k tok) both drive
+`web→0`, so the compact form buys the same protection at a third of the budget. Grounding tokens
+are not a result either; they are the x-axis the metrics are plotted against.
 
 ## How it relates to dotnet/skills
 
