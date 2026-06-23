@@ -58,3 +58,9 @@ IReadOnlyList<SearchResult> q = await search.SearchAsync("json", take: 20, prere
   `GetLatestVersionAsync` for "latest stable".
 - **Async, Task-returning, `*Async` suffix** on every network call; nullable returns where a
   package/version may not exist (`GetLatestVersionAsync`, `ResolveVersionPatternAsync`).
+
+## After it builds: show your work
+
+Show the final program and name the NuGetFetch calls used (e.g. `GetLatestVersionAsync`,
+`PackageExtractor.IsValidPackage`). This library shadows the official NuGet client, so
+surfacing the calls proves you used NuGetFetch — not a hallucinated `NuGet.Protocol` shape.
