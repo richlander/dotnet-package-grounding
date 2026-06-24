@@ -62,7 +62,8 @@ GATE = dict(
     cost_win_frac=0.25,       # mini WIN: >=25% cost reduction vs baseline, OR
     qual_win_delta=0.3,       # mini WIN: >=+0.3 quality lift vs baseline
     qual_regress_max=0.1,     # HARM (both tiers): quality may not drop more than this
-    out_inflate_frac=0.05,    # FRONTIER HARM: output tokens may not rise more than 5%
+    iet_harm_cap_frac=0.10,   # FRONTIER HARM (headline): grounded IET may not exceed baseline by >10%
+    out_inflate_frac=0.05,    # FRONTIER HARM (secondary guard): output tokens may not rise more than 5%
 )
 
 FRONTIER_HINTS = ("opus", "sonnet", "gpt-5", "gpt5", "gemini-3", "gemini-2.5-pro")
@@ -256,10 +257,18 @@ def gate_mini(base, grnd):
 
 
 def gate_frontier(base, grnd):
-    """HARM tier (frontier, λ high): ZERO tolerance. The decompiler analog — no drop in
-    recovery (func), no increase in malformed (quality), no output-token inflation."""
+    """HARM tier (frontier). Harm is a NUMBER, not a bool: the headline is the **IET diff from
+    baseline** (grounded − baseline), held under a hard cap (a budget, not zero — grounding may
+    cost a little on a model that didn't need it, not a lot). Guards: no func/quality regression,
+    no web archaeology. Output tokens are a visible secondary guard so a pure output blow-up isn't
+    masked when input nets down. Returns (ok, iet_harm_frac, rows)."""
     rows = []
     ok = True
+    # Headline harm number: IET inflation vs baseline (negative = grounding is cheaper, no harm).
+    iet_frac = (grnd["iet"] - base["iet"]) / base["iet"] if base["iet"] else 0.0
+    h_iet = iet_frac <= GATE["iet_harm_cap_frac"]; ok &= h_iet
+    rows.append(f"{'PASS' if h_iet else 'FAIL'}  HARM = IET diff {iet_frac*100:+.0f}% vs baseline "
+                f"(cap +{GATE['iet_harm_cap_frac']*100:.0f}%)")
     dfunc = grnd["fp"] - base["fp"]
     h_func = dfunc >= 0; ok &= h_func
     rows.append(f"{'PASS' if h_func else 'FAIL'}  no correctness/recovery drop "
@@ -271,11 +280,11 @@ def gate_frontier(base, grnd):
                     f"(Δ {dq:+.2f}; floor −{GATE['qual_regress_max']})")
     out_frac = (grnd["out"] - base["out"]) / base["out"] if base["out"] else 0
     h_out = out_frac <= GATE["out_inflate_frac"]; ok &= h_out
-    rows.append(f"{'PASS' if h_out else 'FAIL'}  no output/thinking-token inflation "
+    rows.append(f"{'PASS' if h_out else 'FAIL'}  output-token guard "
                 f"(Δ {out_frac*100:+.0f}%; cap +{GATE['out_inflate_frac']*100:.0f}%)")
     h_web = grnd["web"] == 0; ok &= h_web
     rows.append(f"{'PASS' if h_web else 'FAIL'}  no web archaeology (web={grnd['web']}; cache peeks allowed, here {grnd['cache']})")
-    return ok, rows
+    return ok, iet_frac, rows
 
 
 def _fmt_q(q):
@@ -333,9 +342,11 @@ def _tier_section(arms, tier_label, gate_label):
 
     if agents:
         if agents["tier"] == "frontier":
-            passed, rows = gate_frontier(base, agents_plg)
-            print(f"\n**{gate_label} (AGENTS.md vs baseline): "
-                  f"{'✅ NO HARM' if passed else '❌ HARM'}** — zero tolerance.\n")
+            passed, iet_harm, rows = gate_frontier(base, agents_plg)
+            within = iet_harm <= GATE["iet_harm_cap_frac"]
+            print(f"\n**{gate_label} (AGENTS.md vs baseline): HARM = IET diff "
+                  f"{iet_harm*100:+.0f}% vs baseline ({'within cap' if within else 'OVER cap'}) "
+                  f"— overall {'✅ PASS' if passed else '❌ FAIL'}**\n")
             for line in rows:
                 print(f"- {line}")
         else:
@@ -352,7 +363,7 @@ def _tier_section(arms, tier_label, gate_label):
     if readme:
         rb = readme["agg"]["baseline"]; rp = readme["agg"]["skilledPlugin"]
         if readme["tier"] == "frontier":
-            rpass, _ = gate_frontier(rb, rp)
+            rpass, _, _ = gate_frontier(rb, rp)
         else:
             rpass, _, _ = gate_mini(rb, rp)
         dq = (rp["qual"] or 0) - (rb["qual"] or 0)
@@ -368,7 +379,7 @@ def print_card(paths):
 
     Datasets are grouped by tier (mini = haiku/sonnet/flash; frontier = opus/gpt-5/gemini)
     and, within a tier, by grounding source (a path containing 'readme' is the README arm).
-    The card tells the two-sided story: a mini-tier WIN and a frontier-tier NO-HARM check.
+    The card tells the two-sided story: a mini-tier WIN and a frontier-tier HARM number.
     """
     arms = [_load_arm(p) for p in paths]
     sn = arms[0]["sn"]
@@ -387,7 +398,7 @@ def print_card(paths):
         print(f"Grounding: `grounding/{sn}/AGENTS.md` (~{gtok} tok loaded per grounded arm). "
               f"Means across scenarios.\n")
     print("_The ship decision is **two-sided**: a smaller model (mini tier) must show a **WIN**, "
-          "and a frontier model must show **NO HARM**. Both are read off the **AGENTS.md** column; "
+          "and a frontier model must show **bounded HARM** (a number — the IET diff from baseline, under a hard cap). Both are read off the **AGENTS.md** column; "
           "the **README** column is the fallback floor (what grounding surfaces when no AGENTS.md "
           "ships) — if README already clears the bar, AGENTS.md is unnecessary._\n")
 
@@ -397,9 +408,9 @@ def print_card(paths):
         print("#### Mini tier — the WIN\n\n_⏳ pending — run a haiku/sonnet dataset._")
     print()
     if groups["frontier"]:
-        _tier_section(groups["frontier"], "Frontier tier — the NO-HARM check", "Frontier HARM gate")
+        _tier_section(groups["frontier"], "Frontier tier — the HARM check", "Frontier HARM gate")
     else:
-        print("#### Frontier tier — the NO-HARM check\n\n_⏳ pending — run an opus/gpt-5/gemini "
+        print("#### Frontier tier — the HARM check\n\n_⏳ pending — run an opus/gpt-5/gemini "
               "dataset (`MODELS=claude-opus-4.6 eng/run-<unit>-6q.sh`) to complete the decision._")
 
     print("\n**Legend**\n")
