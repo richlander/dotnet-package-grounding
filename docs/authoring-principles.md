@@ -12,8 +12,14 @@ need and lack. If a web-blocked baseline already produces the correct answer, th
 material is *model-resident* and must **not** go in the grounding doc — it adds length,
 dilutes RAG matches, and buys no metric movement.
 
-Concretely: write the content, then run the eval. If the grounded arm doesn't beat the
-baseline on a scenario, the model already knew it — cut it.
+Concretely: do **not** start from a model-written draft — that contaminates the very signal
+you need. A draft restates model-resident knowledge, so a grounded "win" may be an echo of
+what the model already knew, real gaps get masked, and confidently-wrong content can actively
+mislead the agent. Start from an **empty baseline**, run the eval, and watch where the frontier
+model fails outright or succeeds only by burning *resourcefulness* (web/cache archaeology,
+decompiling the package). Add grounding **only** at an observed gap, then re-run. The method is
+**additive** — every line earns its place because a measured failure demanded it — not
+subtractive (starting from a draft and proving each line *isn't* needed is harder and noisier).
 
 ### Evidence (System.CommandLine unit)
 
@@ -218,13 +224,26 @@ The System.CommandLine win is the proof the loop is escapable: the alias-vs-desc
 was not recalled from memory, it was a **transient beta-era detail that had washed out of the
 training corpus**. The fixes all amount to *decoupling discovery from model memory*:
 
-- **Source candidates externally**, not introspectively: post-cutoff release notes, GitHub
-  issues labeled "surprising/gotcha," high-upvote Stack Overflow questions, the package's own
-  edge-case tests. Anything dated after the model's training cutoff is non-resident by
-  construction (this is why a zero-day upgrade is the strongest scenario class).
+- **Observe behavior from a zero-grounding baseline — the strongest signal.** The most
+  reliable non-resident gap is the frontier model's *own failure* on a real task with no
+  grounding present: where it fails outright, or succeeds only by burning **resourcefulness**
+  (web/cache archaeology, decompiling the package). That delta between model behavior and
+  package reality is exactly what grounding must close, and it can only be seen from an empty
+  baseline — which is why seeding from a model-written draft is *worse* than starting empty.
+- **Source genuinely post-cutoff material**, not introspection: release notes, brand-new or
+  renamed APIs, the package's own edge-case tests. Anything dated after the model's training
+  cutoff is non-resident by construction (this is why a zero-day upgrade is the strongest
+  scenario class). Note that **Stack Overflow / issue mining is low-yield**: most of it is
+  already in the training corpus (resident) and noisy — prefer behavioral observation.
 - **Run a cheap residency pre-probe** before spending a 5-run eval: ask the bare model "what
   are the gotchas of X?" If it names the candidate, it is resident — skip it. This turns
   implicit circularity into an explicit, fast gate.
+- **Let the model derive *tasks*, not grounding — then gate with humans.** Knowing "what is a
+  reasonable task for package X" is decoupled from "how to complete it with X's API," so
+  task-generation is far less circular than content-generation. But a model under-samples the
+  hard tasks it cannot already do, so **human-in-the-loop validates tasks for coverage and
+  correctness** (and HIL also reviews the final scoring / data cards). Task validation is the
+  guard against overfitting grounding to the eval's own tasks.
 - **Test an agent weaker than the judge.** `--model` (agent) and `--judge-model` are
   independent. Running Opus-as-both is the *hardest* residency bar and the *least*
   representative of the weaker agents most teams actually deploy. "Does package X need
