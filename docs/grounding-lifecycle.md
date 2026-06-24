@@ -51,7 +51,8 @@ already knows this package — **do not author grounding**. Grounding is justifi
 > package's README/AGENTS.md are packed in its nupkg, so any `dotnet build` restores them to
 > `~/.nuget/packages`, and any decompiler/inspector tool on the box (`dotnet-inspect`, ilspy, …) lets
 > the baseline self-ground. Both *understate* grounding's value. Run evals on a box with **no global
-> decompiler/inspector tools installed**, and treat every quality delta as a **lower bound**.
+> decompiler/inspector tools installed**, and treat every delta as a **lower bound** (the baseline's
+> resourcefulness count is understated, so grounding's advantage is too).
 
 ---
 
@@ -75,7 +76,7 @@ Grounding is a liability once it is redundant (the model learned the package) or
 Deletion is also a claim and needs evidence:
 
 - Re-run **baseline vs AGENTS** on both tiers. If the mini grade has **collapsed to NEUTRAL** — baseline now matches
-  grounded on quality/func with no archaeology — the grounding no longer pays for its tokens. Remove it.
+  grounded on success/func with **resourcefulness already at ~0** (the model no longer needs to dig) — the grounding no longer pays for its tokens. Remove it.
 - If the package is **retired/unsupported**, delete the grounding with a short note; no eval needed, but
   say so explicitly in the PR.
 - Never silently delete: a removal PR carries the "collapsed to NEUTRAL" card or the retirement note.
@@ -86,9 +87,11 @@ Deletion is also a claim and needs evidence:
 
 All operations are decided off `eng/analyze-6q.py`. It emits **three single-variable cards**, each
 isolating exactly one comparison so the data is trivial to read. Each card shows the same metric rows —
-`quality`, `func passed`, `IET`, `output tok`, `cost`, `archaeology` — and a **Conclusion**: a single
-**uniform, model-independent grade** of grounding's effect vs baseline — **BETTER** (real improvement, no
-regression) / **NEUTRAL** (no material change) / **WORSE** (a regression, or cost inflated past the cap).
+`success (scenarios)`, `func passed`, `resourcefulness (archaeology)`, `IET`, `output tok`, `cost` — and a
+**Conclusion**: a single **uniform, model-independent grade** of grounding's effect vs baseline on
+**objective axes** (no judge-quality diff — see methodology §7) — **BETTER** (success held + a real win:
+more scenarios solved, resourcefulness eliminated, or ≥25% IET/cost cut) / **NEUTRAL** (success held, no
+material win) / **WORSE** (success dropped, grounded web archaeology, or cost/IET/output inflated past the cap).
 The same rubric grades every model; the card grades, it does not decide shipping (that is §1 step 4 / methodology §3).
 
 | Card | Flag | Holds fixed | Varies | Answers |
