@@ -304,75 +304,131 @@ def _load_arm(path):
     return dict(model=model, judge=judge, tier=tier, sn=sn, agg=agg, readme=is_readme, path=path)
 
 
-def _three_col_table(base, readme_plg, agents_plg):
-    """Baseline | README (fallback) | AGENTS.md. README column omitted if not provided."""
-    cols = ["Baseline"]
-    if readme_plg is not None:
-        cols.append("README (fallback)")
-    cols.append("AGENTS.md (grounding tool)")
-    head = "| Metric | " + " | ".join(cols) + " |"
-    sep = "| --- |" + " ---: |" * len(cols)
-    print(head); print(sep)
+def _pct(new, old):
+    """Percent change new-vs-old (negative = new is smaller/cheaper)."""
+    return ((new - old) / old * 100.0) if old else 0.0
 
-    def row(label, fn):
-        cells = [fn(base)]
-        if readme_plg is not None:
-            cells.append(fn(readme_plg))
-        cells.append(fn(agents_plg))
+
+def _arch(a):
+    return a["web"] + a["cache"]
+
+
+# Shared headline-metric spec. Each entry drives every card:
+#   key, label, raw(a)->str, diff(new,old)->str, lower_is_better
+# `diff` expresses the *change from old to new* in the metric's natural unit:
+# % for token/cost magnitudes, absolute Δ for quality, count Δ for func, an arrow
+# for archaeology. lower_is_better drives the WIN/benefit interpretation only.
+_METRICS = [
+    ("qual",  "quality (1–5)",
+     lambda a: _fmt_q(a["qual"]),
+     lambda n, o: (f"{(n['qual'] - o['qual']):+.2f}"
+                   if n["qual"] is not None and o["qual"] is not None else "—"),
+     False),
+    ("func",  "func passed",
+     lambda a: f"{a['fp']}/{a['ft']}",
+     lambda n, o: f"{n['fp'] - o['fp']:+d} ({n['fp']}/{n['ft']})",
+     False),
+    ("iet",   "IET",
+     lambda a: f"{a['iet']:.0f}",
+     lambda n, o: f"{_pct(n['iet'], o['iet']):+.0f}%",
+     True),
+    ("out",   "output tok",
+     lambda a: f"{a['out']:.0f}",
+     lambda n, o: f"{_pct(n['out'], o['out']):+.0f}%",
+     True),
+    ("cost",  "cost",
+     lambda a: f"{a['cost']:.2f}",
+     lambda n, o: f"{_pct(n['cost'], o['cost']):+.0f}%",
+     True),
+    ("arch",  "archaeology (web+cache)",
+     lambda a: f"{_arch(a)}",
+     lambda n, o: f"{_arch(o)}→{_arch(n)}",
+     True),
+]
+
+
+def _conclusion(base, grnd, tier):
+    """One-line verdict string (the conclusion, not a row): WIN for mini, HARM for frontier."""
+    iet = _pct(grnd["iet"], base["iet"])
+    cost = _pct(grnd["cost"], base["cost"])
+    dq = ((grnd["qual"] - base["qual"]) if grnd["qual"] is not None
+          and base["qual"] is not None else 0.0)
+    dfunc = grnd["fp"] - base["fp"]
+    if tier == "frontier":
+        ok, iet_harm, _ = gate_frontier(base, grnd)
+        within = iet_harm <= GATE["iet_harm_cap_frac"]
+        return (f"**HARM = IET {iet_harm*100:+.0f}%** vs baseline "
+                f"({'within' if within else 'OVER'} +{GATE['iet_harm_cap_frac']*100:.0f}% cap) "
+                f"— quality Δ {dq:+.2f}, func {dfunc:+d} → "
+                f"{'✅ PASS' if ok else '❌ FAIL'}")
+    ok, _, _ = gate_mini(base, grnd)
+    return (f"**{'WIN' if ok else 'NO WIN'}** — IET {iet:+.0f}%, cost {cost:+.0f}%, "
+            f"quality Δ {dq:+.2f}, func {dfunc:+d}")
+
+
+def print_primary(path):
+    """① Primary card — one model, Baseline vs AGENTS.md (the grounding tool). The data."""
+    a = _load_arm(path)
+    base = a["agg"]["baseline"]; grnd = a["agg"]["skilledPlugin"]
+    sn = a["sn"]; gtok = grounding_tokens(sn)
+    print(f"### Grounding eval — {sn} · `{a['model']}`\n")
+    if gtok:
+        print(f"_Baseline (no grounding) vs `AGENTS.md` (~{gtok} tok, via grounding tool). "
+              f"Judge `{a['judge']}`. Means across scenarios._\n")
+    print("| Metric | Baseline | AGENTS.md |")
+    print("| --- | ---: | ---: |")
+    for _, label, raw, _diff, _lb in _METRICS:
+        print(f"| {label} | {raw(base)} | {raw(grnd)} |")
+    print(f"\n> **Conclusion:** {_conclusion(base, grnd, a['tier'])}.")
+
+
+def print_model_diff(paths):
+    """② Model-diff card — columns = models, value = AGENTS lift over baseline per metric.
+    Shows whether the grounding effect holds across tiers."""
+    arms = [a for a in (_load_arm(p) for p in paths) if not a["readme"]]
+    # mini first, then frontier; stable within tier by model name
+    arms.sort(key=lambda a: (0 if a["tier"] == "mini" else 1, a["model"]))
+    sn = arms[0]["sn"]
+    print(f"### Model-diff — {sn} · AGENTS.md lift over baseline\n")
+    print("_Each cell = grounded (AGENTS.md) change vs that model's own baseline. "
+          "% for IET/output/cost (− = cheaper), Δ for quality, count for func, "
+          "before→after for archaeology._\n")
+    head = "| Metric | " + " | ".join(f"`{a['model']}`" for a in arms) + " |"
+    print(head); print("| --- |" + " ---: |" * len(arms))
+    for _, label, _raw, diff, _lb in _METRICS:
+        cells = [diff(a["agg"]["skilledPlugin"], a["agg"]["baseline"]) for a in arms]
         print(f"| {label} | " + " | ".join(cells) + " |")
-
-    row("quality (1–5)", lambda a: _fmt_q(a["qual"]))
-    row("func passed", lambda a: f"{a['fp']}/{a['ft']}")
-    row("IET (mean)", lambda a: f"{a['iet']:.0f}")
-    row("output tok (mean)", lambda a: f"{a['out']:.0f}")
-    row("cost (mean)", lambda a: f"{a['cost']:.2f}")
-    row("gross tok (mean)", lambda a: f"{a['tok']:.0f}")
-    row("archaeology (web+cache)", lambda a: f"{a['web'] + a['cache']}")
+    verdicts = [_conclusion(a["agg"]["baseline"], a["agg"]["skilledPlugin"], a["tier"])
+                for a in arms]
+    print("| **→ verdict** | " + " | ".join(verdicts) + " |")
 
 
-def _tier_section(arms, tier_label, gate_label):
-    """Render one tier's 3-col table + gate. arms: dict with 'agents' and optional 'readme'."""
-    agents = arms.get("agents"); readme = arms.get("readme")
-    primary = agents or readme
-    base = primary["agg"]["baseline"]
-    agents_plg = agents["agg"]["skilledPlugin"] if agents else None
-    readme_plg = readme["agg"]["skilledPlugin"] if readme else None
-    model = primary["model"]; judge = primary["judge"]
-    print(f"#### {tier_label} — model `{model}`, judge `{judge}`\n")
-    _three_col_table(base, readme_plg, agents_plg if agents_plg is not None else base)
-
-    if agents:
-        if agents["tier"] == "frontier":
-            passed, iet_harm, rows = gate_frontier(base, agents_plg)
-            within = iet_harm <= GATE["iet_harm_cap_frac"]
-            print(f"\n**{gate_label} (AGENTS.md vs baseline): HARM = IET diff "
-                  f"{iet_harm*100:+.0f}% vs baseline ({'within cap' if within else 'OVER cap'}) "
-                  f"— overall {'✅ PASS' if passed else '❌ FAIL'}**\n")
-            for line in rows:
-                print(f"- {line}")
-        else:
-            passed, harm, win = gate_mini(base, agents_plg)
-            print(f"\n**{gate_label} (AGENTS.md vs baseline): "
-                  f"{'✅ PASS' if passed else '❌ FAIL'}**\n")
-            print("_Guards (must hold):_")
-            for line in harm:
-                print(f"- {line}")
-            print("\n_Win (at least one must clear):_")
-            for line in win:
-                print(f"- {line}")
-    # README-as-fallback verdict (judged against README's own run baseline).
-    if readme:
-        rb = readme["agg"]["baseline"]; rp = readme["agg"]["skilledPlugin"]
-        if readme["tier"] == "frontier":
-            rpass, _, _ = gate_frontier(rb, rp)
-        else:
-            rpass, _, _ = gate_mini(rb, rp)
-        dq = (rp["qual"] or 0) - (rb["qual"] or 0)
-        note = "clears the bar — AGENTS.md would be unnecessary" if rpass else \
-               "does NOT clear the bar — AGENTS.md is needed"
-        print(f"\n_Fallback check — **README alone** {'✅' if rpass else '❌'}: {note} "
-              f"(quality Δ {dq:+.2f} vs its own baseline). Grounding surfaces README.md when no "
-              f"AGENTS.md is present, so this is the real floor AGENTS.md must beat._")
+def print_source_diff(paths):
+    """③ Source-diff card — one model, single column = the benefit AGENTS.md adds over
+    README.md (both surfaced via the grounding tool). Is AGENTS worth authoring?"""
+    arms = [_load_arm(p) for p in paths]
+    agents = next((a for a in arms if not a["readme"]), None)
+    readme = next((a for a in arms if a["readme"]), None)
+    if not agents or not readme:
+        print("source-diff needs one AGENTS.md dataset and one README dataset "
+              "(a path containing 'readme')."); return
+    ag = agents["agg"]["skilledPlugin"]; rd = readme["agg"]["skilledPlugin"]
+    sn = agents["sn"]
+    print(f"### Source-diff — {sn} · `{agents['model']}` · AGENTS.md benefit over README.md\n")
+    print("_Both surfaced via the grounding tool; baseline removed. Single column = "
+          "AGENTS.md change vs README.md (− = AGENTS cheaper/better on cost metrics, "
+          "+ on quality/func). This is what authoring AGENTS.md buys over the README floor._\n")
+    print("| Metric | AGENTS.md − README.md |")
+    print("| --- | ---: |")
+    for _, label, _raw, diff, _lb in _METRICS:
+        print(f"| {label} | {diff(ag, rd)} |")
+    diet = _pct(ag["iet"], rd["iet"])
+    dq = ((ag["qual"] - rd["qual"]) if ag["qual"] is not None and rd["qual"] is not None
+          else 0.0)
+    worth = (diet <= -GATE["iet_win_frac"] * 100) or (dq >= GATE["qual_win_delta"])
+    note = ("AGENTS.md earns its place — material gain over README"
+            if worth else "README is close — AGENTS.md adds little here")
+    print(f"\n> **Conclusion:** {note} (IET {diet:+.0f}%, quality Δ {dq:+.2f}).")
 
 
 # --- diagnostic cards: what the agent reached for (tools) and searched (web) -----------
@@ -526,81 +582,36 @@ def print_web_card(paths, topn=10):
 
 
 def print_card(paths):
-    """Render a complete ship card from one or more datasets.
-
-    Datasets are grouped by tier (mini = haiku/sonnet/flash; frontier = opus/gpt-5/gemini)
-    and, within a tier, by grounding source (a path containing 'readme' is the README arm).
-    The card tells the two-sided story: a mini-tier WIN and a frontier-tier HARM number.
-    """
+    """① Primary card(s). Renders one Baseline-vs-AGENTS.md card per non-README model
+    dataset (README datasets are ignored here — see --source-diff). A shared legend follows."""
     arms = [_load_arm(p) for p in paths]
-    sn = arms[0]["sn"]
-    gtok = grounding_tokens(sn)
-    groups = {"mini": {}, "frontier": {}}
-    for a in arms:
-        groups[a["tier"]]["readme" if a["readme"] else "agents"] = a
-
-    print(f"### Grounding eval — {sn}\n")
-    print("_About this grounding._ `AGENTS.md` provides RAG-style, section-addressable "
-          "information for agents, surfaced by a grounding tool like the NuGet MCP. `README.md` "
-          "offers nice introductions and progressive disclosure for untrained humans; `AGENTS.md` "
-          "fills in targeted, evaluated gaps for trained models. Its presence removes any pressure "
-          "to make `README.md` agent-efficient or catered.\n")
-    if gtok:
-        print(f"Grounding: `grounding/{sn}/AGENTS.md` (~{gtok} tok loaded per grounded arm). "
-              f"Means across scenarios.\n")
-    print("_The ship decision is **two-sided**: a smaller model (mini tier) must show a **WIN**, "
-          "and a frontier model must show **bounded HARM** (a number — the IET diff from baseline, under a hard cap). Both are read off the **AGENTS.md** column; "
-          "the **README** column is the fallback floor (what grounding surfaces when no AGENTS.md "
-          "ships) — if README already clears the bar, AGENTS.md is unnecessary._\n")
-
-    if groups["mini"]:
-        _tier_section(groups["mini"], "Mini tier — the WIN", "Mini WIN gate")
-    else:
-        print("#### Mini tier — the WIN\n\n_⏳ pending — run a haiku/sonnet dataset._")
-    print()
-    if groups["frontier"]:
-        _tier_section(groups["frontier"], "Frontier tier — the HARM check", "Frontier HARM gate")
-    else:
-        print("#### Frontier tier — the HARM check\n\n_⏳ pending — run an opus/gpt-5/gemini "
-              "dataset (`MODELS=claude-opus-4.6 eng/run-<unit>-6q.sh`) to complete the decision._")
-
-    print("\n**Legend**\n")
-    print("_Columns — every column runs the **same** task; they differ only in what grounding the "
-          "agent is given:_")
-    print("- **Baseline** — no grounding. The agent has model knowledge only and falls back to "
-          "**archaeology** (the row below) — searching outside the sandbox to reconstruct what "
-          "grounding would have told it. The reality today for a package the model doesn't know.")
-    print("- **README (fallback)** — the package `README.md` is surfaced as grounding. This is what "
-          "a grounding tool returns when no `AGENTS.md` ships, so it is the floor AGENTS.md must "
-          "beat. README is written for humans, not models.")
-    print("- **AGENTS.md (grounding tool)** — the curated package grounding, surfaced by a grounding "
-          "tool (NuGet MCP, `dotnet-inspect`, …). The ship gate is read off this column.")
-    print("\n_Rows — the metrics:_")
-    print("- **quality** — pairwise-judge rubric score, 1–5 (higher better).")
-    print("- **func passed** — functional assertions met (build + file + run-output checks); "
-          "100% is the target.")
-    print("- **IET** — Input-Equivalent Tokens = (input − cache-reads) + output; the "
-          "cache-discounted token cost (lower better).")
-    print("- **output tok** — output/thinking tokens (the priciest, most variable component; the "
-          "key frontier-harm signal).")
-    print("- **cost** — premium-request multiplier, cache-discounted (lower better).")
-    print("- **gross tok** — raw input+output incl. cache re-reads (context only; not the bill).")
-    print("- **archaeology (web+cache)** — out-of-sandbox lookups the agent makes to recover "
-          "missing knowledge: web fetch/search **plus** rummaging the local NuGet cache "
-          "(generalizes to any external source — decompiled DLLs, etc.). An informative signal, "
-          "not a hard gate metric; grounding should collapse it toward 0. The **web** portion is "
-          "the hard guard (a grounded run must never resort to the internet).")
-    print("\n> Quality Δ is a **lower bound** — even ungrounded, the baseline can self-ground "
-          "from the restored NuGet cache (README/AGENTS are packed in the nupkg), so it "
-          "understates grounding's value. Starting cache state is not a variable. "
-          "See docs/grounding-eval-methodology.md.\n")
+    model_files = [a["path"] for a in arms if not a["readme"]]
+    if not model_files:
+        print("--card needs at least one AGENTS.md dataset (non-'readme' path)."); return
+    for i, p in enumerate(model_files):
+        if i:
+            print()
+        print_primary(p)
+    print("\n**Legend** — _quality_: pairwise-judge rubric 1–5 (higher better). "
+          "_func passed_: functional assertions met (build+file+run-output), target 100%. "
+          "_IET_: Input-Equivalent Tokens = (input − cache-reads) + output, the cache-discounted "
+          "token cost (lower better). _output tok_: output/thinking tokens (priciest, most "
+          "variable; key frontier-harm signal). _cost_: premium-request multiplier (lower better). "
+          "_archaeology (web+cache)_: out-of-sandbox lookups to recover missing knowledge — web "
+          "fetch/search **plus** local NuGet-cache rummaging; grounding should collapse it to 0, "
+          "and the web portion is a hard guard. _Conclusion_ is a verdict derived from the rows, "
+          "not a metric: **WIN** (mini tier must beat baseline) or **HARM = IET diff** (frontier "
+          "tier must stay under the cap). See docs/grounding-eval-methodology.md.\n")
+    print("> Quality Δ is a **lower bound** — even ungrounded, the baseline self-grounds from the "
+          "restored NuGet cache (README/AGENTS are packed in the nupkg) and the open web, so it "
+          "understates grounding's value.\n")
 
 
 if __name__ == "__main__":
     args = sys.argv[1:]
     if not args:
         print(__doc__); sys.exit(1)
-    if args[0] in ("--card", "--tools-card", "--web-card"):
+    if args[0] in ("--card", "--tools-card", "--web-card", "--model-diff", "--source-diff"):
         rest = args[1:]
         if not rest:
             print(f"{args[0]} needs a results.json path"); sys.exit(1)
@@ -612,7 +623,11 @@ if __name__ == "__main__":
             print_card(files)
         elif args[0] == "--tools-card":
             print_tools_card(files)
-        else:
+        elif args[0] == "--web-card":
             print_web_card(files)
+        elif args[0] == "--model-diff":
+            print_model_diff(files)
+        else:
+            print_source_diff(files)
         sys.exit(0)
     main(args)
