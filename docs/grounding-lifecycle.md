@@ -110,6 +110,8 @@ the card grades, it does **not** decide shipping (that is §1 step 4 / methodolo
 | **NEUTRAL** | success held, no material efficiency win. |
 | **WORSE** | success dropped, the grounded arm did open-web archaeology, or cost/IET/output inflated past the cap. |
 
+**The three cards** — each isolates exactly one comparison:
+
 | Card | Flag | Holds fixed | Varies | Answers |
 | --- | --- | --- | --- | --- |
 | ① **Primary** | `--card` | one model | baseline → AGENTS.md | Does grounding help *this* model? (one card per model, graded BETTER/NEUTRAL/WORSE) |
