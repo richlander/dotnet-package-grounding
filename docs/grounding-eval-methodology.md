@@ -53,9 +53,9 @@ bound*.
 | **qual** | Judge quality, rubric-weighted `overallScore` 1–5. A **value** metric. |
 | **func** | Functional assertions passed (build + file + run-output regex). A **value** metric. The correctness/recovery analog. |
 | **tok** | Gross tokens (`input + output`); `input` *includes* cache reads. Inflated by cache re-reads, so not the harm by itself. |
-| **IET** | **Input-Equivalent Tokens** — cache-excluded effective tokens, `(input − cacheRead) + output`. Our headline cost stick (see `README.md`). `tok` and `iet` bracket the real spend; `cost` sits between. |
+| **IET** | **Input-Equivalent Tokens** — cache-excluded effective tokens, `(input − cacheRead) + output`. Our headline cost stick (see `README.md`) and the **frontier harm number** (§3). Empirically **input-dominated**: output is only ~7–21% of IET, non-cached input ~79–93%, so IET mainly tracks context/read bloat (the likeliest grounding harm). `tok` and `iet` bracket the real spend; `cost` sits between. |
 | **cost** | Premium-request multiplier (cache-discounted). The truest single harm proxy. |
-| **output tok** | Output/thinking tokens. The most expensive, most variable component and the key **frontier-harm** signal (§3). |
+| **output tok** | Output/thinking tokens. The most expensive *per-token* and most variable component. A small share of IET, so kept as its **own visible guard row** (§3) lest an output-only blow-up be masked when input nets down. |
 | **Normative metric** | A quantity we *claim* as value or harm: `qual`, `func`, `tok`, `iet`, `cost`, `secs`. A conclusion may rest only on these. |
 | **Informative signal** | Corroborating behavioral data that *explains* a metric move but is never the claim: `web`, `tools`, `turns`, `cache` (bash rummaging `~/.nuget/packages`), `di`, `mcp`, `bash`. A tool call adds nothing to the bill on its own; many signals together trace the narrative arc (archaeology, cache-reflection, retry loops). |
 | **warm / cold cache** | Whether the package is restored on disk. For build-based scenarios the agent restores it within its first few tool calls, so **starting cache state is not a variable** — treat it as warm (see harness.md). |
@@ -96,21 +96,37 @@ On the mini tier a large cost/IET reduction with quality flat (within the −0.1
 legitimate ship — tokens are cheap, the binding constraint was the model otherwise flailing or
 failing.
 
-### Frontier tier — the HARM (zero tolerance)
+### Frontier tier — the HARM (hard cap, not zero)
 
 The strong model rarely *needs* grounding, so this run does not need a win — it must prove grounding
-**does no damage**. This is the direct analog of "no drop in recovery, no increase in malformed":
+**does no damage**. This is the direct analog of "no drop in recovery, no increase in malformed".
+
+**Harm is a number, not a bool.** The headline harm metric is the **IET diff from baseline**
+(`IET_grounded − IET_baseline`, signed). Harm need not be zero — it carries a **hard cap** (a budget):
+grounding may cost a little more on a model that didn't need it, but not a lot. In practice the diff is
+usually *negative* (grounding makes even the frontier cheaper), so the cap rarely binds — it exists to
+catch a bloated grounding doc. We report the number so harm is *tracked as a quantity*, not collapsed
+to a pass/fail.
 
 | Axis | Threshold |
 | --- | --- |
 | `func` | Δ ≥ 0 — no correctness/recovery drop |
 | `qual` | Δ ≥ −0.1 — no quality regression |
-| **`output tok`** | Δ ≤ +5% — **no output/thinking-token inflation** (the frontier spend harm) |
+| **`IET diff`** | **≤ hard cap** — `IET_grounded − IET_baseline` may not inflate past the budget (**the headline harm number**) |
+| `output tok` | shown as a guard row (see below) — output overspend must be visible even when IET nets out |
 | `web` | grounded **web** calls = 0 (cache peeks allowed) |
 
-The case the gate exists to catch: grounding that *adds* output/thinking tokens for only a *modest*
-quality change on the frontier — pure harm to the tier that didn't need it. A small quality gain
-bought with significant output tokens is a **fail** on the frontier.
+**Why IET, not output-tokens-only.** A natural objection: the harm we most fear is output/thinking
+overspend, so why not gate on output tokens alone? Because in our data **output is *not* the dominant
+share of IET** — it is only ~7–21%; non-cached input is ~79–93% (`IET = (input − cacheRead) + output`,
+and nothing guarantees output dominates). The **most likely grounding-induced harm on a strong model is
+input bloat** — a fat `AGENTS.md`, or one that induces large file reads / extra tool results — and it
+lands on *every* request. An output-only gate would be **blind to exactly that failure mode**. IET
+catches input bloat *and* output overspend, while correctly discounting cache reads (cheap, and any
+cache/input churn it hides reliably shows up in the informative signals — `turns`, `archaeology`,
+flailing). The one tradeoff: because IET is input-dominated, a pure "reasons-in-circles" output blow-up
+could be partly masked if input nets down — so we keep **`output tok` as its own visible guard row**, and
+a small quality gain bought with a large output-token increase is still a **fail**.
 
 > These thresholds are the team's starting line (haiku/opus tiers, n=3). They are tunable in one place
 > — `GATE` in `eng/analyze-6q.py` — and the analyzer applies them automatically per `--card`.
