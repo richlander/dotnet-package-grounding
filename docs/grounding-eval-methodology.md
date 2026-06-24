@@ -143,7 +143,7 @@ a row itself. A dataset whose filename contains `readme` is read as the **README
 
 | Card | Flag | Holds fixed | Varies | Answers |
 | --- | --- | --- | --- | --- |
-| ① **Primary** | `--card` | one model | baseline → AGENTS.md | Does grounding help *this* model? (one card per model; mini ⇒ WIN, frontier ⇒ HARM cap) |
+| ① **Primary** | `--card` | one model | baseline → AGENTS.md | Does grounding help *this* model? (one card per model; mini ⇒ WIN, frontier ⇒ no-harm under cap) |
 | ② **Model-diff** | `--model-diff` | AGENTS.md vs baseline | the model | Where grounding's lift lands — mini WIN vs frontier no-harm — side by side. |
 | ③ **Source-diff** | `--source-diff` | one model, grounding-tool delivery | AGENTS.md vs README.md | Is authoring `AGENTS.md` worth it over the package README floor? |
 

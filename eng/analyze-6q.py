@@ -355,11 +355,18 @@ def _conclusion(base, grnd, tier):
           and base["qual"] is not None else 0.0)
     dfunc = grnd["fp"] - base["fp"]
     if tier == "frontier":
-        ok, iet_harm, _ = gate_frontier(base, grnd)
-        within = iet_harm <= GATE["iet_harm_cap_frac"]
-        return (f"**HARM = IET {iet_harm*100:+.0f}%** vs baseline "
-                f"({'within' if within else 'OVER'} +{GATE['iet_harm_cap_frac']*100:.0f}% cap) "
-                f"— quality Δ {dq:+.2f}, func {dfunc:+d} → "
+        ok, iet_frac, _ = gate_frontier(base, grnd)
+        cap = GATE["iet_harm_cap_frac"]
+        if iet_frac <= 0:
+            harm = (f"**NO HARM** — IET {iet_frac*100:+.0f}% (grounding is *cheaper*), "
+                    f"well within +{cap*100:.0f}% cap")
+        elif iet_frac <= cap:
+            harm = (f"**NO HARM** — IET inflation {iet_frac*100:+.0f}%, "
+                    f"within +{cap*100:.0f}% cap")
+        else:
+            harm = (f"**HARM** — IET inflation {iet_frac*100:+.0f}% "
+                    f"exceeds +{cap*100:.0f}% cap")
+        return (f"{harm} — quality Δ {dq:+.2f}, func {dfunc:+d} → "
                 f"{'✅ PASS' if ok else '❌ FAIL'}")
     ok, _, _ = gate_mini(base, grnd)
     return (f"**{'WIN' if ok else 'NO WIN'}** — IET {iet:+.0f}%, cost {cost:+.0f}%, "
@@ -600,8 +607,9 @@ def print_card(paths):
           "_archaeology (web+cache)_: out-of-sandbox lookups to recover missing knowledge — web "
           "fetch/search **plus** local NuGet-cache rummaging; grounding should collapse it to 0, "
           "and the web portion is a hard guard. _Conclusion_ is a verdict derived from the rows, "
-          "not a metric: **WIN** (mini tier must beat baseline) or **HARM = IET diff** (frontier "
-          "tier must stay under the cap). See docs/grounding-eval-methodology.md.\n")
+          "not a metric: **WIN** (mini tier must beat baseline) or a **NO-HARM check** (frontier "
+          "tier: IET inflation must stay under the cap; a negative IET means grounding is cheaper, "
+          "so there is no harm). See docs/grounding-eval-methodology.md.\n")
     print("> Quality Δ is a **lower bound** — even ungrounded, the baseline self-grounds from the "
           "restored NuGet cache (README/AGENTS are packed in the nupkg) and the open web, so it "
           "understates grounding's value.\n")

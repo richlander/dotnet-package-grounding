@@ -40,7 +40,7 @@ already knows this package — **do not author grounding**. Grounding is justifi
 3. **Evaluate both tiers, n ≥ 3:**
    - **mini** (e.g. `claude-haiku-4.5`) — the tier that *needs* grounding; you are looking for a **WIN**.
    - **frontier** (e.g. `claude-opus-4.8`) — the tier that doesn't; you are checking for **no HARM**.
-4. **Read the cards** (§4). Ship only if the **mini WIN** gate and the **frontier HARM cap** both pass
+4. **Read the cards** (§4). Ship only if the **mini WIN** gate and the **frontier no-harm check** (IET inflation under the cap) both pass
    (thresholds in methodology §3).
 5. **Open the PR** using `.github/PULL_REQUEST_TEMPLATE.md`. Paste the four cards into *Metrics*, link
    this playbook and the methodology, and give one representative before/after.
@@ -89,7 +89,7 @@ verdict *derived from* the rows, not a row itself.
 
 | Card | Flag | Holds fixed | Varies | Answers |
 | --- | --- | --- | --- | --- |
-| ① **Primary** | `--card` | one model | baseline → AGENTS.md | Does grounding help *this* model? (one card per model; mini = WIN, frontier = HARM cap) |
+| ① **Primary** | `--card` | one model | baseline → AGENTS.md | Does grounding help *this* model? (one card per model; mini = WIN, frontier = no-harm under cap) |
 | ② **Model-diff** | `--model-diff` | AGENTS.md vs baseline | the model | Where does grounding's lift land — mini WIN vs frontier no-harm — side by side. |
 | ③ **Source-diff** | `--source-diff` | one model, grounding-tool delivery | AGENTS.md vs README.md | Is authoring `AGENTS.md` worth it over the package README floor? |
 
