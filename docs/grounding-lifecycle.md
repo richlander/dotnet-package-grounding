@@ -44,7 +44,7 @@ already knows this package — **do not author grounding**. Grounding is justifi
    rubric for every model — the card grades, it doesn't decide). Apply the higher-level ship rule
    (methodology §3): **require BETTER on the mini tier** (it needs grounding) and **merely not-WORSE on
    the frontier tier** (a frontier BETTER is a welcome bonus). Ship only if both hold.
-5. **Complete the README too (if the package has one).** The source-diff card (③) is a **usability test
+5. **Complete the README too (if the package has one).** The source-diff card is a **usability test
    of the README**: any question its arm fails, or archaeology it forces, is a README bug. Fix the README
    **in this PR**, using the finished `AGENTS.md` as the checklist of facts it must cover (human prose —
    not token-optimized; authoring-principles §2c), and re-run to confirm it also reaches success + 0
@@ -70,7 +70,7 @@ Trigger an update when the package's API changes, the README is rewritten, the m
 knowledge shifts, or a new trap appears. The operation is the same as CREATE plus one extra question:
 
 - **Re-run the matched matrix** (mini + frontier, AGENTS + README).
-- **Read the source-diff card** (③) — a **usability test of the README** (AGENTS.md vs README.md, both via
+- **Read the source-diff card** — a **usability test of the README** (AGENTS.md vs README.md, both via
   the grounding tool, baseline removed). Any question the README arm fails, or archaeology it forces, is a
   README bug to fix here too. Once the README is complete, AGENTS's remaining edge is efficiency/retrieval —
   if even that edge has vanished (the README now carries the same knowledge as cheaply), the curated file
@@ -124,16 +124,16 @@ the card grades, it does **not** decide shipping (that is §1 step 4 / methodolo
 
 | Card | Flag | Holds fixed | Varies | Answers |
 | --- | --- | --- | --- | --- |
-| ① **Primary** | `--card` | one model | baseline → AGENTS.md | Does grounding help *this* model? (one card per model, graded BETTER/NEUTRAL/WORSE) |
-| ② **Model-diff** | `--model-diff` | AGENTS.md vs baseline | the model | Does the grade hold across tiers — side by side. |
-| ③ **Source-diff** | `--source-diff` | one model, grounding-tool delivery | AGENTS.md vs README.md | A **usability test of the README** (not a floor to beat): does the README also answer every question with 0 archaeology? Its failures are bugs to fix in the same PR; once it's complete, AGENTS's edge is efficiency/retrieval. |
+| **Primary** | `--card` | one model | baseline → AGENTS.md | Does grounding help *this* model? (one card per model, graded BETTER/NEUTRAL/WORSE) |
+| **Model-diff** | `--model-diff` | AGENTS.md vs baseline | the model | Does the grade hold across tiers — side by side. |
+| **Source-diff** | `--source-diff` | one model, grounding-tool delivery | AGENTS.md vs README.md | A **usability test of the README** (not a floor to beat): does the README also answer every question with 0 archaeology? Its failures are bugs to fix in the same PR; once it's complete, AGENTS's edge is efficiency/retrieval. |
 
 ```bash
-# ① primary, one card per model
+# primary, one card per model
 python3 eng/analyze-6q.py --card data/<unit>-6q/<unit>.n3.haiku.json data/<unit>-6q/<unit>.n3.opus.json
-# ② model-diff (AGENTS lift, models side by side)
+# model-diff (AGENTS lift, models side by side)
 python3 eng/analyze-6q.py --model-diff data/<unit>-6q/<unit>.n3.haiku.json data/<unit>-6q/<unit>.n3.opus.json
-# ③ source-diff (AGENTS − README, one model)
+# source-diff (AGENTS − README, one model)
 python3 eng/analyze-6q.py --source-diff data/<unit>-6q/<unit>.n3.haiku.json data/<unit>-6q/<unit>-readme.n3.haiku.json
 ```
 

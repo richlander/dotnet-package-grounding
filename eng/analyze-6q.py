@@ -338,7 +338,7 @@ def _grade(base, grnd):
     return f"**NEUTRAL** — no material change ({tail})"
 
 def print_primary(path):
-    """① Primary card — one model, Baseline vs AGENTS.md (the grounding tool). The data."""
+    """Primary card — one model, Baseline vs AGENTS.md (the grounding tool). The data."""
     a = _load_arm(path)
     base = a["agg"]["baseline"]; grnd = a["agg"]["skilledPlugin"]
     sn = a["sn"]; gtok = grounding_tokens(sn)
@@ -356,7 +356,7 @@ def print_primary(path):
 
 
 def print_model_diff(paths):
-    """② Model-diff card — columns = models, value = AGENTS lift over baseline per metric.
+    """Model-diff card — columns = models, value = AGENTS lift over baseline per metric.
     Shows whether the grounding effect holds across tiers."""
     arms = [a for a in (_load_arm(p) for p in paths) if not a["readme"]]
     # mini first, then frontier; stable within tier by model name
@@ -378,7 +378,7 @@ def print_model_diff(paths):
 
 
 def print_source_diff(paths):
-    """③ Source-diff card — one model, single column = the benefit AGENTS.md adds over
+    """Source-diff card — one model, single column = the benefit AGENTS.md adds over
     README.md (both surfaced via the grounding tool). Is AGENTS worth authoring?"""
     arms = [_load_arm(p) for p in paths]
     agents = next((a for a in arms if not a["readme"]), None)
@@ -553,7 +553,7 @@ def print_web_card(paths, topn=10):
 
 
 def print_card(paths):
-    """① Primary card(s). Renders one Baseline-vs-AGENTS.md card per non-README model
+    """Primary card(s). Renders one Baseline-vs-AGENTS.md card per non-README model
     dataset (README datasets are ignored here — see --source-diff). A shared legend follows."""
     arms = [_load_arm(p) for p in paths]
     model_files = [a["path"] for a in arms if not a["readme"]]

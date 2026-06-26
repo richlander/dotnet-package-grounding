@@ -1,12 +1,14 @@
-// Comments provide context and instructions; they are not included in the final PR
-// Start with a terse list of changes; Some example changes may not apply at all or as worded
-// All the data is examples.
+<!--
+Comments provide context and instructions; they are not included in the final PR.
+Start with a terse list of changes; some example changes may not apply, or apply differently.
+The metric data below is an example (NuGetFetch).
+-->
 
 - Adds/Improves `AGENTS.md` grounding information
-- Improves `README.md` per grounding evaluation
-- Grounding test tasks
+- Improves `README.md` per grounding evaluation ([usability gaps](<readme-issue>))
+- Grounding test tasks — the questions this change is gated on: [`tests/<unit>/eval.yaml`](<eval-link>)
 - Updated version `x` -> `y`
-- Evaluated content with [richlander/dotnet-package-grounding@3bd9749](https://github.com/richlander/dotnet-package-grounding/commit/3bd97493174063c38fd87937642cf17f05c1b09c)
+- Evaluated content with [richlander/dotnet-package-grounding@`<commit>`](https://github.com/richlander/dotnet-package-grounding/commit/<commit>)
 
 ## Metrics
 
@@ -22,10 +24,7 @@ Grounding effectiveness is read off **three single-variable cards**, which were 
 
 > does grounding help *this* model?
 
-- Baseline: no grounding
-- AGENTS.md: `AGENTS.md` (~<tok>, via grounding tool)
-- Evaluation model: `claude-haiku-4.5`
-- Judge model: `claude-haiku-4.5`
+_`claude-haiku-4.5` · baseline (no grounding) vs `AGENTS.md` (~<tok>) · judge `claude-haiku-4.5`_
 
 | Metric | Baseline | AGENTS.md |
 | --- | ---: | ---: |
@@ -38,10 +37,7 @@ Grounding effectiveness is read off **three single-variable cards**, which were 
 
 > **Conclusion:** **BETTER** — success 6/6 vs 5/6, resourcefulness 35→0, IET -44%, cost -71%.
 
-- Baseline: no grounding
-- AGENTS.md: `AGENTS.md` (~<tok>, via grounding tool)
-- Evaluation model: `claude-opus-4.8`
-- Judge model: `claude-haiku-4.5`
+_`claude-opus-4.8` · baseline (no grounding) vs `AGENTS.md` (~<tok>) · judge `claude-haiku-4.5`_
 
 | Metric | Baseline | AGENTS.md |
 | --- | ---: | ---: |
@@ -76,12 +72,7 @@ Note: each cell is the change vs that model's own baseline — correctness up, r
 
 > Is `AGENTS.md` effective relative to the existing `README.md`; also, should `README.md` be improved?
 
-- README.md: the package `README.md` (via grounding tool — typically far larger than `AGENTS.md`)
-- AGENTS.md: `AGENTS.md` (~<tok>, via grounding tool)
-- Evaluation model: `claude-haiku-4.5`
-- Judge model: `claude-haiku-4.5`
-
-_`claude-haiku-4.5` · Both surfaced via the grounding tool; baseline removed. Single column = AGENTS.md change vs README.md (− = AGENTS cheaper on cost metrics, + on success/func, lower resourcefulness = AGENTS more self-sufficient). The README is co-tested here as a usability artifact._
+_`claude-haiku-4.5` · `AGENTS.md` (~<tok>) vs the package `README.md` (typically far larger), both via the grounding tool, baseline removed · judge `claude-haiku-4.5`. Single column = AGENTS.md − README.md (− = AGENTS cheaper on cost, + on success/func, lower resourcefulness = more self-sufficient). The README is co-tested here as a usability artifact._
 
 | Metric | AGENTS.md − README.md |
 | --- | ---: |
@@ -95,6 +86,15 @@ _`claude-haiku-4.5` · Both surfaced via the grounding tool; baseline removed. S
 > **Conclusion:** **BETTER** — success 6/6 vs 4/6, resourcefulness 0→0, IET -4%, cost +7% _(README arm is co-tested for usability, not a floor to beat)._
 
 Note: `README.md` acts as the baseline; rows show the difference and the end state (same higher/lower targets apply). A `README.md` that cannot be used to answer all test questions is a signal to improve that file. When a strong `README.md` exists, `AGENTS.md` should win on efficiency, not correctness.
+
+## Analysis
+
+<!-- One line: what grounding actually changes. State it from the transcripts, not a guess. -->
+Grounding eliminates the resourcefulness (cache/web archaeology) the agent otherwise spends to reach the *same* correct API; on the weak tier it also rescues scenarios the ungrounded model fails.
+
+## Caveats
+
+The baseline self-grounds from the restored NuGet cache (README/AGENTS ship in the nupkg), so its resourcefulness is a **lower bound** — grounding's advantage is understated. Cache state is not a variable.
 
 ## Validation
 
@@ -113,5 +113,6 @@ python3 eng/analyze-6q.py --source-diff  data/<unit>-6q/<unit>.n3.haiku.json dat
 
 ## Grounding resources
 
+- Test questions: [`tests/<unit>/eval.yaml`](<eval-link>) · Datasets: `data/<unit>-6q/` (committed for `--baseline-from` reuse)
 - Methodology: [grounding-eval-methodology.md](https://github.com/richlander/dotnet-package-grounding/blob/main/docs/grounding-eval-methodology.md)
 - Lifecycle playbook: [grounding-lifecycle.md](https://github.com/richlander/dotnet-package-grounding/blob/main/docs/grounding-lifecycle.md)

@@ -118,7 +118,7 @@ the model's ignorance — the minimal non-resident set (§1). That dictates the 
 
 1. **Author `AGENTS.md` first**, additively from the empty baseline, until it reaches full **success with
    zero archaeology**. It is now a verified checklist of *exactly* the facts the model lacked.
-2. **Then run the README arm** (source-diff card ③). Any question the README-grounded agent fails, or any
+2. **Then run the README arm** (the source-diff card). Any question the README-grounded agent fails, or any
    archaeology it forces, is a **README usability bug** — *if an AI given only the README can't answer it,
    an untrained human can't either.*
 3. **Fix the README in the same PR**, using the finished `AGENTS.md` as the checklist of facts it must

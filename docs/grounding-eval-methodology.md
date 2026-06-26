@@ -26,7 +26,7 @@ for NuGetFetch, M1–M6 for Markout). Each scenario runs three **arms**:
 
 The grounded arms can be run with **either** grounding source: `AGENTS.md` (the curated grounding) or
 the package `README.md` (the **fallback** a grounding tool surfaces when no `AGENTS.md` ships). Running
-both feeds the **source-diff card** (③ in §4), which isolates `AGENTS.md − README.md` as a **usability
+both feeds the **source-diff card** (§4), which isolates `AGENTS.md − README.md` as a **usability
 test of the README**: if the README arm fails questions or forces archaeology, those are README bugs to
 fix; and if a *complete* README already clears the gate as cheaply, the curated `AGENTS.md` isn't earning
 its place.
@@ -172,21 +172,21 @@ filename contains `readme` is read as the **README arm**.
 
 | Card | Flag | Holds fixed | Varies | Answers |
 | --- | --- | --- | --- | --- |
-| ① **Primary** | `--card` | one model | baseline → AGENTS.md | Does grounding help *this* model? (one card per model, graded BETTER/NEUTRAL/WORSE) |
-| ② **Model-diff** | `--model-diff` | AGENTS.md vs baseline | the model | Does the grade hold across tiers — side by side. |
-| ③ **Source-diff** | `--source-diff` | one model, grounding-tool delivery | AGENTS.md vs README.md | A **usability test of the README** (not a floor to beat): does the README also answer every question with 0 archaeology? README failures are bugs to **fix in the same PR**. Once the README is complete, AGENTS's edge narrows to efficiency/retrieval. |
+| **Primary** | `--card` | one model | baseline → AGENTS.md | Does grounding help *this* model? (one card per model, graded BETTER/NEUTRAL/WORSE) |
+| **Model-diff** | `--model-diff` | AGENTS.md vs baseline | the model | Does the grade hold across tiers — side by side. |
+| **Source-diff** | `--source-diff` | one model, grounding-tool delivery | AGENTS.md vs README.md | A **usability test of the README** (not a floor to beat): does the README also answer every question with 0 archaeology? README failures are bugs to **fix in the same PR**. Once the README is complete, AGENTS's edge narrows to efficiency/retrieval. |
 
 ```bash
-# ① primary, one card per model
+# primary, one card per model
 python3 eng/analyze-6q.py --card data/<unit>-6q/<unit>.n3.haiku.json data/<unit>-6q/<unit>.n3.opus.json
-# ② model-diff (AGENTS lift, models side by side)
+# model-diff (AGENTS lift, models side by side)
 python3 eng/analyze-6q.py --model-diff data/<unit>-6q/<unit>.n3.haiku.json data/<unit>-6q/<unit>.n3.opus.json
-# ③ source-diff (AGENTS − README, one model — usually the mini tier)
+# source-diff (AGENTS − README, one model — usually the mini tier)
 python3 eng/analyze-6q.py --source-diff data/<unit>-6q/<unit>.n3.haiku.json data/<unit>-6q/<unit>-readme.n3.haiku.json
 ```
 
-**Paste the cards verbatim** into the PR's *Metrics* section. The PR carries four: ① primary (mini), ①
-primary (frontier), ② model-diff, ③ source-diff (mini). Example (NuGetFetch, mini primary):
+**Paste the cards verbatim** into the PR's *Metrics* section. The PR carries four: primary (mini), primary
+(frontier), model-diff, source-diff (mini). Example (NuGetFetch, mini primary):
 
 ```
 ### Grounding eval — nugetfetch · `claude-haiku-4.5`
