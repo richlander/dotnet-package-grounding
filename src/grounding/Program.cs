@@ -21,17 +21,22 @@ var noTitleOpt = new Option<bool>("--no-title")
 {
     Description = "Omit the ### heading; fold the model into the italic descriptor.",
 };
+// Legacy flag aliases (analyze-6q.py compatibility): --card / --model-diff / etc.
+var legacy = new[] { "card", "model-diff", "source-diff", "tools-card", "web-card" }
+    .ToDictionary(v => v, v => new Option<bool>($"--{v}") { Description = $"Alias for --view {v}." });
 
 var analyze = new Command("analyze", "Render metric cards / tables from results.json.")
 {
     filesArg, viewOpt, noTitleOpt,
 };
+foreach (var o in legacy.Values) analyze.Options.Add(o);
 analyze.SetAction(parse =>
 {
     var files = FileArgs.Expand(parse.GetValue(filesArg) ?? Array.Empty<string>());
     if (files.Count == 0) { Console.Error.WriteLine("analyze: no input files."); return 1; }
     var cards = new Cards { NoTitle = parse.GetValue(noTitleOpt) };
-    switch (parse.GetValue(viewOpt))
+    var view = legacy.FirstOrDefault(kv => parse.GetValue(kv.Value)).Key ?? parse.GetValue(viewOpt);
+    switch (view)
     {
         case "card": cards.Card(files); break;
         case "model-diff": cards.ModelDiff(files); break;

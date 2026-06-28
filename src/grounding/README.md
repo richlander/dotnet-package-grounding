@@ -1,45 +1,56 @@
 # grounding — eval orchestration & analysis (C#)
 
-A single Native-AOT CLI that ports the repo's Python/shell tooling. It drives the
-external `skill-validator` harness and renders the grounding metric cards.
+A single Native-AOT CLI that ports this repo's Python/shell tooling. It drives the
+external `skill-validator` harness and renders the grounding metric cards. The eval
+engine (`skill-validator`) stays external; build it once via `eng/run-evals.sh`.
 
 Build / run:
 
 ```bash
 dotnet build src/grounding -c Release
 dotnet src/grounding/bin/Release/net11.0/grounding.dll --help
-# or publish a native binary:
-dotnet publish src/grounding -c Release -r osx-arm64   # -> .../publish/grounding
+eng/grounding --help            # launcher: builds once, then forwards args
+dotnet publish src/grounding -c Release -r osx-arm64   # native binary -> publish/grounding
 ```
 
-## analyze — metric cards from results.json
+## Commands
 
-```bash
-grounding analyze <results.json...>                 # raw per-scenario table
-grounding analyze -v card        a.json b.json      # primary cards + legend
-grounding analyze -v model-diff  haiku.json opus.json
-grounding analyze -v source-diff agents.json readme.json   # 'readme' in the filename = README arm
-grounding analyze -v card --no-title a.json         # omit ### heading (for embedding)
-```
+| Command | Replaces | Notes |
+| --- | --- | --- |
+| `analyze <results.json...>` | `eng/analyze-6q.py` | default = raw table |
+| `analyze --card / --model-diff / --source-diff / --tools-card / --web-card` | `analyze-6q.py --card …` | also `-v <view>`; `--no-title` supported |
+| `run <unit> --source agents\|readme\|none` | `eng/run-nugetfetch-6q.sh` | README/AGENTS/nothing toggle; `--dry-run`, `--emit-skill` |
+| `sync-skill [--check]` | `eng/sync-skill.sh` | regenerate `grounding/<unit>/SKILL.md` |
+| `gen-plugins` | `eng/gen-plugins.sh` | expand `plugin.json.in` |
+| `rescore <model=path>… [--w N]` | `eng/rescore.py` | IET rubric, Pareto gate |
+| `rescore --all` | `eng/rescore_all.py` | batch over `.skill-validator-results/` |
+| `channels extract [dir]` | `eng/extract-channels.py` | default dir `data/markout` |
+| `channels compare` | `eng/compare-channels.py` | cross-channel IET (data/markout) |
+| `mcp` | `grounding/_mcp/grounding_mcp.py` | stdio JSON-RPC server (`GROUNDING_GATE`) |
 
-Output is byte-for-byte identical to the legacy `eng/analyze-6q.py`.
+Every command's output is verified byte-for-byte (or, for `mcp`, semantically
+JSON-identical) against its Python/bash original.
 
-## run — test a unit with README / AGENTS / nothing
+## Source toggle (README / AGENTS / nothing)
 
-`--source` is the first-class toggle for *what fills the grounded arm*:
+`run --source` is the first-class toggle for *what fills the grounded arm*:
 
 ```bash
 grounding run nugetfetch --source agents --model "claude-haiku-4.5 claude-opus-4.8" --runs 3
-grounding run nugetfetch --source readme --readme-file path/to/README.md   # README arm
-grounding run nugetfetch --source none                                     # empty grounding
-grounding run nugetfetch --source agents --dry-run                         # print the plan only
-grounding run nugetfetch --source agents --emit-skill /tmp/SKILL.md        # inspect generated SKILL.md
+grounding run nugetfetch --source readme --readme-file path/to/README.md
+grounding run nugetfetch --source none
+grounding run nugetfetch --source agents --dry-run      # print the plan only
+grounding run nugetfetch --source agents --emit-skill /tmp/SKILL.md
 ```
 
 `run` reversibly swaps `grounding/<unit>/SKILL.md` to the chosen source, invokes
 `skill-validator`, copies `results.json` into `data/<unit>-6q/<tag>.json`
 (`<unit>` / `<unit>-readme` / `<unit>-none`), restores `SKILL.md`, then prints the
-table. The `agents` SKILL.md it generates matches `eng/sync-skill.sh` exactly.
+table.
 
-The eval engine (`skill-validator`) stays external; build it once via
-`eng/run-evals.sh`.
+## Migration
+
+The legacy `eng/*.py` / `eng/*.sh` tools are now thin shims that delegate to this
+CLI via `eng/grounding`, so existing callers and docs keep working unchanged. The
+implementations live here. (`grounding/_mcp/grounding_mcp.py` is retained while the
+MCP eval units still reference it directly; `grounding mcp` is the C# equivalent.)
