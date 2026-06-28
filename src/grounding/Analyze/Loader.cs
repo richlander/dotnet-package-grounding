@@ -10,7 +10,8 @@ internal sealed class ArmRow
     public int Fp, Ft;            // functional assertions passed / total
     public bool WebUsed;          // any reject-tools assertion failed
     public int Web, Di, Mcp, Cache, Bash;
-    public int? Tools, Turns;
+    public double? Tools;
+    public int? Turns;
     public long Tok, Iet, Out;
     public double Cost;           // rounded to 1 decimal, like Python (for aggregation)
     public string CostDisplay = ""; // raw-table cell, preserving JSON int/float type

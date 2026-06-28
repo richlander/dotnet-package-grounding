@@ -13,10 +13,10 @@ var filesArg = new Argument<string[]>("files")
 };
 var viewOpt = new Option<string>("--view", "-v")
 {
-    Description = "table | card | model-diff | source-diff",
+    Description = "table | card | model-diff | source-diff | tools-card | web-card",
     DefaultValueFactory = _ => "table",
 };
-viewOpt.AcceptOnlyFromAmong("table", "card", "model-diff", "source-diff");
+viewOpt.AcceptOnlyFromAmong("table", "card", "model-diff", "source-diff", "tools-card", "web-card");
 var noTitleOpt = new Option<bool>("--no-title")
 {
     Description = "Omit the ### heading; fold the model into the italic descriptor.",
@@ -36,6 +36,8 @@ analyze.SetAction(parse =>
         case "card": cards.Card(files); break;
         case "model-diff": cards.ModelDiff(files); break;
         case "source-diff": cards.SourceDiff(files); break;
+        case "tools-card": cards.ToolsCard(files); break;
+        case "web-card": cards.WebCard(files); break;
         default: cards.Table(files); break;
     }
     return 0;
@@ -93,6 +95,67 @@ run.SetAction(parse =>
     return Runner.Run(opts);
 });
 root.Subcommands.Add(run);
+
+// ---- sync-skill ---------------------------------------------------------
+var checkOpt = new Option<bool>("--check")
+{
+    Description = "Fail if any SKILL.md is stale instead of writing (for CI).",
+};
+var syncSkill = new Command("sync-skill", "Regenerate grounding/<unit>/SKILL.md from AGENTS.md.")
+{
+    checkOpt,
+};
+syncSkill.SetAction(parse => Grounding.Codegen.Codegen.SyncSkill(parse.GetValue(checkOpt)));
+root.Subcommands.Add(syncSkill);
+
+// ---- gen-plugins --------------------------------------------------------
+var genPlugins = new Command("gen-plugins", "Expand grounding/**/plugin.json.in into plugin.json.");
+genPlugins.SetAction(_ => Grounding.Codegen.Codegen.GenPlugins());
+root.Subcommands.Add(genPlugins);
+
+// ---- rescore ------------------------------------------------------------
+var specsArg = new Argument<string[]>("specs")
+{
+    Description = "model=path specs (path is a results.json or its dir). Omit with --all.",
+    Arity = ArgumentArity.ZeroOrMore,
+};
+var wOpt = new Option<double>("--w")
+{
+    Description = "Output-token IET weight (5 Anthropic / 6 OpenAI).",
+    DefaultValueFactory = _ => 5.0,
+};
+var allOpt = new Option<bool>("--all")
+{
+    Description = "Batch-rescore every .skill-validator-results/*/results.json.",
+};
+var rescore = new Command("rescore", "Re-score skill-validator results under the IET rubric.")
+{
+    specsArg, wOpt, allOpt,
+};
+rescore.SetAction(parse =>
+{
+    var w = parse.GetValue(wOpt);
+    if (parse.GetValue(allOpt))
+        return Grounding.Rescore.Rescore.All(w);
+    return Grounding.Rescore.Rescore.Single(parse.GetValue(specsArg) ?? Array.Empty<string>(), w);
+});
+root.Subcommands.Add(rescore);
+
+// ---- channels -----------------------------------------------------------
+var channels = new Command("channels", "Delivery-channel matrix (Markout study).");
+var taskDirArg = new Argument<string>("task-dir")
+{
+    Description = "data/<task> directory.",
+    DefaultValueFactory = _ => "data/markout",
+    Arity = ArgumentArity.ZeroOrOne,
+};
+var extract = new Command("extract", "Per-model channel matrix from data/<task>/*.json.") { taskDirArg };
+extract.SetAction(parse => Grounding.Channels.Channels.Extract(parse.GetValue(taskDirArg)!));
+channels.Subcommands.Add(extract);
+var compare = new Command("compare", "Cross-channel IET comparison (data/markout).");
+compare.SetAction(_ => Grounding.Channels.Channels.Compare());
+channels.Subcommands.Add(compare);
+root.Subcommands.Add(channels);
 
 root.SetAction(_ =>
 {

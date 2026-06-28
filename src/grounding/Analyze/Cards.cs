@@ -6,7 +6,7 @@ using static Grounding.Analyze.Metrics;
 namespace Grounding.Analyze;
 
 // Port of analyze-6q.py renderers. Output is matched byte-for-byte.
-internal sealed class Cards
+internal sealed partial class Cards
 {
     private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
     private readonly TextWriter _o = Console.Out;
@@ -218,8 +218,7 @@ internal sealed class Cards
         sb.Append(PadL(r.Secs.ToString(Inv), 4)).Append(" \u2016 ");
         sb.Append(PadL(web, 3)).Append(" | ");
         sb.Append(PadL(Str(r.Tools), 5)).Append(" | ");
-        sb.Append(PadL(Str(r.Turns), 4)).Append(" | ");
-        sb.Append(PadL(r.Di.ToString(Inv), 2)).Append(" | ");
+        sb.Append(PadL(Str(r.Turns), 4)).Append(" | ");        sb.Append(PadL(r.Di.ToString(Inv), 2)).Append(" | ");
         sb.Append(PadL(r.Mcp.ToString(Inv), 3)).Append(" | ");
         sb.Append(PadL(r.Cache.ToString(Inv), 5)).Append(" | ");
         sb.Append(PadL(r.Bash.ToString(Inv), 4));
@@ -227,6 +226,7 @@ internal sealed class Cards
     }
 
     private static string Str(int? v) => v?.ToString(Inv) ?? "?";
+    private static string Str(double? v) => v?.ToString(Inv) ?? "?";
     private static string Pad(string s, int w) => s.Length >= w ? s : s + new string(' ', w - s.Length);
     private static string PadL(string s, int w) => s.Length >= w ? s : new string(' ', w - s.Length) + s;
 }

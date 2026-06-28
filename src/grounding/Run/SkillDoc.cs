@@ -86,5 +86,14 @@ internal sealed class SkillDoc
         return sb.ToString();
     }
 
-    public int BodyLineCount => Body.Length == 0 ? 0 : Body.TrimEnd('\n').Split('\n').Length;
+    // grep -c '' on the body: number of newlines (body always ends with one).
+    public int BodyLineCount
+    {
+        get
+        {
+            if (Body.Length == 0) return 0;
+            var n = Body.Count(c => c == '\n');
+            return Body.EndsWith('\n') ? n : n + 1;
+        }
+    }
 }
