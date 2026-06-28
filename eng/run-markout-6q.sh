@@ -44,7 +44,7 @@ BIN=$(ls -d .tools/skill-validator-*/skill-validator 2>/dev/null | head -1)
 # Units that participate, and the arm each contributes to the 4-arm matrix.
 UNITS=("markout-broadskill" "markout-realmcp" "prefer-dotnet-inspect")
 
-./eng/gen-plugins.sh >/dev/null
+./eng/grounding gen-plugins >/dev/null
 
 OUT="data/markout-6q"; mkdir -p "$OUT"
 short() { case "$1" in *opus*) echo opus;; *haiku*) echo haiku;; *sonnet*) echo sonnet;; *) echo "$1";; esac; }

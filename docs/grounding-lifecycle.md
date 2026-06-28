@@ -35,8 +35,8 @@ already knows this package — **do not author grounding**. Grounding is justifi
 1. **Write `grounding/<unit>/AGENTS.md`.** Body ≤ `eng/agents-line-limit.txt` lines. Describe only the
    trap and the correct path; skip anything the model already knows. See
    [`authoring-principles.md`](./authoring-principles.md).
-2. **Sync the wrapper:** `eng/sync-skill.sh` regenerates `SKILL.md` (harness toggle only — never
-   hand-edit it). `eng/sync-skill.sh --check` must pass.
+2. **Sync the wrapper:** `grounding sync-skill` regenerates `SKILL.md` (harness toggle only — never
+   hand-edit it). `grounding sync-skill --check` must pass.
 3. **Evaluate both tiers, n ≥ 3:**
    - **mini** (e.g. `claude-haiku-4.5`) — the tier that *needs* grounding.
    - **frontier** (e.g. `claude-opus-4.8`) — the tier that doesn't.
@@ -95,7 +95,7 @@ Deletion is also a claim and needs evidence:
 
 ## 4. EVALUATE — the three cards
 
-All operations are decided off `eng/analyze-6q.py`. It emits **three single-variable cards**, each
+All operations are decided off `grounding analyze`. It emits **three single-variable cards**, each
 isolating exactly one comparison so the data is trivial to read. Every card shows the same metric rows
 and a **Conclusion** — a single **uniform, model-independent grade** of grounding's effect vs baseline,
 on **objective axes** (no judge-quality diff; see methodology §7). The same rubric grades every model;
@@ -130,11 +130,11 @@ the card grades, it does **not** decide shipping (that is §1 step 4 / methodolo
 
 ```bash
 # primary, one card per model
-python3 eng/analyze-6q.py --card data/<unit>-6q/<unit>.n3.haiku.json data/<unit>-6q/<unit>.n3.opus.json
+grounding analyze --card data/<unit>-6q/<unit>.n3.haiku.json data/<unit>-6q/<unit>.n3.opus.json
 # model-diff (AGENTS lift, models side by side)
-python3 eng/analyze-6q.py --model-diff data/<unit>-6q/<unit>.n3.haiku.json data/<unit>-6q/<unit>.n3.opus.json
+grounding analyze --model-diff data/<unit>-6q/<unit>.n3.haiku.json data/<unit>-6q/<unit>.n3.opus.json
 # source-diff (AGENTS − README, one model)
-python3 eng/analyze-6q.py --source-diff data/<unit>-6q/<unit>.n3.haiku.json data/<unit>-6q/<unit>-readme.n3.haiku.json
+grounding analyze --source-diff data/<unit>-6q/<unit>.n3.haiku.json data/<unit>-6q/<unit>-readme.n3.haiku.json
 ```
 
 A dataset whose filename contains `readme` is automatically read as the **README arm**. The mini tier
@@ -147,7 +147,7 @@ safety check.
 
 Same artifact list and reviewer checklist as methodology §5–§6:
 
-- `grounding/<unit>/AGENTS.md` (within the line limit) + regenerated `SKILL.md` (`sync-skill.sh --check`).
+- `grounding/<unit>/AGENTS.md` (within the line limit) + regenerated `SKILL.md` (`grounding sync-skill --check`).
 - Matched n ≥ 3 datasets for **both** tiers under `data/<unit>-6q/`.
 - The four cards pasted into *Metrics*, matching the committed datasets.
 - An **Analysis** of what grounding changes (typically eliminating the *resourcefulness* the agent spends

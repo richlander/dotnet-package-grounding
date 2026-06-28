@@ -33,7 +33,7 @@ its place.
 
 A pairwise LLM judge scores rubric quality; the harness also records tokens, cost, tool calls, and
 assertion pass/fail. Mechanics live in [`harness.md`](./harness.md). We read results with
-`eng/analyze-6q.py` (full table) or `eng/analyze-6q.py --card` (the PR dump, §4).
+`grounding analyze` (full table) or `grounding analyze --card` (the PR dump, §4).
 
 **Why grounded must be compared carefully.** The baseline is *not* a clean "model ignorance" control:
 a package's `README.md`/`AGENTS.md` are packed inside its nupkg, so any `dotnet build` restores them
@@ -49,7 +49,7 @@ bound*.
 | Term | Meaning here |
 | --- | --- |
 | **Grounding** | A compact, package-specific `AGENTS.md` that ships in the package root and makes the package self-teaching for an agent. Records only what the model is *proven to lack* — not model-resident knowledge. |
-| **`AGENTS.md` vs `SKILL.md`** | `AGENTS.md` is the source of truth (it ships in the package). `SKILL.md` is generated from it by `eng/sync-skill.sh` purely so the harness can toggle grounding on/off. Never hand-edit `SKILL.md`. |
+| **`AGENTS.md` vs `SKILL.md`** | `AGENTS.md` is the source of truth (it ships in the package). `SKILL.md` is generated from it by `grounding sync-skill` purely so the harness can toggle grounding on/off. Never hand-edit `SKILL.md`. |
 | **isolated / plugin → "grounding tool"** | The two grounded delivery channels the harness simulates. **plugin** (auto-loaded) is closest to a packed `AGENTS.md` that is always present — it stands in for any **grounding tool** (packed `AGENTS.md`, NuGet MCP, `dotnet-inspect`), so the ship gate is evaluated on it and ship cards label it **"Grounding tool"**. **isolated** is a research-only diagnostic, omitted from cards. |
 | **resourcefulness (archaeology)** | Out-of-sandbox lookups the agent must make to recover API knowledge that grounding would supply inline — web fetch/search **plus** local NuGet-cache rummaging / decompiling DLLs. Measured **objectively** from the timeline (not the judge). **High = the agent had to be resourceful; grounding's job is to drive it to 0, so lower is the win, not a loss.** Cards show it as one **resourcefulness (archaeology)** row; the **web** portion alone is a hard gate guard (a grounded run must never resort to the internet). |
 | **success** | A scenario is **solved** for an arm iff every functional assertion passes **and** the judge's overall quality clears the **≥4 floor** ("meets expectations"). Reported per arm as a rate (e.g. `6/6`). The headline **value** metric. The judge's 1–5 score enters **only** as this pass/fail floor — its subjective 4→5 top band is discarded (see §7). |
@@ -152,13 +152,13 @@ could be partly masked if input nets down — so we keep **`output tok` as its o
 a small efficiency gain bought with a large output-token increase is still a **fail**.
 
 > These thresholds are the team's starting line (haiku/opus tiers, n=3). They are tunable in one place
-> — `GATE` in `eng/analyze-6q.py` — and the analyzer applies them automatically per `--card`.
+> — `GATE` in `grounding analyze` — and the analyzer applies them automatically per `--card`.
 
 ---
 
 ## 4. The eval dump (copy-paste into the PR)
 
-`eng/analyze-6q.py` emits **three single-variable cards**, each isolating exactly one comparison so the
+`grounding analyze` emits **three single-variable cards**, each isolating exactly one comparison so the
 data is trivial to read. Every card shows the same metric rows — `success (scenarios)`, `func passed`,
 `resourcefulness (archaeology)`, `IET`, `output tok`, `cost` — and a **Conclusion**: a single **uniform,
 model-independent grade** of grounding's effect vs baseline, **BETTER / NEUTRAL / WORSE** (the same rubric
@@ -178,11 +178,11 @@ filename contains `readme` is read as the **README arm**.
 
 ```bash
 # primary, one card per model
-python3 eng/analyze-6q.py --card data/<unit>-6q/<unit>.n3.haiku.json data/<unit>-6q/<unit>.n3.opus.json
+grounding analyze --card data/<unit>-6q/<unit>.n3.haiku.json data/<unit>-6q/<unit>.n3.opus.json
 # model-diff (AGENTS lift, models side by side)
-python3 eng/analyze-6q.py --model-diff data/<unit>-6q/<unit>.n3.haiku.json data/<unit>-6q/<unit>.n3.opus.json
+grounding analyze --model-diff data/<unit>-6q/<unit>.n3.haiku.json data/<unit>-6q/<unit>.n3.opus.json
 # source-diff (AGENTS − README, one model — usually the mini tier)
-python3 eng/analyze-6q.py --source-diff data/<unit>-6q/<unit>.n3.haiku.json data/<unit>-6q/<unit>-readme.n3.haiku.json
+grounding analyze --source-diff data/<unit>-6q/<unit>.n3.haiku.json data/<unit>-6q/<unit>-readme.n3.haiku.json
 ```
 
 **Paste the cards verbatim** into the PR's *Metrics* section. The PR carries four: primary (mini), primary
@@ -214,7 +214,7 @@ operational "which card for which lifecycle operation" guide, see
 | Artifact | Path |
 | --- | --- |
 | The grounding edit (body ≤ `eng/agents-line-limit.txt`, currently 60) | `grounding/<unit>/AGENTS.md` |
-| Regenerated wrapper, in sync (`sync-skill.sh --check`) | `grounding/<unit>/SKILL.md` |
+| Regenerated wrapper, in sync (`grounding sync-skill --check`) | `grounding/<unit>/SKILL.md` |
 | The matched n≥3 mini-tier dataset | `data/<unit>-6q/<unit>.n3.haiku.json` |
 | The matched n≥3 frontier-tier dataset (no-harm check) | `data/<unit>-6q/<unit>.n3.opus.json` |
 | The report | `docs/reports/<unit>.md` |
@@ -230,10 +230,10 @@ cache-state-not-a-variable).
 ### Validation (reproducible)
 
 ```bash
-eng/sync-skill.sh --check
+grounding sync-skill --check
 RUNS=3 eng/run-<unit>-6q.sh                                    # -> data/<unit>-6q/<unit>.haiku.json
 RUNS=3 MODELS=claude-opus-4.8 eng/run-<unit>-6q.sh            # frontier no-harm run
-python3 eng/analyze-6q.py --card data/<unit>-6q/<unit>.haiku.json
+grounding analyze --card data/<unit>-6q/<unit>.haiku.json
 cp data/<unit>-6q/<unit>.haiku.json data/<unit>-6q/<unit>.n3.haiku.json   # commit the matched run
 ```
 
@@ -241,7 +241,7 @@ cp data/<unit>-6q/<unit>.haiku.json data/<unit>-6q/<unit>.n3.haiku.json   # comm
 
 ## 6. Reviewer checklist
 
-- [ ] `AGENTS.md` within the line limit; `eng/sync-skill.sh --check` passes.
+- [ ] `AGENTS.md` within the line limit; `grounding sync-skill --check` passes.
 - [ ] Datasets committed under `data/<unit>-6q/`; both `--card` dumps in the PR match them.
 - [ ] n ≥ 3; model and judge named, for **both** tiers.
 - [ ] Mini tier graded **BETTER** (a success gain, eliminated resourcefulness, or ≥25% cost/IET cut; no success/func/web regression).

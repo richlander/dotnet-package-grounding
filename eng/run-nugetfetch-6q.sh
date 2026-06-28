@@ -3,7 +3,7 @@
 # (candidate AGENTS.md, delivered inline + as a plugin). NuGetFetch is a second unknown
 # library; this proves the grounding text BEFORE we publish AGENTS.md to the package.
 #
-# Metrics land in results.json; read them with: python3 eng/analyze-6q.py <results.json>
+# Metrics land in results.json; read them with: ./eng/grounding analyze <results.json>
 #   quality (judge), tokens, web calls, tool calls (incl dotnet-inspect / MCP), duration.
 #
 # Env:
@@ -36,7 +36,7 @@ for m in $MODELS; do
     grounding/nugetfetch > ".tools/nf-$tag.out" 2>&1 || true
   rj=$(find ".skill-validator-results/nf-$tag" -name results.json | head -1)
   if [ -n "$rj" ]; then cp "$rj" "$OUT/$tag.json"; echo "   -> $OUT/$tag.json";
-    python3 eng/analyze-6q.py "$rj" || true
+    ./eng/grounding analyze "$rj" || true
   else
     echo "   !! no results.json (NO_JUDGE?). Rejudge:"
     echo "      $BIN evaluate grounding/nugetfetch rejudge .skill-validator-results/nf-$tag/<ts> --judge-model claude-haiku-4.5"

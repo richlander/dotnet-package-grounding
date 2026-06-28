@@ -14,8 +14,8 @@ Unit: `grounding/<unit>` · Package: `<Name> <version>` · `AGENTS.md` body line
 ## Metrics
 
 <!-- Paste BOTH `--card` dumps verbatim: the mini-tier WIN card and the frontier-tier NO-HARM card.
-     python3 eng/analyze-6q.py --card data/<unit>-6q/<unit>.n3.haiku.json   # mini WIN
-     python3 eng/analyze-6q.py --card data/<unit>-6q/<unit>.n3.opus.json    # frontier NO-HARM
+     grounding analyze --card data/<unit>-6q/<unit>.n3.haiku.json   # mini WIN
+     grounding analyze --card data/<unit>-6q/<unit>.n3.opus.json    # frontier NO-HARM
 Each card prints its metrics table, a term Legend, and the tier gate (PASS/FAIL per threshold).
 Keep the Legend — outside readers need it to interpret IET / output tok / func / the arm names. -->
 
@@ -31,10 +31,10 @@ what the grounding makes it do. -->
 ## Validation
 
 ```bash
-eng/sync-skill.sh --check
+grounding sync-skill --check
 RUNS=3 eng/run-<unit>-6q.sh                                   # -> data/<unit>-6q/<unit>.haiku.json (mini WIN)
 RUNS=3 MODELS=claude-opus-4.8 eng/run-<unit>-6q.sh           # frontier NO-HARM run
-python3 eng/analyze-6q.py --card data/<unit>-6q/<unit>.haiku.json
+grounding analyze --card data/<unit>-6q/<unit>.haiku.json
 cp data/<unit>-6q/<unit>.haiku.json data/<unit>-6q/<unit>.n3.haiku.json   # commit matched n=3
 ```
 
@@ -45,7 +45,7 @@ cp data/<unit>-6q/<unit>.haiku.json data/<unit>-6q/<unit>.n3.haiku.json   # comm
 
 ## Checklist
 
-- [ ] `AGENTS.md` within line limit; `sync-skill.sh --check` passes
+- [ ] `AGENTS.md` within line limit; `grounding sync-skill --check` passes
 - [ ] Datasets committed under `data/<unit>-6q/`; both `--card` dumps match them
 - [ ] n ≥ 3; model + judge named, for **both** tiers
 - [ ] **mini WIN** gate passes (real cost/IET or quality win; no func/quality/web regression)

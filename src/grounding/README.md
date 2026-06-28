@@ -31,21 +31,20 @@ dotnet tool install --global --add-source src/grounding/nupkg dotnet-package-gro
 
 ## Commands
 
-| Command | Replaces | Notes |
-| --- | --- | --- |
-| `analyze <results.json...>` | `eng/analyze-6q.py` | default = raw table |
-| `analyze --card / --model-diff / --source-diff / --tools-card / --web-card` | `analyze-6q.py --card …` | also `-v <view>`; `--no-title` supported |
-| `run <unit> --source agents\|readme\|none` | `eng/run-nugetfetch-6q.sh` | README/AGENTS/nothing toggle; `--dry-run`, `--emit-skill` |
-| `sync-skill [--check]` | `eng/sync-skill.sh` | regenerate `grounding/<unit>/SKILL.md` |
-| `gen-plugins` | `eng/gen-plugins.sh` | expand `plugin.json.in` |
-| `rescore <model=path>… [--w N]` | `eng/rescore.py` | IET rubric, Pareto gate |
-| `rescore --all` | `eng/rescore_all.py` | batch over `.skill-validator-results/` |
-| `channels extract [dir]` | `eng/extract-channels.py` | default dir `data/markout` |
-| `channels compare` | `eng/compare-channels.py` | cross-channel IET (data/markout) |
-| `mcp` | `grounding/_mcp/grounding_mcp.py` | stdio JSON-RPC server (`GROUNDING_GATE`) |
+| Command | Notes |
+| --- | --- |
+| `analyze <results.json...>` | default = raw per-scenario table |
+| `analyze --card / --model-diff / --source-diff / --tools-card / --web-card` | also `-v <view>`; `--no-title` supported |
+| `run <unit> --source agents\|readme\|none` | README/AGENTS/nothing toggle; `--dry-run`, `--emit-skill` |
+| `sync-skill [--check]` | regenerate `grounding/<unit>/SKILL.md` from `AGENTS.md` |
+| `gen-plugins` | expand `grounding/**/plugin.json.in` |
+| `rescore <model=path>… [--w N]` | IET rubric, Pareto gate |
+| `rescore --all` | batch over `.skill-validator-results/` |
+| `channels extract [dir]` | per-model channel matrix (default dir `data/markout`) |
+| `channels compare` | cross-channel IET (data/markout) |
+| `mcp [--root <repo>]` | stdio JSON-RPC server (`GROUNDING_GATE`) |
 
-Every command's output is verified byte-for-byte (or, for `mcp`, semantically
-JSON-identical) against its Python/bash original.
+This CLI is the single implementation of the repo's eval tooling.
 
 ## Source toggle (README / AGENTS / nothing)
 
@@ -64,9 +63,10 @@ grounding run nugetfetch --source agents --emit-skill /tmp/SKILL.md
 (`<unit>` / `<unit>-readme` / `<unit>-none`), restores `SKILL.md`, then prints the
 table.
 
-## Migration
+## Eval scripts
 
-The legacy `eng/*.py` / `eng/*.sh` tools are now thin shims that delegate to this
-CLI via `eng/grounding`, so existing callers and docs keep working unchanged. The
-implementations live here. (`grounding/_mcp/grounding_mcp.py` is retained while the
-MCP eval units still reference it directly; `grounding mcp` is the C# equivalent.)
+The harness scripts in `eng/` (`run-evals.sh`, `run-*-6q.sh`,
+`run-channel-matrix.sh`) call this CLI through the `eng/grounding` launcher,
+which builds the project once and forwards arguments. The MCP eval units spawn
+the server via `dotnet <grounding.dll> mcp --root <repo>` (skill-validator's
+command allowlist permits `dotnet`, not arbitrary binaries).

@@ -244,6 +244,6 @@ package — are documented in **[`docs/harness.md`](docs/harness.md)**. Quick st
 
 ```bash
 # Prereq: a .NET SDK matching dotnet/skills' global.json, git, and `gh auth login`.
-eng/sync-skill.sh                  # regenerate SKILL.md from AGENTS.md
+grounding sync-skill                  # regenerate SKILL.md from AGENTS.md
 eng/run-evals.sh System.CommandLine
 ```

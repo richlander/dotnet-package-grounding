@@ -12,7 +12,7 @@ How this repo **builds and runs** the [`dotnet/skills`](https://github.com/dotne
 ## Metrics vs. signals: what a claim may rest on
 
 The study reads two epistemically different kinds of data, and we keep them strictly
-separated — the analyzer ([`eng/analyze-6q.py`](../eng/analyze-6q.py)) even prints them in
+separated — the analyzer (`grounding analyze`) even prints them in
 two labeled column groups. Conflating them is the easiest way to overclaim.
 
 **Normative metrics** are the quantities we are *allowed to draw conclusions from* — the
@@ -153,12 +153,12 @@ PR pointing at the latest `dotnet/skills` main commit.
 
 `AGENTS.md` is the human-authored artifact under test (the file that ships in the package root).
 `SKILL.md` is **generated** from `AGENTS.md` + `meta.yaml` by
-[`eng/sync-skill.sh`](../eng/sync-skill.sh) purely so the harness has a *togglable* skill to
+`grounding sync-skill` purely so the harness has a *togglable* skill to
 add/remove between arms. It is an implementation detail of the harness, **not** a marketplace
 skill and **not** something the package ships. Never hand-edit `SKILL.md`. Edit `AGENTS.md`, then
-run `eng/sync-skill.sh`.
+run `grounding sync-skill`.
 
-Grounding `AGENTS.md` files must stay **concise**: `eng/sync-skill.sh` fails if any exceeds the
+Grounding `AGENTS.md` files must stay **concise**: `grounding sync-skill` fails if any exceeds the
 budget in `eng/agents-line-limit.txt` (currently **60** lines). Keep content tight and prefer a
 short "see also" link over inlining depth. Raise the limit deliberately, not casually.
 
@@ -172,14 +172,15 @@ package. The real package id is recorded in `meta.yaml` (`package:`).
 grounding/<slug>/
   AGENTS.md     # SOURCE OF TRUTH — ships in the package root
   meta.yaml     # name (== <slug>), package, description for the generated SKILL.md
-  SKILL.md      # GENERATED (eng/sync-skill.sh) — do not edit
+  SKILL.md      # GENERATED (grounding sync-skill) — do not edit
 tests/<slug>/
   eval.yaml     # scenarios: prompt + setup.copy_test_files + assertions
   <fixtures>    # sample project(s) copied into the agent workdir; gated by `dotnet test`
 eng/
   skill-validator.sha    # pinned dotnet/skills commit we build the validator from
   agents-line-limit.txt  # max lines allowed in any AGENTS.md (start: 60)
-  sync-skill.sh          # AGENTS.md (+ meta.yaml) -> SKILL.md; enforces the line limit (--check for CI)
+  grounding              # launcher for the C# grounding CLI (sync-skill, gen-plugins, analyze, ...)
+  install-grounding.sh   # publish the Native AOT binary onto PATH
   run-evals.sh           # builds skill-validator from the pinned SHA, then runs evaluate
 ```
 
@@ -192,7 +193,7 @@ The grounding folder name must match the tests folder name and the skill `name` 
 ```bash
 # Prereq: a .NET SDK matching dotnet/skills' global.json, git, and
 # `gh auth login` (skill-validator's Copilot SDK uses gh creds).
-eng/sync-skill.sh                  # regenerate SKILL.md from AGENTS.md
+grounding sync-skill                  # regenerate SKILL.md from AGENTS.md
 eng/run-evals.sh System.CommandLine
 ```
 
@@ -205,12 +206,12 @@ eng/run-evals.sh System.CommandLine
 2. `grounding/<slug>/meta.yaml` — `name` (== `<slug>`), `package`, `description`.
 3. `tests/<slug>/eval.yaml` — one or more scenarios.
 4. `tests/<slug>/<fixture project(s)>` — the task, with a `dotnet test` correctness gate.
-5. `eng/sync-skill.sh` then `eng/run-evals.sh <slug>`.
+5. `grounding sync-skill` then `eng/run-evals.sh <slug>`.
 
 ## Channel-matrix runs
 
 The delivery-channel study (raw package → NuGet MCP → shipped `AGENTS.md` → resident-index MCP)
 is driven by [`eng/run-channel-matrix.sh`](../eng/run-channel-matrix.sh) and summarized by
-[`eng/extract-channels.py`](../eng/extract-channels.py). See
+`grounding channels extract`. See
 [`docs/recommendation.md`](recommendation.md) for the results and
 [`data/README.md`](../data/README.md) for the channel definitions.

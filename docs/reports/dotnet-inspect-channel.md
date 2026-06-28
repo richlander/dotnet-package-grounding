@@ -36,7 +36,7 @@ why.
 | **E′** | **dotnet-inspect CLI → AGENTS.md** | **35.9k** (107k) | **41.9k** (113k) | 4.3 / 5.0 | ✓ |
 | **E**  | **dotnet-inspect CLI → README** | 41.1k (120k) | 47.5k (140k) | 4.0 / 4.0 | ✓ |
 
-Reproduce: `python3 eng/compare-channels.py` (reads `data/markout/*.json`).
+Reproduce: `grounding channels compare` (reads `data/markout/*.json`).
 
 ## Reading
 
@@ -120,7 +120,7 @@ same-model comparisons, read HIET when comparing tiers.)
 | E′ | dotnet-inspect → AGENTS.md | 538,582 | 41,875 | 4.3 / **5.0** | 12.9× |
 | E  | dotnet-inspect → README | 616,182 | 47,501 | 4.0 / 4.0 | 13.0× |
 
-Reproduce: `python3 eng/compare-channels.py` (HIET columns + cross-tier table).
+Reproduce: `grounding channels compare` (HIET columns + cross-tier table).
 
 **What HIET proves that IET cannot:**
 
@@ -221,8 +221,8 @@ real directive deployment takes (always-present `AGENTS.md` / system prompt).
 Three levels of fix, in order of leverage:
 
 1. **Analysis (done here):** delivery-normalized IET\* — re-price the turn‑1 resident prefix at `1×`.
-   Implemented in `eng/rescore.py` (`arm_iet_norm`) and surfaced as the `IET*` column in
-   `eng/compare-channels.py`. Use IET\* whenever comparing a *resident* delivery (MCP) against a
+   Implemented in `grounding rescore` (`arm_iet_norm`) and surfaced as the `IET*` column in
+   `grounding channels compare`. Use IET\* whenever comparing a *resident* delivery (MCP) against a
    *loaded* one (skill/CLI).
 2. **Design:** make the directive resident like the MCP (channel D). This is the deployment we
    actually recommend, and it is already competitive on raw IET — normalization just confirms it.

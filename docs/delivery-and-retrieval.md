@@ -73,13 +73,13 @@ We frame delivery as a ladder, each rung isolating one variable:
 2. **Raw NuGet MCP** (`NuGet.Mcp.Server`) — the real server. Its `get_package_context` prefers
    the installed package's `AGENTS.md`, returns the **full body verbatim**, all-or-nothing,
    behind a fixed **task-type** gate ("call when the user asks about a package").
-3. **Our controlled MCP** (`grounding/_mcp/grounding_mcp.py`) — a faithful stand-in for #2 with
+3. **Our controlled MCP** (`grounding mcp`) — a faithful stand-in for #2 with
    one knob: the tool description (the *gate*) is the experimental variable, and we can switch
    to a two-tool **progressive** shape. This is the instrument used below.
 
 ## The instrument
 
-`grounding/_mcp/grounding_mcp.py` is a dependency-free stdio MCP server. It serves a
+`grounding mcp` is a dependency-free stdio MCP server. It serves a
 package's grounding by resolving `packageName` to that unit's `AGENTS.md`. The retrieval
 **gate** is selected by the `GROUNDING_GATE` environment variable:
 
@@ -124,7 +124,7 @@ It is the right metric because it is **near-binary, intentional, and low-varianc
 agent either retrieves or it doesn't. Weighted Input-Equivalent Tokens
 (IET = `fresh + 0.1·cacheRead + 1.25·cacheWrite + 5·output`, where
 `fresh = inputTokens − cacheReadTokens`; the repo-wide primary cost metric, recomputed from the
-raw token classes by [`eng/extract-channels.py`](../eng/extract-channels.py)) is a downstream,
+raw token classes by `grounding channels extract`) is a downstream,
 noisy proxy — on a small task, fixed overhead and cache warmup swamp the ~600-token cost of the
 retrieval decision (we observed identical-config baselines swing 19k–34k IET). So we read
 **call behavior + pass/fail** on small/resident tasks, and reserve **IET** for large tasks
@@ -310,8 +310,8 @@ free and *acts* (activates the body) only on the relevant entry. Two properties 
 - **Decline is the default.** You skip a skill by simply *not acting*; skipping is free and is
   never externalized as a decision.
 
-Our `progressive` gate exposed the summaries as a **tool** (`summarize_package_context`,
-grounding_mcp.py:223–232): the per-package descriptions are **not** in context — the agent must
+Our `progressive` gate exposed the summaries as a **tool** (`summarize_package_context`):
+the per-package descriptions are **not** in context — the agent must
 *call* a tool to see one. So we gated **both** the index *and* the body behind calls, destroying
 both properties:
 
@@ -515,7 +515,7 @@ BIN=.tools/skill-validator-5d717dbdd1998cdf88e7542eef52c5517cbefdb9/skill-valida
 # One-time after clone: generate each MCP unit's plugin.json (absolute paths) from the
 # committed plugin.json.in templates. The harness drops cwd, so the MCP path must be absolute;
 # the generated plugin.json files are gitignored.
-./eng/gen-plugins.sh
+grounding gen-plugins
 
 # Pick a gate, then run a scenario. The MCP attaches to the skilled arms only.
 export GROUNDING_GATE=resident_index       # or task_type | uncertainty_version | progressive
@@ -537,7 +537,7 @@ export GROUNDING_GATE=resident_index       # or task_type | uncertainty_version 
 cat .tools/mcp-calls.log
 ```
 
-The MCP server (`grounding/_mcp/grounding_mcp.py`), the inert attach units
+The MCP server (`grounding mcp`), the inert attach units
 (`grounding/*-mcp/`, generated `plugin.json` from `plugin.json.in`) and the scenarios
 (`tests/*-mcp/`) carry the full setup. `.skill-validator-results/` and `.tools/` are
 gitignored; results live locally per run. Run gates **sequentially** — concurrent runs share

@@ -108,9 +108,9 @@ Eval (in richlander/dotnet-package-grounding), on a clean box:
 ```bash
 RUNS=3 MODELS=claude-haiku-4.5  eng/run-<unit>-6q.sh     # mini: expect BETTER
 RUNS=3 MODELS=claude-opus-4.8   eng/run-<unit>-6q.sh     # frontier: expect not-WORSE
-python3 eng/analyze-6q.py --card        data/<unit>-6q/<unit>.n3.haiku.json data/<unit>-6q/<unit>.n3.opus.json
-python3 eng/analyze-6q.py --model-diff   data/<unit>-6q/<unit>.n3.haiku.json data/<unit>-6q/<unit>.n3.opus.json
-python3 eng/analyze-6q.py --source-diff  data/<unit>-6q/<unit>.n3.haiku.json data/<unit>-6q/<unit>-readme.n3.haiku.json
+grounding analyze --card        data/<unit>-6q/<unit>.n3.haiku.json data/<unit>-6q/<unit>.n3.opus.json
+grounding analyze --model-diff   data/<unit>-6q/<unit>.n3.haiku.json data/<unit>-6q/<unit>.n3.opus.json
+grounding analyze --source-diff  data/<unit>-6q/<unit>.n3.haiku.json data/<unit>-6q/<unit>-readme.n3.haiku.json
 ```
 
 ## Grounding resources

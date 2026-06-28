@@ -40,7 +40,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Verify generated SKILL.md is in sync
-        run: ./eng/sync-skill.sh --check
+        run: ./eng/grounding sync-skill --check
 
       - name: Run package-grounding evals
         run: .tools/skill-validator/skill-validator evaluate --tests-dir ./tests ./grounding

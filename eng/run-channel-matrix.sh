@@ -27,7 +27,7 @@ RUNS="${RUNS:-3}"
 MODELS="${MODELS:-claude-opus-4.8 claude-haiku-4.5}"
 BIN=$(ls -d .tools/skill-validator-*/skill-validator 2>/dev/null | head -1)
 [ -x "$BIN" ] || { echo "skill-validator not built; run eng/run-evals.sh once first"; exit 1; }
-./eng/gen-plugins.sh >/dev/null
+./eng/grounding gen-plugins >/dev/null
 
 CACHE="$HOME/.nuget/packages/markout/0.13.6"
 AGENTS_SRC="grounding/markout/AGENTS.md"

@@ -110,7 +110,7 @@ NuGetFetch meets both; Markout meets neither.
   --model claude-haiku-4.5 --judge-model claude-haiku-4.5 --runs 3 \
   --keep-sessions --results-dir .skill-validator-results/n3-nugetfetch.haiku \
   grounding/nugetfetch
-python3 eng/analyze-6q.py data/nugetfetch-6q/nugetfetch.n3.haiku.json
+grounding analyze data/nugetfetch-6q/nugetfetch.n3.haiku.json
 ```
 
 > Caveat: runs=3 (baseline quality swung 0.28 between this and the prior dataset). The robust claims

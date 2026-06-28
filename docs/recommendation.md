@@ -288,13 +288,13 @@ channel gap. (Channels A′/C are omitted on this task by design — see *Method
 
 - Harness: `skill-validator` (pinned `eng/skill-validator.sha`), built from source. Runner:
   [`eng/run-channel-matrix.sh`](../eng/run-channel-matrix.sh); extractor:
-  [`eng/extract-channels.py`](../eng/extract-channels.py).
+  `grounding channels extract`.
 - Channels A/A′/B/C are the baseline+plugin arms of the `*-realmcp` evals under two cache states;
   D is the plugin arm of the `*-custommcp` eval (`GROUNDING_GATE=resident_index`).
 - **Metric.** Primary cost is **weighted IET** = `fresh + 0.1·cacheRead + 1.25·cacheWrite +
   5·output`, where `fresh = inputTokens − cacheReadTokens` (Copilot/OpenAI report `inputTokens`
   as the *total* prompt, with `cacheReadTokens` a subset). It is recomputed from the raw token
-  classes in each `results.json` by [`eng/extract-channels.py`](../eng/extract-channels.py); it
+  classes in each `results.json` by `grounding channels extract`; it
   discounts cheap prompt-cache reads so the exploration-heavy raw baseline is not over-counted.
   Tables also cite the harness's unweighted `tokenEstimate` (`tEst` = `inputTokens + outputTokens`)
   for traceability. Switching to weighted IET preserves every channel ordering but shrinks the
