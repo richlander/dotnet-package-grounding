@@ -86,8 +86,9 @@ internal static class Loader
                 a.N++;
                 if (r.Qual is { } q) quals[key].Add(q);
                 a.Fp += r.Fp; a.Ft += r.Ft;
-                // Scenario success: all functional assertions passed AND judge >= 4 floor.
-                if (r.Ft > 0 && r.Fp == r.Ft && (r.Qual is null || r.Qual >= 4.0))
+                // Functional success: all functional assertions passed. (Judge score is a
+                // signal, not a gate — it wobbles near the floor and conflates with quality.)
+                if (r.Ft > 0 && r.Fp == r.Ft)
                     a.Succ++;
                 a.Iet += r.Iet; a.Cost += r.Cost; a.Tok += r.Tok;
                 a.Out += r.Out; a.Web += r.Web; a.Cache += r.Cache;

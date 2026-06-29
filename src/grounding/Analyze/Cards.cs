@@ -40,6 +40,9 @@ internal sealed partial class Cards
 
     // ---- grading (Python _grade) -----------------------------------------
 
+    // Verdict model: FAIL is the only correctness gate (grounding made the model answer
+    // fewer scenarios correctly). The rest — archaeology, web, IET, output, cost, judge —
+    // are SIGNALS that rank BETTER / NEUTRAL / WORSE; none of them flips the verdict alone.
     private static string Grade(ArmAgg b, ArmAgg g)
     {
         var iet = Pct(g.Iet, b.Iet);
@@ -50,15 +53,19 @@ internal sealed partial class Cards
         var tail = $"success {g.Succ}/{g.N} vs {b.Succ}/{b.N}, "
                  + $"resourcefulness {bArch}\u2192{gArch}, IET {SignedPct(iet)}, cost {SignedPct(cost)}";
 
+        // FAIL: grounding regressed correctness — fewer scenarios answered correctly.
+        if (dsucc < 0)
+            return $"**FAIL** — solved fewer ({tail})";
+
+        // WORSE: real cost/IET/output inflation (a harm signal), not a stray web call.
         var worse = new List<string>();
-        if (dsucc < 0) worse.Add($"success {SignedInt(dsucc)}");
-        if (g.Web > 0) worse.Add($"web archaeology {g.Web}");
         if (iet > IetHarmCapFrac * 100) worse.Add($"IET +{F0(iet)}%");
         if (cost > CostHarmCapFrac * 100) worse.Add($"cost +{F0(cost)}%");
         if (@out > OutInflateFrac * 100) worse.Add($"output +{F0(@out)}%");
         if (worse.Count > 0)
             return $"**WORSE** — {string.Join(", ", worse)} ({tail})";
 
+        // BETTER: solved more, eliminated archaeology, or materially cheaper.
         if (dsucc > 0 || -iet >= IetWinFrac * 100 || -cost >= CostWinFrac * 100 || (bArch > 0 && gArch == 0))
             return $"**BETTER** — {tail}";
 
