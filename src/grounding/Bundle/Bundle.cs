@@ -59,10 +59,12 @@ internal static partial class Bundle
         {
             var api = string.Join(", ", s[i].Apis.Select(a => $"`{a}`"));
             var anc = string.Join(" / ", s[i].Anchors.Select(a => $"`{a}`"));
-            sb.Append($"| {i + 1} | {Cap(s[i].Title)} | {api} | {anc} |\n");
+            sb.Append($"| {i + 1} | {Cap(s[i].Title)} | {Esc(api)} | {Esc(anc)} |\n");
         }
         return sb.ToString();
     }
+
+    private static string Esc(string cell) => cell.Replace("|", "\\|");
 
     public static int Tasks(string unit, string? outPath)
     {
