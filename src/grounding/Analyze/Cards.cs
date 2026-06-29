@@ -72,6 +72,13 @@ internal sealed partial class Cards
         return $"**NEUTRAL** — no material change ({tail})";
     }
 
+    private static string GradeLabel(ArmAgg b, ArmAgg g)
+    {
+        var v = Grade(b, g);
+        var i = v.IndexOf("**", 2, StringComparison.Ordinal);
+        return v[2..i]; // FAIL | WORSE | NEUTRAL | BETTER
+    }
+
     // ---- cards ------------------------------------------------------------
 
     public void Primary(string path)
@@ -81,8 +88,8 @@ internal sealed partial class Cards
         var g = a.Agg["skilledPlugin"];
         var gtok = Loader.GroundingTokens(a.SkillName);
         if (!NoTitle)
-            _o.WriteLine($"### Grounding eval — {a.SkillName} · `{a.Model}`\n");
-        var mpref = NoTitle ? $"`{a.Model}` · " : "";
+            _o.WriteLine($"### Grounding eval — {a.SkillName} | `{a.Model}`\n");
+        var mpref = NoTitle ? $"`{a.Model}` | " : "";
         var tokNote = gtok is { } t ? $" (~{t} tok, via grounding tool)" : "";
         _o.WriteLine($"_{mpref}Baseline (no grounding) vs `AGENTS.md`{tokNote}. Judge `{a.Judge}`. Means across scenarios._\n");
         _o.WriteLine("| Metric | Baseline | AGENTS.md |");
@@ -94,26 +101,24 @@ internal sealed partial class Cards
 
     public void Card(IReadOnlyList<string> files)
     {
-        var arms = files.Select(Loader.LoadArm).ToList();
-        var modelFiles = arms.Where(a => !a.IsReadme).Select(a => a.Path).ToList();
-        if (modelFiles.Count == 0)
+        var arms = files.Select(Loader.LoadArm).Where(a => !a.IsReadme)
+            .OrderBy(a => a.Tier == "mini" ? 0 : 1).ThenBy(a => a.Model, StringComparer.Ordinal).ToList();
+        if (arms.Count == 0)
         {
-            _o.WriteLine("--card needs at least one AGENTS.md dataset (non-'readme' path).");
-            return;
+            _o.WriteLine("--card needs at least one AGENTS.md dataset (non-'readme' path)."); return;
         }
-        for (var i = 0; i < modelFiles.Count; i++)
-        {
-            if (i > 0) _o.WriteLine();
-            Primary(modelFiles[i]);
-        }
-        _o.WriteLine("\n**Legend & grades** — full term table at "
-            + "[grounding-lifecycle.md §4](https://github.com/richlander/dotnet-package-grounding/blob/main/docs/grounding-lifecycle.md#4-evaluate--the-three-cards). "
-            + "In short, each metric is read **per arm in isolation** (no judge-quality diff): "
-            + "_success_ = func assertions pass **and** judge ≥4 floor (higher better); "
-            + "_resourcefulness (archaeology)_ = web+cache lookups to recover the API — grounding drives it to 0, so lower is the win, and grounded **web** must be 0; "
-            + "_IET / output tok / cost_ = token/spend cost (lower better). "
-            + "**Conclusion:** **BETTER** = success held + a real win (more solved, resourcefulness eliminated, or IET/cost cut), "
-            + "**NEUTRAL** = success held with no material win, **WORSE** = success dropped, grounded web archaeology, or cost/IET/output inflated past the cap.\n");
+        var sn = arms[0].SkillName;
+        var gtok = Loader.GroundingTokens(sn);
+        var tokNote = gtok is { } t ? $" (~{t} tok)" : "";
+        if (!NoTitle) _o.WriteLine($"### Grounding eval — {sn}\n");
+        _o.WriteLine($"_Baseline (no grounding) → `AGENTS.md`{tokNote} per model; columns are models. Judge `{arms[0].Judge}`. Means across scenarios._\n");
+        _o.WriteLine("| Metric | " + string.Join(" | ", arms.Select(a => $"`{a.Model}`")) + " |");
+        _o.WriteLine("| --- |" + string.Concat(Enumerable.Repeat(" ---: |", arms.Count)));
+        foreach (var (label, raw, _) in Spec)
+            _o.WriteLine($"| {label} | " + string.Join(" | ", arms.Select(a => $"{raw(a.Agg["baseline"])} → {raw(a.Agg["skilledPlugin"])}")) + " |");
+        _o.WriteLine("| **verdict** | " + string.Join(" | ", arms.Select(a => $"**{GradeLabel(a.Agg["baseline"], a.Agg["skilledPlugin"])}**")) + " |");
+        _o.WriteLine("\n_FAIL = solved fewer (correctness regressed); BETTER = solved more / archaeology→0 / IET/cost cut ≥20%; "
+            + "WORSE = IET/cost/output inflated ≥20%; NEUTRAL = held. Archaeology, web, judge are signals, not gates._\n");
         _o.WriteLine("> Note: even ungrounded, the baseline self-grounds from the restored NuGet cache "
             + "(README/AGENTS are packed in the nupkg) and the open web — so its resourcefulness count is a "
             + "**lower bound** and grounding's advantage is understated.\n");
@@ -129,7 +134,7 @@ internal sealed partial class Cards
             .ToList();
         var sn = arms[0].SkillName;
         if (!NoTitle)
-            _o.WriteLine($"### Model-diff — {sn} · AGENTS.md lift over baseline\n");
+            _o.WriteLine($"### Model-diff — {sn} | AGENTS.md lift over baseline\n");
         _o.WriteLine("_Each cell = grounded (AGENTS.md) change vs that model's own baseline. "
             + "count Δ for success/func, before→after for resourcefulness, "
             + "% for IET/output/cost (− = cheaper)._\n");
@@ -159,8 +164,8 @@ internal sealed partial class Cards
         var rd = readme.Agg["skilledPlugin"];
         var sn = agents.SkillName;
         if (!NoTitle)
-            _o.WriteLine($"### Source-diff — {sn} · `{agents.Model}` · AGENTS.md benefit over README.md\n");
-        var mpref = NoTitle ? $"`{agents.Model}` · " : "";
+            _o.WriteLine($"### Source-diff — {sn} | `{agents.Model}` | AGENTS.md benefit over README.md\n");
+        var mpref = NoTitle ? $"`{agents.Model}` | " : "";
         _o.WriteLine($"_{mpref}Both surfaced via the grounding tool; baseline removed. Single column = "
             + "AGENTS.md change vs README.md (− = AGENTS cheaper on cost metrics, "
             + "+ on success/func, lower resourcefulness = AGENTS more self-sufficient). "
