@@ -8,7 +8,11 @@
     <AssemblyName>grounding</AssemblyName>
     <RootNamespace>Grounding</RootNamespace>
     <InvariantGlobalization>true</InvariantGlobalization>
-    <PublishAot>true</PublishAot>
+    <!-- AOT only when a RID is given (the `dotnet publish -r <rid>` path); plain
+         build/run/pack stay framework-dependent and fast, with no AOT warnings. -->
+    <PublishAot Condition="'$(RuntimeIdentifier)' != ''">true</PublishAot>
+    <InvariantTimezone>true</InvariantTimezone>
+    <StripSymbols>true</StripSymbols>
   </PropertyGroup>
 
   <!-- `dotnet pack` produces a conventional (framework-dependent) global tool; the
