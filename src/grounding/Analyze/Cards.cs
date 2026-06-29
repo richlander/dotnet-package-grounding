@@ -149,26 +149,28 @@ internal sealed partial class Cards
 
     public void SourceDiff(IReadOnlyList<string> files)
     {
-        var arms = files.Select(Loader.LoadArm).ToList();
-        var agents = arms.FirstOrDefault(a => !a.IsReadme);
-        var readme = arms.FirstOrDefault(a => a.IsReadme);
-        if (agents is null || readme is null)
+        var loaded = files.Select(Loader.LoadArm).ToList();
+        // Pair AGENTS + README datasets by model; columns are models (mini first).
+        var models = loaded.GroupBy(a => a.Model)
+            .Select(g => (Model: g.Key,
+                          Agents: g.FirstOrDefault(a => !a.IsReadme),
+                          Readme: g.FirstOrDefault(a => a.IsReadme)))
+            .Where(x => x.Agents is not null && x.Readme is not null)
+            .OrderBy(x => x.Agents!.Tier == "mini" ? 0 : 1).ThenBy(x => x.Model, StringComparer.Ordinal)
+            .ToList();
+        if (models.Count == 0)
         {
-            _o.WriteLine("source-diff needs one AGENTS.md dataset and one README dataset "
-                + "(a path containing 'readme').");
+            _o.WriteLine("source-diff needs an AGENTS.md + README dataset per model (a path containing 'readme').");
             return;
         }
-        var ag = agents.Agg["skilledPlugin"];
-        var rd = readme.Agg["skilledPlugin"];
-        var sn = agents.SkillName;
-        if (!NoTitle)
-            _o.WriteLine($"### Comparison to README.md — {sn} | `{agents.Model}`\n");
-        _o.WriteLine($"_Each cell: `AGENTS.md` − `README.md`, both via the grounding tool, baseline removed (− = AGENTS cheaper; + on success/func; lower archaeology = AGENTS more self-sufficient). Column is `{agents.Model}`. Judge `{agents.Judge}`. Means across scenarios._\n");
-        _o.WriteLine("| Metric | AGENTS.md − README.md |");
-        _o.WriteLine("| --- | ---: |");
+        var sn = models[0].Agents!.SkillName;
+        if (!NoTitle) _o.WriteLine($"### Comparison to README.md — {sn}\n");
+        _o.WriteLine($"_Each cell: `AGENTS.md` − `README.md`, both via the grounding tool, baseline removed (− = AGENTS cheaper; + on success/func; lower archaeology = AGENTS more self-sufficient). Columns are models. Judge `{models[0].Agents!.Judge}`. Means across scenarios._\n");
+        _o.WriteLine("| Metric | " + string.Join(" | ", models.Select(m => $"`{m.Model}`")) + " |");
+        _o.WriteLine("| --- |" + string.Concat(Enumerable.Repeat(" ---: |", models.Count)));
         foreach (var (label, _, diff) in Spec)
-            _o.WriteLine($"| {label} | {diff(ag, rd)} |");
-        _o.WriteLine($"\n> **Conclusion:** {Grade(rd, ag)} _(README arm is co-tested for usability, not a floor to beat)._");
+            _o.WriteLine($"| {label} | " + string.Join(" | ", models.Select(m => diff(m.Agents!.Agg["skilledPlugin"], m.Readme!.Agg["skilledPlugin"]))) + " |");
+        _o.WriteLine("| **verdict** | " + string.Join(" | ", models.Select(m => $"**{GradeLabel(m.Readme!.Agg["skilledPlugin"], m.Agents!.Agg["skilledPlugin"])}**")) + " |");
     }
 
     // ---- raw per-scenario table (Python main) ----------------------------
