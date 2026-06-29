@@ -162,7 +162,7 @@ internal sealed partial class Cards
         var rd = readme.Agg["skilledPlugin"];
         var sn = agents.SkillName;
         if (!NoTitle)
-            _o.WriteLine($"### Source-diff — {sn} | `{agents.Model}` | AGENTS.md benefit over README.md\n");
+            _o.WriteLine($"### Comparison to README.md — {sn} | `{agents.Model}`\n");
         _o.WriteLine($"_`{agents.Model}` — each cell: `AGENTS.md` − `README.md`, both via the grounding tool, baseline removed (− = AGENTS cheaper; + on success/func; lower archaeology = AGENTS more self-sufficient). Judge `{agents.Judge}`. Means across scenarios._\n");
         _o.WriteLine("| Metric | AGENTS.md − README.md |");
         _o.WriteLine("| --- | ---: |");
