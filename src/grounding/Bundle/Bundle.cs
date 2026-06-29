@@ -54,7 +54,7 @@ internal static partial class Bundle
         sb.Append("build + run with a deterministic anchor, so the grounding (AGENTS.md) is proven\n");
         sb.Append("to move an agent from \"fails / hand-rolls\" to \"uses the API correctly, first try.\"\n");
         sb.Append("Machine form + fixtures: `eval.yaml`. Datasets/cards: `data/`.\n\n");
-        sb.Append("| # | Task | Key API | Anchor |\n|---|------|---------|--------|\n");
+        sb.Append("| # | Task | Key API | Anchor |\n| --- | --- | --- | --- |\n");
         for (var i = 0; i < s.Count; i++)
         {
             var api = string.Join(", ", s[i].Apis.Select(a => $"`{a}`"));
