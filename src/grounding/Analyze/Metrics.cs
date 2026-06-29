@@ -37,12 +37,13 @@ internal static class Metrics
         ("skilledPlugin", "plugin"),
     };
 
-    // Grading thresholds — uniform across every model (GATE dict in Python).
-    public const double IetWinFrac = 0.25;
-    public const double CostWinFrac = 0.25;
-    public const double IetHarmCapFrac = 0.10;
-    public const double CostHarmCapFrac = 0.10;
-    public const double OutInflateFrac = 0.05;
+    // Win / harm bars. <10% = noise, 10–20% = inconclusive (re-eval), >=20% = real:
+    // a >=20% IET/cost cut is BETTER, a >=20% inflation is WORSE; the band between is NEUTRAL.
+    public const double IetWinFrac = 0.20;
+    public const double CostWinFrac = 0.20;
+    public const double IetHarmCapFrac = 0.20;
+    public const double CostHarmCapFrac = 0.20;
+    public const double OutInflateFrac = 0.20;
 
     private static readonly string[] FrontierHints =
         { "opus", "sonnet", "gpt-5", "gpt5", "gemini-3", "gemini-2.5-pro" };
