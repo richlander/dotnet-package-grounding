@@ -163,7 +163,7 @@ internal sealed partial class Cards
         var sn = agents.SkillName;
         if (!NoTitle)
             _o.WriteLine($"### Comparison to README.md — {sn} | `{agents.Model}`\n");
-        _o.WriteLine($"_`{agents.Model}` — each cell: `AGENTS.md` − `README.md`, both via the grounding tool, baseline removed (− = AGENTS cheaper; + on success/func; lower archaeology = AGENTS more self-sufficient). Judge `{agents.Judge}`. Means across scenarios._\n");
+        _o.WriteLine($"_Each cell: `AGENTS.md` − `README.md`, both via the grounding tool, baseline removed (− = AGENTS cheaper; + on success/func; lower archaeology = AGENTS more self-sufficient). Column is `{agents.Model}`. Judge `{agents.Judge}`. Means across scenarios._\n");
         _o.WriteLine("| Metric | AGENTS.md − README.md |");
         _o.WriteLine("| --- | ---: |");
         foreach (var (label, _, diff) in Spec)
