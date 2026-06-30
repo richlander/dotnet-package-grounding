@@ -12,6 +12,13 @@ internal sealed partial class Cards
     private readonly TextWriter _o = Console.Out;
     public bool NoTitle;
 
+    // The content arm to grade. The clean content measure is skilledIsolated (ONLY the
+    // target skill loaded). skilledPlugin loads every skill on the shelf, so for units
+    // that share the grounding dir (e.g. markout alongside broadskill + prefer-dotnet-
+    // inspect) it is CONTAMINATED and flatters the result. Override via GROUNDING_CARD_ARM.
+    private static readonly string Arm =
+        Environment.GetEnvironmentVariable("GROUNDING_CARD_ARM") is { Length: > 0 } v ? v : "skilledIsolated";
+
     // ---- shared headline-metric spec (Python _METRICS) -------------------
 
     private static string RawSuccess(ArmAgg a) => $"{a.Succ}/{a.N}";
@@ -93,7 +100,7 @@ internal sealed partial class Cards
     {
         var a = Loader.LoadArm(path);
         var b = a.Agg["baseline"];
-        var g = a.Agg["skilledPlugin"];
+        var g = a.Agg[Arm];
         var gtok = Loader.GroundingTokens(a.SkillName);
         if (!NoTitle)
             _o.WriteLine($"### Grounding eval — {a.SkillName} | `{a.Model}`\n");
@@ -123,8 +130,8 @@ internal sealed partial class Cards
         _o.WriteLine("| Metric | " + string.Join(" | ", arms.Select(a => $"`{a.Model}`")) + " |");
         _o.WriteLine("| --- |" + string.Concat(Enumerable.Repeat(" ---: |", arms.Count)));
         foreach (var (label, raw, _) in Spec)
-            _o.WriteLine($"| {label} | " + string.Join(" | ", arms.Select(a => $"{raw(a.Agg["baseline"])} → {raw(a.Agg["skilledPlugin"])}")) + " |");
-        _o.WriteLine("| **verdict** | " + string.Join(" | ", arms.Select(a => $"**{GradeLabel(a.Agg["baseline"], a.Agg["skilledPlugin"])}**")) + " |");
+            _o.WriteLine($"| {label} | " + string.Join(" | ", arms.Select(a => $"{raw(a.Agg["baseline"])} → {raw(a.Agg[Arm])}")) + " |");
+        _o.WriteLine("| **verdict** | " + string.Join(" | ", arms.Select(a => $"**{GradeLabel(a.Agg["baseline"], a.Agg[Arm])}**")) + " |");
         _o.WriteLine("\n_**FAIL** = solved fewer (correctness regressed); **BETTER** = solved more / archaeology→0 / IET/cost cut ≥20%; "
             + "**WORSE** = IET/cost/output inflated ≥20%; **NEUTRAL** = held. Archaeology, web, judge are signals, not gates._\n");
         _o.WriteLine("> Note: even ungrounded, the baseline self-grounds from the restored NuGet cache "
@@ -148,10 +155,10 @@ internal sealed partial class Cards
         _o.WriteLine("| --- |" + string.Concat(Enumerable.Repeat(" ---: |", arms.Count)));
         foreach (var (label, _, diff) in Spec)
         {
-            var cells = arms.Select(a => diff(a.Agg["skilledPlugin"], a.Agg["baseline"]));
+            var cells = arms.Select(a => diff(a.Agg[Arm], a.Agg["baseline"]));
             _o.WriteLine($"| {label} | " + string.Join(" | ", cells) + " |");
         }
-        var verdicts = arms.Select(a => $"**{GradeLabel(a.Agg["baseline"], a.Agg["skilledPlugin"])}**");
+        var verdicts = arms.Select(a => $"**{GradeLabel(a.Agg["baseline"], a.Agg[Arm])}**");
         _o.WriteLine("| **verdict** | " + string.Join(" | ", verdicts) + " |");
     }
 
@@ -177,8 +184,8 @@ internal sealed partial class Cards
         _o.WriteLine("| Metric | " + string.Join(" | ", models.Select(m => $"`{m.Model}`")) + " |");
         _o.WriteLine("| --- |" + string.Concat(Enumerable.Repeat(" ---: |", models.Count)));
         foreach (var (label, _, diff) in Spec)
-            _o.WriteLine($"| {label} | " + string.Join(" | ", models.Select(m => diff(m.Agents!.Agg["skilledPlugin"], m.Readme!.Agg["skilledPlugin"]))) + " |");
-        _o.WriteLine("| **verdict** | " + string.Join(" | ", models.Select(m => $"**{GradeLabel(m.Readme!.Agg["skilledPlugin"], m.Agents!.Agg["skilledPlugin"])}**")) + " |");
+            _o.WriteLine($"| {label} | " + string.Join(" | ", models.Select(m => diff(m.Agents!.Agg[Arm], m.Readme!.Agg[Arm]))) + " |");
+        _o.WriteLine("| **verdict** | " + string.Join(" | ", models.Select(m => $"**{GradeLabel(m.Readme!.Agg[Arm], m.Agents!.Agg[Arm])}**")) + " |");
     }
 
     // ---- raw per-scenario table (Python main) ----------------------------

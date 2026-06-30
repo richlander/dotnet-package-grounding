@@ -11,6 +11,9 @@ Generic infrastructure for evaluating NuGet package **grounding**. Start at the 
   CT 24), the cost-tiered ladder, and the confounds.
 - **[scoring.md](./scoring.md)** — *grading and shipping*: the **BETTER / NEUTRAL / WORSE** grade model,
   the tier-aware ship gate, the cards, the PR contents + checklist, and the judge-floor finding.
+- **[eval-protocol.md](./eval-protocol.md)** — *measurement discipline*: the pre-registered rules that
+  keep numbers honest — arm hygiene, variance-aware n, pass-rate metric, robust assertions, no
+  splicing — each tied to a real mistake it prevents.
 
 ## Supporting references
 

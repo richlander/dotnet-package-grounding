@@ -1,0 +1,107 @@
+# Eval protocol — how to measure a grounding unit without fooling yourself
+
+This is the **pre-registered measurement discipline** for every grounding eval. It exists
+because results are easy to misread: contaminated arms, single-draw noise, brittle
+assertions, and spliced datasets each produced a wrong conclusion in practice. Decide the
+arm, the runs, the metric, and the thresholds **before** you look at numbers, then follow
+the rules below.
+
+`scoring.md` defines *grades and ship gates*; `harness.md` covers *confounds*. This doc is
+the *operating procedure* that makes those numbers trustworthy.
+
+---
+
+## The rules
+
+### 1. Arm hygiene — grade the clean isolated arm only
+Every scenario runs three arms: `baseline` (no grounding), `skilledIsolated` (**only** the
+target grounding loaded), and `skilledPlugin` (the target **plus every other skill on the
+shelf**). **Claims about a document use `skilledIsolated`.** Never `skilledPlugin`.
+
+- **Mistake it prevents:** markout's `skilledPlugin` also loads the broadskill *Textbook* +
+  prefer-dotnet-inspect, so the card read **23/24** when the clean compact AGENTS.md was
+  **15/24**. We reported the shelf's score, not the document's.
+- **How:** the analyze card grades `skilledIsolated` by default. Before trusting a unit,
+  enumerate what else is in `grounding/` (shared dir = shared shelf) and confirm the
+  isolated arm is what you think it is.
+
+### 2. Variance pre-flight — a per-scenario verdict is invalid under high variance
+Before claiming any per-scenario pass/fail, check `highVariance` / `varianceCV` across
+scenarios.
+
+- **Mistake it prevents:** for markout **23/24 scenarios were `highVariance`** (CV median
+  3.4, max 27). The "Textbook regressed CT6/CT8 vs baseline" — *a document cannot make a
+  model worse at boolformat* — proved the per-scenario numbers were pure draw noise.
+- **How:** if a meaningful share of scenarios are high-variance at the current `n`, the
+  per-scenario verdict **does not hold**. Either raise `n` until rates stabilize, or report
+  pass **rates with intervals**, not single-draw pass/fail. Contrast: SCL was 9/24
+  high-variance (CV 1.2) and its numbers held.
+
+### 3. Pass-rate metric, not a single representative run
+A scenario's functional result is its **k/n pass rate**, computed identically for baseline
+and grounded. "Solved" = rate ≥ a stated threshold (declare the threshold up front).
+
+- **Mistake it prevents:** quoting one representative run as "12/12" or "23/24" that then
+  failed to reproduce.
+- **How:** at low `n` the single-draw `Fp == Ft` success is only an estimate. Treat
+  `success` as an estimate of the rate; under high variance (rule 2) raise `n`.
+
+### 4. Assertions must accept every correct solution
+Gate on **semantics**, never on incidental formatting — whitespace, separator style, case,
+ordering, key wording. When authoring, confirm the assertion passes the reference **and**
+at least one reasonable valid variant.
+
+- **Mistake it prevents:** SCL **M8** failed `items: a,b,c` because the model emitted the
+  equally-correct `items: a, b, c`. A brittle assertion manufactured a "gap."
+- **How:** prefer tolerant patterns (`a,\s*b,\s*c`, `[Tt]rue`), assert on stable anchors
+  (a deterministic value, an exit code, a substring), and avoid pinning exact whitespace or
+  punctuation a competent solution may vary.
+
+### 5. No splicing — one dataset = one clean condition
+When the document changes, **re-run the whole suite** under identical harness conditions.
+Never fuse runs from different timestamps or doc versions into one dataset.
+
+- **Mistake it prevents:** the nuget-fetch "12/12" splice (overnight 0.7.0 results + targeted
+  0.7.1 re-runs of two scenarios) was unreproducible and confusing. A clean full re-run
+  showed the same result and removed all ambiguity.
+- **How:** before/after = **two fresh full runs**. If you reuse unchanged scenarios, you are
+  splicing — don't.
+
+### 6. Separate stable metrics from noisy ones
+- **Stable across runs (safe to lead with at low n):** IET, output tokens, cost, archaeology
+  (web / cache / dotnet-inspect calls).
+- **Noisy (needs adequate n, rule 2/3):** per-scenario functional pass.
+- **Signal, never a gate:** judge quality score (it saturates and wobbles near the floor).
+
+Lead the story with the stable metrics; gate on functional pass only when `n` is adequate.
+
+### 7. Model-for-the-claim
+A **completeness** claim ("does the document let the model do every task?") needs a model
+steady enough to give a stable pass rate. If a unit is too noisy on the mini-tier model
+(haiku), measure completeness on the frontier model (opus) and use haiku for
+cost/efficiency. Cost/archaeology claims hold on both tiers.
+
+### 8. Pre-register, then look
+Fix the arm (1), the runs and variance handling (2/3), the success threshold (3), and the
+assertion review (4) **before** rendering numbers. Choosing them after seeing results is
+p-hacking — it manufactures whichever conclusion you were hoping for.
+
+---
+
+## Pre-run checklist
+
+- [ ] Which arm is the claim about? (`skilledIsolated` for a document.)
+- [ ] What else is on the shelf for this unit? (shared `grounding/` dir ⇒ contamination risk)
+- [ ] Expected variance? Is `n` adequate, or do I report rates + intervals?
+- [ ] Success threshold stated.
+- [ ] Assertions reviewed for brittleness (pass the reference **and** a valid variant).
+- [ ] One clean condition per dataset — no splice.
+
+## Reporting checklist
+
+- [ ] Numbers are from `skilledIsolated`.
+- [ ] High-variance scenarios flagged; per-scenario verdicts only where variance permits.
+- [ ] Stable metrics (cost/archaeology) lead; functional pass qualified by `n`.
+- [ ] "Impossible" results (a doc making the model *worse* at an unrelated task) are treated
+      as a noise/contamination/assertion flag, not a finding.
+- [ ] Datasets + harness commit + package versions pinned for reproduction.
