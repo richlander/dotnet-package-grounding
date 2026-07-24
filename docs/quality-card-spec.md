@@ -6,9 +6,11 @@ The **row-level reference** for the quality card (`analyze --view card`): every 
 / pairing arguments, the deliberate exclusions). This doc only pins down what each row *is*.
 
 Example values are the markout CT-24 holistic run (`N = 24`, `claude-haiku-4.5`, `baseline → grounded`).
-They are the current **binary (last-run) measurement**; rows marked *(graded)* become richer once the
-harness persists per-run yield (`Kᵢˣ / k`) and per-run cost into the results JSON — a change that needs
-a re-run, since neither is recoverable from existing artifacts (see the model doc's *Capture* note).
+Per-run yield capture (`Kᵢˣ / k` and per-run cost) has **landed** — the *(graded)* rows are now
+measured over the real `k = 5` batch, not a single last run. The **one** remaining proxy is the
+`Delivers` bit itself: until delivers-tier assertions are authored, `Delivers` is stood in by the
+**functional-satisfies** gate (assertions pass), so `Kᵢˣ` and every fidelity (C4) figure read as their
+functional-pass proxy, not a confirmed *did-it-as-asked* signal (see the model doc's *Capture* note).
 
 ## Notation
 
@@ -38,13 +40,11 @@ a re-run, since neither is recoverable from existing artifacts (see the model do
 
 ## ① Outcome — the coverage scoreboard
 
-*Example values are the current **binary `k=1` lens** — a single run's **functional-pass bit** (the
-**satisfies** gate only: assertions pass), used as a **proxy** for `Delivers` because the harness does
-not yet persist the `delivers` bit. So today `pᵢˣ ∈ {0,1}` and the `τ = 3/5` bar collapses to
-"functionally passed" (reliably-delivered and productive coincide **only under this proxy**). The
-graded `τ = 3/5` threshold — and the true `Delivers`-counted `Kᵢˣ` — take effect once per-run capture
-lands; until then, read every `Delivers`/`Kᵢˣ` figure below as its functional-pass stand-in, not a
-confirmed fidelity signal.*
+*The `Delivers`/`Kᵢˣ` figures below are measured over the real `k = 5` batch, but `Delivers` is still
+stood in by the **functional-satisfies** gate (assertions pass) until delivers-tier assertions are
+authored — so `pᵢˣ` uses the graded `τ = 3/5` threshold on real per-run yield, while the `Delivers`
+vs. `Satisfies` distinction (did-it-as-asked) is not yet separable. Read every `Delivers`/`Kᵢˣ` figure
+as functionally-passed until that lands, not a confirmed fidelity signal.*
 
 | Label | Equation | Example (b→g) | Description |
 | --- | --- | --- | --- |
@@ -68,6 +68,13 @@ Context for the **assumed** mechanism (a skill read replacing library archaeolog
 | `↳ tool calls: web / bash / other` | `Σᵢ webᵢ / bashᵢ / otherᵢ` | `4/172/217 → 1/103/197` | Raw, **unfiltered** tool-call totals by class (every web fetch, bash call, etc.). Context, not a judgment. |
 
 ## ③ Turns — symmetric with ④, ⑤
+
+**Axis-2 framing — three cost currencies, one gate.** Sections ③–⑤ all price the delivered unit on
+the shared set `S`, but they carry different weight in the verdict. **⑤ Token cost (IET) is the gated
+per-dollar currency** — machine-independent, it carries the economic-materiality gate (`≥20%` cut).
+**④ Wall-clock duration is the per-day co-headline** — reported with its own band, but machine-dependent
+(one fixed host), so it is *not* a gate. **③ Turns is a diagnostic** — it explains *why* IET and duration
+move (fewer round-trips), not a shipped headline. Read ⑤ as the punchline, ④ beside it, ③ as mechanism.
 
 | Label | Equation | Example (b→g) | Description |
 | --- | --- | --- | --- |
@@ -101,7 +108,7 @@ Context for the **assumed** mechanism (a skill read replacing library archaeolog
 
 | Label | Equation | Example (b→g) | Description |
 | --- | --- | --- | --- |
-| `verdict` | tally of per-task grades + gate, **per model class**, **on this suite** | `<strong·half·mixed·wash·regression·capability>` *(schematic — needs graded data)* | **Scope: the finite 24-task suite is the certified estimand** (task-population claims are a sensitivity read only) — quote the verdict as "on this suite." Each **both-productive** task is graded **strong win** (both axes better), **half win** (one axis better, other held), **mixed** (one better, other worse — a genuine trade), **wash** (both held), or **regression** (an axis worse with no compensating better). Grounded-only unlocks are **capability** wins (Axis 1 only — no cost axis), tallied separately. The aggregate *is* the tally (rows, no synthetic score). **Gate:** a *material* `baseline-only` loss (`Δpᵢ` past the margin **and** band excludes zero) disqualifies regardless of wins — **or** a suite-level **loss-mass band** `Σ max(−Δpᵢ,0)` over **all `N` tasks** (so both-productive slides count, not only cell crossings), calibrated against a **null-bootstrap** (resample both arms of task `i` from the pooled rate `p̃ᵢ=(Kᵢᵇ+Kᵢᵍ)/2k` → `Δpᵢ=0` in expectation, **finite-suite frame** — tasks fixed, runs redrawn — since the truncated sum is `≥0` under noise) with a **predeclared** materiality threshold, so diffuse flaky losses no single task can prove still trip it. **Bar is model-scoped:** frontier → cost-led wins; mini → capability unlocks; never pool classes. Primary currency IET; each margin is a **practical floor**, predeclared ex ante per model class (no separate noise floor — the suite band carries sampling uncertainty; noise sized from pooled log-scale `σ_within`, currently ~5% IET frontier / ~13% mini, only to keep the floor above harness resolution). **Yield inference:** beta-binomial with a **predeclared uniform `Beta(1,1)`** prior (primary) + a **Jeffreys `Beta(½,½)`** sensitivity read; independent per-cell priors (no hierarchical pooling — tasks are heterogeneous by design, and pooling would dilute C1 unlocks). Gate each axis in its **benefit direction**: yield (higher-better) on the band's lower bound; cost ratio `R` (lower-better) on `−ln R` or `R`'s upper bound — never a lower-bound rule on `R` itself. Thin `S` (`|S| < 8`) → "not estimable". |
+| `verdict` | tally of per-task grades + gate, **per model class**, **on this suite** | `<strong·half·mixed·wash·regression·capability>` *(schematic — needs graded data)* | **Scope: the finite 24-task suite is the certified estimand** (task-population claims are a sensitivity read only) — quote the verdict as "on this suite." Each **both-productive** task is graded **strong win** (both axes better), **half win** (one axis better, other held), **mixed** (one better, other worse — a genuine trade), **wash** (both held), or **regression** (an axis worse with no compensating better). Grounded-only unlocks are **capability** wins (Axis 1 only — no cost axis), tallied separately. The aggregate *is* the tally (rows, no synthetic score). **Gate:** a *material* `baseline-only` loss (`Δpᵢ` past the margin **and** band excludes zero) disqualifies regardless of wins — **or** a suite-level **loss-mass band** `Σ max(−Δpᵢ,0)` over **all `N` tasks** (so both-productive slides count, not only cell crossings), calibrated against a **null-bootstrap** (resample both arms of task `i` from the pooled rate `p̃ᵢ=(Kᵢᵇ+Kᵢᵍ)/2k` → `Δpᵢ=0` in expectation, **finite-suite frame** — tasks fixed, runs redrawn — since the truncated sum is `≥0` under noise) with a **predeclared** materiality threshold, so diffuse flaky losses no single task can prove still trip it. **Second gate — economic materiality:** the per-dollar (IET) cost win must be **certified material** — the **upper** bound of the geo-mean cost-ratio band must sit at `≤ ×0.80` (a worst-credible-case `≥20%` cut), the minimum premium that repays authoring + drift maintenance; a real-but-tiny win (e.g. `×0.95`) clears do-no-harm yet **fails** here. Duration co-headlines but does not gate. **Bar is model-scoped:** frontier → cost-led wins; mini → capability unlocks; never pool classes. Primary currency IET; each margin is a **practical floor**, predeclared ex ante per model class (no separate noise floor — the suite band carries sampling uncertainty; noise sized from pooled log-scale `σ_within`, currently ~5% IET frontier / ~13% mini, only to keep the floor above harness resolution). **Yield inference:** beta-binomial with a **predeclared uniform `Beta(1,1)`** prior (primary) + a **Jeffreys `Beta(½,½)`** sensitivity read; independent per-cell priors (no hierarchical pooling — tasks are heterogeneous by design, and pooling would dilute C1 unlocks). Gate each axis in its **benefit direction**: yield (higher-better) on the band's lower bound; cost ratio `R` (lower-better) on `−ln R` or `R`'s upper bound — never a lower-bound rule on `R` itself. Thin `S` (`|S| < 8`) → "not estimable". |
 
 ## Invariants
 

@@ -1,5 +1,10 @@
 # Skill-shelf methodology — the holistic benchmark and composition-axis LIET
 
+> **New here?** This doc explains how to evaluate a whole shelf of skills, not just one doc, and how
+> to tell which skills helped, duplicated, or conflicted. For **how we now grade and ship** grounding
+> changes, read the ratified **[quality-card model](./quality-card-model.md)**: return + efficiency,
+> with do no harm + a ≥20% cost win.
+
 *How we evaluate a **shelf** of skills as a whole, and how we attribute the shelf's score
 back to the individual skills that earned it. Testing and scoring are one document because
 they are one question asked against two reference lines.*

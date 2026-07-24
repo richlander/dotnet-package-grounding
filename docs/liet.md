@@ -1,5 +1,10 @@
 # The Levelized IET Curve
 
+> **New here?** The LIET chart shows how grounding cost changes as tasks get harder, so teams can compare
+> baseline, `AGENTS.md`, and `SKILL.md` (the complete textbook) at the same difficulty. For tabular
+> grading and ship decisions, read the ratified **[quality-card model](./quality-card-model.md)**; it is
+> the tabular superset of this live reference chart.
+
 *A shared cost axis for comparing grounding documents, and a name for the metric.*
 
 > **Ladder alignment (read first).** This doc predates the `Fails → Satisfies → Delivers` ladder and

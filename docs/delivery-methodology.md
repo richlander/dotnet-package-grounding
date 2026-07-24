@@ -1,5 +1,10 @@
 # Push vs. pull grounding delivery — evaluation methodology
 
+> **New here?** This doc explains how to compare always-on ("push") grounding with on-demand
+> ("pull") grounding without confusing delivery effects with content quality. For **how we now grade
+> and ship**, read the ratified **[quality-card model](./quality-card-model.md)**: return + efficiency,
+> with do no harm + a ≥20% cost win. Legacy verdict names below (`BETTER/WORSE/NEUTRAL`) predate it; the card is current.
+
 How to measure, honestly, whether delivering package grounding **push** (always-on, at t=0) beats
 delivering it **pull** (a model-invoked skill the agent must discover). This is the "good process"
 we follow and ask others to follow; it is written to be *defensible*, because the conclusions are

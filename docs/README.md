@@ -7,6 +7,14 @@ Generic infrastructure for evaluating NuGet package **grounding**. Start at the 
 - **[overview.md](./overview.md)** — **read this first**: the whole system in one pass — the three
   documents (Brochure / Missing Manual / Complete Textbook), the three task tiers
   (BR-6 / MM-12 / CT-24), and the eval-diff triangulation that gives each its confidence signal.
+- **[quality-card-model.md](./quality-card-model.md)** — **the measurement model** (start here for
+  *how we judge*): the two axes (**RETURN** = graded yield + reliability, **EFFICIENCY** = per-dollar
+  cost *and* per-day duration), the `Fails < Satisfies < Delivers` ladder, and the **two ship gates**
+  (do-no-harm + economic-materiality ≥20%). Plain-English analogies throughout (semiconductor yield,
+  basketball "do no harm").
+- **[quality-card-spec.md](./quality-card-spec.md)** — the **row-level reference** for the card
+  (`analyze --view card`): every row as Label · Equation · Example · Description. Derives from the
+  model doc.
 - **[getting-started.md](./getting-started.md)** — build the `grounding` CLI, author a unit, run the
   ladder, read the card.
 - **[running-eval.md](./running-eval.md)** — point the harness at a package repo's grounding and read
@@ -23,8 +31,9 @@ Generic infrastructure for evaluating NuGet package **grounding**. Start at the 
   attribute the shelf's score back to individual skills — the two paradigms (per-skill PR vs
   holistic), the ascend-to-oracle polarity, the three interference regimes, and the attribution
   protocol. The skill-shelf counterpart to `grounding-eval-methodology.md`.
-- **[scoring.md](./scoring.md)** — *grading and shipping*: the **BETTER / NEUTRAL / WORSE** grade model,
-  the tier-aware ship gate, the cards, the PR contents + checklist, and the judge-floor finding.
+- **[scoring.md](./scoring.md)** — *grading and shipping*: the graded two-axis verdict, the two ship
+  gates (do-no-harm + economic-materiality), the cards, and the PR contents + checklist. See
+  `quality-card-model.md` for the full model.
 - **[eval-protocol.md](./eval-protocol.md)** — *measurement discipline*: the pre-registered rules that
   keep numbers honest — arm hygiene, variance-aware n, pass-rate metric, robust assertions, no
   splicing — each tied to a real mistake it prevents.

@@ -1,5 +1,13 @@
 # NuGet Package Grounding
 
+> **New here?** _Grounding_ is authoritative, package-shipped instructions that help an AI coding agent
+> use a library correctly. This doc explains the **triangulation approach** (how three files —
+> Brochure / Missing Manual / Complete Textbook — cross-check each other). For **how we now grade and
+> ship** a grounding change, read the ratified **[quality-card model](./quality-card-model.md)**: two
+> axes (**return** = does it succeed, reliably; **efficiency** = per-dollar cost and per-day speed) and
+> two ship gates (**do no harm** + a **≥20% economic** win). Some legacy grade names below
+> (`BETTER/NEUTRAL/WORSE`, "Pareto gate") predate that model — read them as history; the card is current.
+
 Package grounding is a new concept (at least for .NET/NuGet) that is defined as package-resident (co-located) model context information. This information is intended to provide a model with authoritative information about how to use a library. NuGet MCP and `dotnet-inspect` have added support for offering this information to a model. The core question is how to decide which information should be included and how to determine if it helps or hurts. We've developed a process for evaluating grounding information that involves a sort of triangulation scheme across multiple files to generate confidence signal. This document describes that approach (at a high level).
 
 Adding grounding information to the model makes it sound like its a singular consideration. Test the experience; if it's good you are done. That's not the case. The AI labs have a spectrum of models, mini to frontier, as categories. There are also routers which make selection and switching automatic, unpredictable, and black box. What works well for one model might not for another. Our approach is based on [Pareto improvement](https://en.wikipedia.org/wiki/Pareto_efficiency): make improvements to model usage, but do not harm to any one model. Harm is defined as worse outcomes. Eval is used to account for and keep that balance.
@@ -109,7 +117,7 @@ The tests answer a set of questions and drive quality work.
 
 ### `AGENTS.md` Creation
 
-We start by using eval as a generative process. We start with only baseline eval on BR-6. This is how we identify what the gaps are. `AGENTS.md` is intended to be an emergent result of _probing the model_ with our task questions. If we get back perfect scores, then `AGENTS.md` isn't needed. Assuming non-perfect scores, we add content to `AGENTS.md` that improves scores, reduces archeology, or that lowers thinking. This is an iterative process until we hit steady state. We then enter the gauntlet of the H2H eval.
+We start by using eval as a generative process. We start with only baseline eval on BR-6. This is how we identify what the gaps are. `AGENTS.md` is intended to be an emergent result of _probing the model_ with our task questions. If we get back perfect scores, then `AGENTS.md` isn't needed. Assuming non-perfect scores, we add content to `AGENTS.md` that improves scores, reduces archaeology, or that lowers thinking. This is an iterative process until we hit steady state. We then enter the gauntlet of the H2H eval.
 
 ### Test: BR-6 H2H
 

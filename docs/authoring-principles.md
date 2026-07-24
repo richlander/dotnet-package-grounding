@@ -1,5 +1,10 @@
 # Authoring principles for grounding docs
 
+> **New here?** This doc explains how to write grounding that earns its place: capture only package facts
+> an agent has proven it lacks, and keep each section retrievable on its own. For **how we now grade and
+> ship**, read the ratified **[quality-card model](./quality-card-model.md)**: return + efficiency, do no harm,
+> and a ≥20% economic win. Legacy threshold / "Pareto gate" language below predates that model — read it as history; the card is current.
+
 Grounding docs (`AGENTS.md`) are **not** READMEs. A README explains a package to a
 human from scratch; a grounding doc supplies *only* what an AI agent provably lacks.
 These principles keep the content tight, measurable, and worth its place in the

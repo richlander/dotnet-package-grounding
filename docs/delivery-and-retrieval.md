@@ -1,5 +1,10 @@
 # How agents retrieve grounding: delivery, gates, and the retrieval pre-screen
 
+> **New here?** This doc explains how an agent decides whether to retrieve package grounding through
+> tools, and why a free resident index beats a "peek" tool for many cases. For **how we now grade
+> and ship** grounding changes, read the ratified **[quality-card model](./quality-card-model.md)**:
+> return + efficiency, with do no harm + a ≥20% cost win.
+
 **Date:** 2026-06-20
 **Status:** Findings complete. Companion to [`authoring-principles.md`](./authoring-principles.md)
 (which covers *what* to write); this doc covers *how the content reaches the agent* and

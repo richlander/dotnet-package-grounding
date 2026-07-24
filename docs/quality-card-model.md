@@ -94,9 +94,11 @@ trust it) and **cost** (understood at depth, per unit delivered). Neither alone 
 - **Axis 1 — Risk-adjusted return.** How much more does grounding *win*, and how much should I trust
   that given only `k` runs? ("You say n=5 — will I see this again?") — adjudicates **C1 capability**
   and **C2 reliability**.
-- **Axis 2 — Levelized cost / yield.** What does it cost to bring *one sellable win* to market —
-  retry tax and entry fee included — versus the alternative? — adjudicates **C3 efficiency** (with
-  **C5 predictability** as a memo alongside).
+- **Axis 2 — Efficiency (cost *and* duration).** What does it cost to bring *one sellable win* to
+  market — retry tax and entry fee included — versus the alternative, measured in **two currencies**:
+  the **per-dollar** cost (IET — the gated headline) and the **per-day** wall-clock **duration** (a
+  co-headline, reported not gated)? — adjudicates **C3 efficiency** (with **C5 predictability** as a
+  memo alongside).
 
 (**C4 fidelity** is not a separate axis — it lives in the **unit definition**: the `Fails < Satisfies <
 Delivers` ladder gates yield on `Delivers` and reports the `Satisfies`-vs-`Delivers` split as the
@@ -316,9 +318,15 @@ the confirmatory estimand — **not** against literal zero, or it over-trips; (2
 materiality threshold** like every other margin. Erring toward disqualification is the safe way for a
 "do no harm" guard to be wrong.
 
-## Axis 2 — Levelized cost / yield
+## Axis 2 — Efficiency (cost and duration)
 
-The cost of a win, done like a **levelized cost of electricity (LCOE)** / manufacturing
+Efficiency is priced in **two currencies on the same delivered unit**: **per-dollar** cost (IET) and
+**per-day** wall-clock duration. Cost is the **gated headline** (it carries the economic verdict);
+duration is a **co-headline** — reported with its own band, never a gate. Both are computed the same
+way — a per-task grounded/baseline ratio on the shared set, summarized as a geometric mean — so they
+read as one story in two units: *a delivered unit costs `×c` the dollars and takes `×d` the time.*
+
+The cost currency is done like a **levelized cost of electricity (LCOE)** / manufacturing
 **cost-per-good-unit**: count the scrap from a *yielding* run as part of that unit's price, amortize
 the fixed entry cost, and benchmark difficulty-for-difficulty against the alternative.
 
@@ -431,6 +439,17 @@ hidden, though — it lands in the **grounded-only memo line** of Total IET (its
 expensive unlock is visible as capability *investment* without contaminating the shared-set comparison.
 (A `0/5` baseline is *observed nonproduction this batch*, not proven impossibility.)
 
+**The second currency — per-day duration (co-headline, not a gate).** Alongside per-dollar cost we
+report **wall-clock duration** the same way: a per-task grounded/baseline ratio on the shared set,
+summarized as a **geometric mean**, with its own bootstrap band. Two deliberate differences from cost:
+duration is measured **over Delivered runs only** (no retry tax — a run's wall-clock is spent whether
+or not it delivers, so folding non-delivered runs in would double-count what the cost axis already
+carries), and it runs on **one fixed host**, so the machine constant cancels in every ratio. Duration
+answers *"how much faster does a delivery arrive?"* — the **cycle-time** companion to cost's
+**price-per-good-unit**. It is a co-headline because a shop cares about both the bill and the
+turnaround, but it does **not** gate: only cost carries the economic verdict, because dollars — not
+minutes on our one box — are what repay authoring and maintenance.
+
 ## The coverage scoreboard
 
 Aggregate outcomes are shown as the **four-way paired decomposition — as rows, never a single netted
@@ -460,12 +479,29 @@ noisy binomials**, always print the **yield-mass movement `Σᵢ pᵢˣ`** (sum 
 the thresholded count: a lone boundary cell flipping `2/5 ↔ 3/5` can move the count ±1 with essentially
 no change in the certified quantity, and the mass keeps that from reading as real progress.
 
-## The verdict (to be litigated)
+## The verdict — two gates and a graded win
 
-The verdict is **not** a suite-level either/or to adjudicate — it is a **tally of per-task grades**,
-read straight off the coverage scoreboard. Each **both-productive** task is classified by two moves —
-the **yield move** (Axis 1) and the **cost move** (Axis 2) — each read against a **predeclared margin**
-as *better*, *held*, or *worse*. The 3×3 grid is exhaustive and unambiguous:
+**The decision rule is two gates; everything else is the graded detail behind them.** A card ships
+when it clears **both**:
+
+1. **Do no harm (the safety gate).** No material baseline-only regression — grounding must not lower
+   the yield on work the baseline already delivered. Measured as the **suite loss mass**
+   `Σᵢ max(pᵢᵇ − pᵢᵍ, 0)` against a **null-calibrated** threshold (the 95th percentile of the loss
+   mass two *identically-skilled* arms would post from run-to-run luck alone), so ordinary noise
+   cannot trip it. This is the substitute told *"we don't expect wonders — just don't lower our
+   conversion replacing your colleague."*
+2. **Economic materiality (the value gate).** The per-dollar cost win must be **big enough to be worth
+   maintaining**: the **upper** bound of the per-dollar cost-ratio band must sit at or below **×0.80**
+   — a **certified ≥20% cost cut**, even in the worst credible case. Twenty percent is the minimum
+   premium that repays authoring the grounding plus keeping it current as models drift; a real-but-tiny
+   5% win clears *do-no-harm* yet fails here — correctly *"not worth the upkeep."* Duration
+   co-headlines the value story but does not gate.
+
+Beyond the gates the card reports a **graded** two-axis win, not a binary pass. The grade is a
+**tally of per-task classifications**, read straight off the coverage scoreboard. Each
+**both-productive** task is classified by two moves — the **yield move** (Axis 1) and the **cost move**
+(Axis 2) — each read against a **predeclared margin** as *better*, *held*, or *worse*. The 3×3 grid is
+exhaustive and unambiguous:
 
 | yield \ cost | cost better | cost held | cost worse |
 | --- | --- | --- | --- |
@@ -554,6 +590,14 @@ the tail), so these are conservative anchors. A **targeted variance study** — 
 **Delivered-runs only**, log-variance-components with a CI — would replace them with a tighter, unbiased
 anchor; the ad-hoc method above is the reproducible way to re-anchor if the harness changes.
 
+**Two floors, and which one binds.** The per-model-class practical floors above are a **resolution**
+bound — *can the harness even see a move this small?* The shipped **economic-materiality gate (≥20%)**
+is an **economics** bound — *is the move big enough to be worth maintaining?* The economic floor sits
+comfortably **above** both resolution floors (≈5% frontier, ≈13% mini), so on the cost axis the ≥20%
+gate is the one that **binds**: a win must be both resolvable *and* material, and materiality is the
+higher bar. The resolution floors still matter for the reliability (yield) axis and as the sanity check
+that the harness can support the claim at all.
+
 **Pooled vs. arm-specific — two different jobs.** The *pooled* `σ_within` above sizes the **margin**
 (one harness-noise number). It cannot test **C5 predictability**, which asks whether *grounded* cost is
 steadier than *baseline* cost — that needs the **arm-specific** `σ_b` and `σ_g` (same log-scale
@@ -624,3 +668,10 @@ The card derives from this chart; documenting it fixes the model's meaning in on
 | Entry fee + unit price vs alternatives | Costco: pay the membership, then compare per-item price to Safeway/QFC — amortizes only if you keep shopping there. |
 | Retries as yield loss | First-pass yield / scrap & rework; `1/p` ≈ Number Needed to Treat; geometric expected trials to a success. |
 | Capability win (baseline can't) | A store that doesn't stock the item this batch. |
+| **The whole card as one picture** | A **semiconductor earnings slide**: **wafer yield** (how many good dies per wafer = our success yield), **process capability / Cpk** (how *tightly* the line holds spec = our reliability, `ΔP` on shared work), **cost-per-good-die** (yield-adjusted unit cost = our gated per-dollar efficiency — the gross-margin lever a CEO speaks to), and **cycle time** (fab turnaround = our per-day duration co-headline). |
+| Per-dollar cost as gross margin | **Cost-per-good-die**: scrap is already priced in, so a lower number is a real margin gain — the one figure that shows up on the earnings call. |
+| Duration co-headline | **Cycle time / fab turnaround**: a second thing the shop tracks (how fast good units arrive), reported beside cost but not the number that gates the quarter. |
+| Reliability = tight process | **Process capability (Cpk)**: not "did one part pass" but "how reliably does every part land in spec" — a `5/5` line vs a `3/5` line at the same average. |
+| Do-no-harm gate | **A substitute for an injured starter**, told *"we don't expect wonders — just don't lower our shooting."* We judge the season-total shortfall against what luck alone would produce, not any single bad game. |
+| Why the do-no-harm cushion is self-calibrating | **Free-throw variance:** a 99% shooter over five attempts almost always hits 5/5 (near-zero spread → tiny cushion); a 55% shooter scatters 2/5–4/5 (wide spread → wide cushion). A near-ceiling model's harm bar is strict *because* luck can barely fake a shortfall. |
+| Economic-materiality gate (≥20%) | **Minimum viable margin:** a 5% cut is real but not worth the upkeep; the gate demands a cut big enough — even in the worst credible case — to repay authoring and ongoing drift maintenance. |

@@ -1,5 +1,10 @@
 # Eval protocol — how to measure a grounding unit without fooling yourself
 
+> **New here?** This is the checklist for running grounding evals without fooling yourself: choose
+> the arm, sample size, assertions, and thresholds before reading results. For **how we now grade and
+> ship**, read the ratified **[quality-card model](./quality-card-model.md)**: return + efficiency,
+> with do no harm + a ≥20% cost win. Single-run examples below predate it as pitfalls; the card is current.
+
 This is the **pre-registered measurement discipline** for every grounding eval. It exists
 because results are easy to misread: contaminated arms, single-draw noise, brittle
 assertions, and spliced datasets each produced a wrong conclusion in practice. Decide the

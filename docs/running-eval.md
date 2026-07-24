@@ -1,5 +1,9 @@
 # Running eval
 
+> **Reading the result?** What the numbers mean and how a run becomes a ship/no-ship call is the
+> **[quality-card model](./quality-card-model.md)** (two axes — return + efficiency — and two ship
+> gates). This doc is the *operational* how-to: build the harness, point it at a repo, run.
+
 This repo is the **generic eval harness**. It holds no package grounding of its own — the grounding
 (`AGENTS.md`, optional `SKILL.md`) and its eval (`eval.yaml` + `fixtures/`) live in the **package's own
 repo**, under `grounding/<unit>/`. You run eval by pointing the harness at that repo. Nothing is packed
