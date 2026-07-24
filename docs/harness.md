@@ -9,92 +9,89 @@ How this repo **builds and runs** the [`dotnet/skills`](https://github.com/dotne
 `skill-validator` to measure whether grounding helps. The root [`README`](../README.md) covers
 *what* grounding is and the findings; this file covers *how* the evals run.
 
-> The harness scaffolding — the **generated** per-unit `SKILL.md` skill-wrappers, the slug
-> rules, and the runner scripts — is **not** shipped grounding. The artifacts under test are the
-> package's grounding **documents**: the **Missing Manual** (`AGENTS.md`, rungs 0–1) and, at rung 2,
-> the **Complete Textbook** (a hand-authored, shipped `SKILL.md`). Don't confuse that shipped Textbook
-> with the harness's generated `SKILL.md` wrapper — same filename, different thing (skill-validator just
-> requires that name).
+> The harness scaffolding — generated plugin manifests, transient validator wrappers, slug rules,
+> and runner scripts — is **not** shipped grounding. The artifact under test is the package skill set
+> rooted at `grounding/<slug>/SKILL.md`: a small base skill, optional domain skills and supporting
+> files, and pull-based install into the consuming repo.
 
 ## Metrics vs. signals: what a claim may rest on
 
-The study reads two epistemically different kinds of data, and we keep them strictly
-separated — the analyzer (`grounding analyze`) even prints them in
-two labeled column groups. Conflating them is the easiest way to overclaim.
+The study reads two epistemically different kinds of data, and we keep them strictly separated — the
+analyzer (`grounding analyze`) even prints them in two labeled column groups. Conflating them is the
+easiest way to overclaim.
 
-**Normative metrics** are the quantities we are *allowed to draw conclusions from* — the
-actual value delivered or harm incurred:
+**Normative metrics** are the quantities we are *allowed to draw conclusions from* — the actual value
+delivered or harm incurred:
 
-- **quality** (judge `overallScore`) and **functional pass** (`taskCompleted` + assertion
-  gates) — the *value* axis (was the task done, and done well?).
-- **tokens**, **cost** (premium-request multiplier), and **wall-clock** — the *harm* axis
-  (what did it cost to get there?). The analyzer carries **two token views** because the raw
-  metrics are not lossy: `tok` (gross input+output, where input *includes* cache re-reads) and
-  `iet` (cache-excluded effective tokens, `(input − cacheRead) + output`). They **bracket** the
-  real harm — a baseline that re-reads a large cache shows a huge `tok` but a modest `iet` — and
-  **`cost` sits between them** as the truest single proxy. Quote `cost` for the harm claim; show
-  `tok`/`iet` to reveal whether a token gap is fresh compute or cheap cache reflection.
+- **RETURN**: graded yield on the `Fails < Satisfies < Delivers` ladder, plus reliability as ΔP on the
+  shared-success set.
+- **EFFICIENCY**: cost over delivered runs. Per-dollar IET cost is the gate metric; per-day duration is
+  a co-headline, not a gate.
+- **Validity**: the do-no-harm gate checks loss mass against a null-calibrated threshold. The
+  economic-materiality gate requires the per-dollar cost-ratio band upper bound to be ≤ ×0.80, certifying
+  at least a 20% cost cut.
 
-A headline like "grounding is cheaper and at least as correct" may rest **only** on these.
+A headline like "grounding is cheaper and at least as correct" may rest **only** on these metrics.
 
-**Informative signals** are everything about *how* the agent behaved: total tool calls,
-**reasoning turns** (`turnCount` — iterations of the think→act loop, the cleanest measure of
-flailing), `web_fetch`/`web_search`, `dotnet-inspect` invocations, NuGet-MCP calls, NuGet-cache
-rummaging, and bash retry loops. **A tool call (or turn) is not itself a cost or a harm** — on
-its own it adds nothing to the bill, and "fewer tool calls" is not a result we claim. Their value
-is **interpretive**: token spend is a single point, but many signal points together trace the
-*narrative arc* — web archaeology, cache-reflection, compile-retry flailing — that **explains
-why** the normative metrics move. Signals corroborate and give shape to a claim; they are
-never the claim.
+**Informative signals** are everything about *how* the agent behaved: total tool calls, **reasoning
+turns** (`turnCount` — iterations of the think→act loop, the cleanest measure of flailing),
+`web_fetch`/`web_search`, `dotnet-inspect` invocations, NuGet-MCP calls, NuGet-cache rummaging, and bash
+retry loops. **A tool call (or turn) is not itself a cost or a harm** — on its own it adds nothing to the
+bill, and "fewer tool calls" is not a result we claim. Their value is **interpretive**: token spend is a
+single point, but many signal points together trace the *narrative arc* — web archaeology,
+cache-reflection, compile-retry flailing — that **explains why** the normative metrics move. Signals
+corroborate and give shape to a claim; they are never the claim.
 
-So when a baseline burns 6× the tokens of a grounded arm, the **tokens** are the finding; the
-74 reasoning turns, the 25 web fetches, and the cache pokes are the *story* of where those tokens
-went. Cite signals to explain a metric, never in place of one.
+So when a baseline burns 6× the IET of a grounded arm, the **IET** is the finding; the 74 reasoning
+turns, the 25 web fetches, and the cache pokes are the *story* of where those tokens went. Cite signals
+to explain a metric, never in place of one.
 
-A third kind of data is the **experimental parameter** — the size of the intervention itself.
-The analyzer reports **grounding ~tok** (the `SKILL.md` loaded into each grounded arm) per
-subject, so payoff can be read *against* the grounding budget. This is what lets us see the
-distribution's modes: a compact `AGENTS.md` (~0.8k tok) and a broad skill (~2.6k tok) both drive
-`web→0`, so the compact form buys the same protection at a third of the budget. Grounding tokens
-are not a result either; they are the x-axis the metrics are plotted against.
+A third kind of data is the **experimental parameter** — the size of the intervention itself. The
+analyzer reports **grounding ~tok** (the `SKILL.md` content loaded into each grounded arm) per subject,
+so payoff can be read *against* the grounding budget. Grounding tokens are not a result either; they are
+the x-axis the metrics are plotted against.
 
 ## A confound: the baseline can read the package from the NuGet cache
 
 The "baseline" arm is meant to be *ungrounded* — model knowledge only, web blocked. But a scenario
-references a real package, so `dotnet build`/`run` restores it into `~/.nuget/packages`, and the
-agent's `bash` can read whatever the package **ships on disk**. That can include the package's
-`README.md`, its **shipped `AGENTS.md`** (the very grounding doc, once we pack it into the nupkg),
-and the `lib/*.dll` (reflectable/decompilable). So the web-blocked baseline is not necessarily
-ungrounded — it can self-serve the grounding straight from the restored package.
+references a real package, so `dotnet build`/`run` restores it into `~/.nuget/packages`, and the agent's
+`bash` can read whatever the package **ships on disk**. That can include the package's `README.md`,
+other package docs, and the `lib/*.dll` (reflectable/decompilable). So the web-blocked baseline is not
+necessarily pure model knowledge — it can self-serve shipped package material straight from the restored
+cache.
 
-This is empirically active, not hypothetical. In the Markout n=3 runs (package `Markout 0.13.8`,
-whose cache entry ships both `README.md` and `AGENTS.md`), the **baseline** read those files from
-the cache. Attributing every session to its arm via `sessions.db` and counting only *successful*
-tool results, the **baseline** arm made **28 successful reads** of the cached `README.md`/`AGENTS.md`
-across its 18 sessions (6 scenarios × 3 runs); the two grounded arms made **0** cache-path reads —
-they receive `AGENTS.md` through the skill mechanism, not the cache. (An earlier coarse `grep` of the
-path string across all session logs reported 304/98; that over-counted — one read spans many log
-lines — and conflated arms. The per-arm, success-aware figure is 28 baseline reads.) The consequence:
-for a package that ships groundable artifacts, **the baseline-vs-grounded gap understates grounding's
-value**, because the baseline already had (a fraction of) the grounding on disk.
+This is empirically active, not hypothetical. In the Markout n=3 runs (package `Markout 0.13.8`, whose
+cache entry ships package docs), the **baseline** read those files from the cache. Attributing every
+session to its arm via `sessions.db` and counting only *successful* tool results, the **baseline** arm
+made **28 successful reads** of cached package docs across its 18 sessions (6 scenarios × 3 runs); the
+grounded arms made **0** cache-path reads — they receive grounding through the skill mechanism, not the
+cache. (An earlier coarse `grep` of the path string across all session logs reported 304/98; that
+over-counted — one read spans many log lines — and conflated arms. The per-arm, success-aware figure is
+28 baseline reads.) The consequence: for a package that ships useful docs, **the baseline-vs-grounded gap
+understates grounding's value**, because the baseline already had a fraction of the needed context on
+disk.
 
-**The docs ride inside the nupkg, so every restore extracts them.** `Markout 0.13.8`'s nupkg contains
-`README.md` and `AGENTS.md` at the package root (declared via `<PackageReadmeFile>` / `<None Pack>`).
-Verified directly: starting from a *completely empty* `NUGET_PACKAGES` dir, a single `dotnet restore`
-of the package re-materializes both files on disk. This has a sharp implication: **you cannot have the
-package restored (buildable) without its shipped docs being readable** — the docs travel with the
-code. Since every Markout scenario asserts `dotnet build`/`run`, the agent's own build necessarily
-restores the package and lands the docs in the cache. So in any build-based scenario the web-blocked
-baseline is **never truly ungrounded**.
+**Docs inside the nupkg are extracted by restore.** `Markout 0.13.8`'s nupkg contains package docs at
+the package root (declared via `<PackageReadmeFile>` / `<None Pack>`). Verified directly: starting from a
+*completely empty* `NUGET_PACKAGES` dir, a single `dotnet restore` of the package re-materializes those
+files on disk. This has a sharp implication: **you cannot have the package restored (buildable) without
+its shipped docs being readable** — the docs travel with the code. Since every Markout scenario asserts
+`dotnet build`/`run`, the agent's own build necessarily restores the package and lands the docs in the
+cache. So in any build-based scenario the web-blocked baseline is **never truly empty of package
+context**.
 
 That makes only two baseline conditions physically meaningful:
 
-1. **Warm / restored** — the only condition compatible with build-based scenarios. The package (and
-   therefore its `README.md`/`AGENTS.md`) is on disk; the baseline competes against
-   grounding-via-cache, not against model ignorance. **Every number in this repo is this condition.**
+1. **Warm / restored** — the only condition compatible with build-based scenarios. The package and its
+   shipped docs are on disk; the baseline competes against package-cache context, not against model
+   ignorance. **Every number in this repo is this condition.**
 2. **Cold / no-restore** — a truly empty cache where the package is never restored. Here the baseline
    has model knowledge only. But this is only achievable for **advisory scenarios that never build**;
    the moment a task requires `dotnet build`, restore warms the cache and condition (1) returns.
+
+The current pull-based skill set is installed into the consuming repo and is removable; it is not an
+always-on file packed into the package. The cache confound above is therefore about ordinary package
+materials already shipped in a nupkg, not about the live grounding delivery mechanism.
 
 ### Why "empty NuGet cache" is not an eval state worth measuring
 
@@ -107,14 +104,14 @@ that first build — in **0/18** sessions did the baseline read a package doc be
 empty starting cache collapses to the warm condition within the agent's first few actions; it cannot
 persist through a build-based run. Measuring "empty cache at t=0" would therefore measure a transient
 that the agent erases before it does any package-specific work — the package is effectively *always
-present* by the time it matters. The only setup in which an empty cache is a stable, observable state
-is an advisory task that never builds, which is condition (2) above. Treat starting cache state as
-fixed (warm), not as a variable.
+present* by the time it matters. The only setup in which an empty cache is a stable, observable state is
+an advisory task that never builds, which is condition (2) above. Treat starting cache state as fixed
+(warm), not as a variable.
 
-Stripping the docs out of a *restored* cache entry (lib kept) is therefore an **artificial third
-state** that corresponds to no real developer setup — you would never have a restored, buildable
-package on disk with its `README.md` surgically deleted. It is useful only as an upper-bound probe of
-"how much does denying the cached docs cost the baseline," not as a realistic ungrounded baseline.
+Stripping the docs out of a *restored* cache entry (lib kept) is therefore an **artificial third state**
+that corresponds to no real developer setup — you would never have a restored, buildable package on disk
+with its `README.md` surgically deleted. It is useful only as an upper-bound probe of "how much does
+denying the cached docs cost the baseline," not as a realistic ungrounded baseline.
 
 NuGetFetch `0.6.2` ships **no** docs in its nupkg (only the DLL), so its baseline leak is reflection
 only (weaker) — which is itself a reason the NuGetFetch baseline looks stronger relative to grounding
@@ -125,11 +122,11 @@ than Markout's.
 isolation harness **does not work** — the Copilot CLI's auth state is HOME-bound, so a redirected
 `HOME` fails with `Not authenticated`; the working approach (`.tools/baseline-cache-clean.sh`,
 gitignored) keeps the real `HOME` and relocates only the doc files with a checksum-verified restore
-trap. Stripping `0.13.8` dropped the baseline's successful cache-doc reads from **28 → 1**: the
-single survivor was the agent **falling back to a sibling cached version** —
+trap. Stripping `0.13.8` dropped the baseline's successful cache-doc reads from **28 → 1**: the single
+survivor was the agent **falling back to a sibling cached version** —
 `cat .../0.13.8/README.md || cat .../0.13.7/README.md` — proving that stripping one version is *not* a
-cold cache (the global cache here held five Markout versions: 0.10.2, 0.13.7, 0.13.8, 0.13.9,
-10.0.2, four of them shipping a README). The effect on the baseline arm (mean / 6 scenarios):
+cold cache (the global cache here held five Markout versions: 0.10.2, 0.13.7, 0.13.8, 0.13.9, 10.0.2,
+four of them shipping a README). The effect on the baseline arm (mean / 6 scenarios):
 
 | baseline (n=3) | quality | cost | iet |
 | --- | --- | --- | --- |
@@ -138,11 +135,10 @@ cold cache (the global cache here held five Markout versions: 0.10.2, 0.13.7, 0.
 | **delta** | **+0.18** | +0.51 | +4,014 |
 
 So denying the baseline the `0.13.8` docs cost it **~0.18 quality** (a *lower bound* — sibling-version
-READMEs still leaked); cost/iet moved within noise. Bottom line: the published baseline-vs-grounded
-gap **understates** grounding, the understatement scales with how much groundable material the package
-ships, and because the docs are packed in the nupkg, a build-based scenario can never fully remove
-that understatement. (`.tools/baseline-cache-test.sh` is an earlier HOME-isolated variant kept only
-for reference — it is blocked by the auth issue above.)
+READMEs still leaked); cost/iet moved within noise. Bottom line: the published baseline-vs-grounded gap
+**understates** grounding, and the understatement scales with how much useful material the package
+ships. (`.tools/baseline-cache-test.sh` is an earlier HOME-isolated variant kept only for reference — it
+is blocked by the auth issue above.)
 
 ## Run, session, and dataset artifacts (per-run vs aggregate)
 
@@ -151,7 +147,7 @@ essential — conflating them caused a real bug (tool-call counts read as single
 runs > 1 study).
 
 | Level | Unit | Where | Nature |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | **Session** | one (scenario, arm, **run**) execution | `sessions/<id>/session-state/events.jsonl`; a row each in the `sessions` (id → scenario/role/run mapping) and `run_results` (per-run `metrics_json`) tables | **Per-run source of truth — complete** (full events, *with* tool arguments) |
 | **`sessions.db`** | all sessions of one eval | `<results-dir>/<timestamp>/sessions.db` | Complete, per-run; **ephemeral / regenerable** |
 | **Dataset** | one eval | `results.json` (copied to the data cache) | **Aggregate summary** — the N runs collapsed per (scenario, arm) |
@@ -173,11 +169,12 @@ collapse. The session data itself is never incomplete; the *aggregate* is.
   time). **`sessions.db` is the regenerable source**, discarded with the results dir.
 
 **Why read `sessions.db` and not the raw `events.jsonl` files?** The events are *not* only in the db —
-every run's full log is also in its own `events.jsonl` (with arguments). What the db uniquely provides is
-the **mapping**: each session directory is named by an opaque hash id, and nothing in the log or its path
-says *which scenario / arm / run* it is. That attribution — `session-id → (scenario, role, run_index)` —
-lives only in the `sessions` table. So we open the db for the **mapping**, not because the events live
-only there (`run_results.metrics_json` also holds each run's events pre-parsed, which is convenient).
+every run's full log is also in its own `events.jsonl` (with arguments). What the db uniquely provides
+is the **mapping**: each session directory is named by an opaque hash id, and nothing in the log or its
+path says *which scenario / arm / run* it is. That attribution — `session-id → (scenario, role,
+run_index)` — lives only in the `sessions` table. So we open the db for the **mapping**, not because the
+events live only there (`run_results.metrics_json` also holds each run's events pre-parsed, which is
+convenient).
 
 **Why bake stats into the dataset instead of reading the db at analyze time?** Because `grounding run`
 copies `results.json` *out* to a separate cache location, decoupled from the (ephemeral) results dir — so
@@ -187,99 +184,84 @@ correct and self-contained. (The alternative — have skill-validator keep *all*
 
 ## How it relates to dotnet/skills
 
-We follow the same pattern `dotnet/skills` uses for its own evals: **build** the
-`skill-validator` binary from source (`dotnet publish eng/skill-validator/src/SkillValidator.csproj`)
-and run it. skill-validator is **not published to any NuGet feed** (not nuget.org, not GitHub
-Packages) — `dotnet/skills` only builds it in-repo and publishes a rolling `--prerelease`
-nightly to a GitHub Release. So we pin a `dotnet/skills` commit in
-[`eng/skill-validator.sha`](../eng/skill-validator.sha) and build the validator from it.
-"Taking updates" = bump that SHA — automated by
-[`.github/workflows/update-harness.yml`](../.github/workflows/update-harness.yml), which opens a
-PR pointing at the latest `dotnet/skills` main commit.
+We follow the same pattern `dotnet/skills` uses for its own evals: **build** the `skill-validator`
+binary from source (`dotnet publish eng/skill-validator/src/SkillValidator.csproj`) and run it.
+skill-validator is **not published to any NuGet feed** (not nuget.org, not GitHub Packages) —
+`dotnet/skills` only builds it in-repo and publishes a rolling `--prerelease` nightly to a GitHub
+Release. So we pin a `dotnet/skills` commit in [`eng/skill-validator.sha`](../eng/skill-validator.sha)
+and build the validator from it. "Taking updates" = bump that SHA — automated by
+[`.github/workflows/update-harness.yml`](../.github/workflows/update-harness.yml), which opens a PR
+pointing at the latest `dotnet/skills` main commit.
 
-## `AGENTS.md` (grounding) vs `SKILL.md` (optional Textbook)
+## Shipped skill set vs transient validator wrapper
 
-`AGENTS.md` is the human-authored grounding under test — the **Missing Manual**, the file that ships in
-the package root and lives under `grounding/<slug>/`. `SKILL.md` is a different thing on two axes:
+The package-authored grounding under test is a pull-based skill set rooted at
+`grounding/<slug>/SKILL.md`. That base skill uses the Anthropic Agent Skills convention: YAML
+frontmatter with `name` and a use-when `description`, followed by concise guidance and progressive
+disclosure into domain skills or supporting files. The package can carry multiple domain skills, and a
+root meta-skill orchestrates install into the consuming repo.
 
-- **It is optional and maintainer-authored** — the **Complete Textbook** (rung-2 content arm). We do
-  **not** generate it. Not every package earns one.
-- **It is not grounding**, so it does **not** live under `grounding/`. It is a real Claude skill: it
-  belongs in a conventional `skills/<name>/SKILL.md` with a `.claude-plugin/plugin.json`, per Anthropic
-  guidance (see `richlander/dotnet-skills` / `richlander/markout` for the layout).
-
-`grounding check-agents` only enforces the `AGENTS.md` body-line budget in
-[`eng/agents-line-limit.txt`](../eng/agents-line-limit.txt) (currently **120**); it does **not** write or
-check any `SKILL.md`. Keep `AGENTS.md` tight — prefer a short "see also" link over inlining depth, and
-raise the limit deliberately, not casually.
-
-> **Two things named `SKILL.md`.** To deliver a content arm, the harness synthesizes a **transient**
-> skill wrapper (skill-validator requires a `SKILL.md` beside a `plugin.json`); `grounding run --source
-> {agents|readme|skill|none}` selects which document fills it, and it is cleaned up after the run. Don't
-> confuse that throwaway delivery wrapper with a **package's shipped Textbook `SKILL.md`** — same
-> filename, entirely different artifact. `--source skill` reads the authored Textbook from
-> `skills/<unit>/SKILL.md`.
+`skill-validator` still needs a runnable skill surface during eval. The harness may synthesize transient
+plugin scaffolding or copy the skill set into the validator layout, then clean up after the run. Do not
+confuse that runner scaffolding with the package's shipped grounding artifact.
 
 ## Layout
 
-Each grounding unit lives in a folder named with a **lowercase-hyphen slug** (the
-skill-validator skill name rule), e.g. `system-commandline` for the `System.CommandLine`
-package. The real package id is recorded in `meta.yaml` (`package:`).
+Each grounding unit lives in a folder named with a **lowercase-hyphen slug** (the skill-validator skill
+name rule), e.g. `system-commandline` for the `System.CommandLine` package. The real package id is
+recorded in `meta.yaml` (`package:`).
 
-```
+```text
 grounding/<slug>/
-  AGENTS.md     # SOURCE OF TRUTH — the Missing Manual; ships in the package root
-  meta.yaml     # name (== <slug>), package, description
-tests/<slug>/
-  eval.yaml     # scenarios: prompt + setup.copy_test_files + assertions
-  <fixtures>    # sample project(s) copied into the agent workdir; gated by `dotnet test`
-skills/<slug>/  # OPTIONAL, maintainer-authored — the Complete Textbook (a real Claude skill)
-  SKILL.md      # + a .claude-plugin/plugin.json alongside skills/ (not generated)
+  SKILL.md       # base package skill; source of truth for the grounded arm
+  <domain>/...   # optional domain skills and progressive-disclosure support files
+  meta.yaml      # name (== <slug>), package, description
+  eval.yaml      # CT-24 scenarios: prompt + setup.copy_test_files + assertions
+  fixtures/...   # sample project(s) copied into the agent workdir; gated by `dotnet test`
 eng/
   skill-validator.sha    # pinned dotnet/skills commit we build the validator from
-  agents-line-limit.txt  # max lines allowed in any AGENTS.md (currently 120)
-  grounding              # launcher for the C# grounding CLI (check-agents, gen-plugins, analyze, ...)
+  grounding              # launcher for the C# grounding CLI (run, gen-plugins, analyze, ...)
   install-grounding.sh   # publish the Native AOT binary onto PATH
   run-evals.sh           # builds skill-validator from the pinned SHA, then runs evaluate
 ```
 
-The grounding folder name must match the tests folder name and the skill `name` (e.g.
-`system-commandline`); the harness resolves `tests/<name>/eval.yaml`. Fixtures live under
-`tests/` (never beside `AGENTS.md`) so the baseline arm cannot accidentally read the grounding.
+The grounding folder name must match the skill `name` (e.g. `system-commandline`). Fixtures live under
+the eval bundle so the baseline arm receives only task setup, never the grounded skill set.
 
 ## Run locally
 
 ```bash
 # Prereq: a .NET SDK matching dotnet/skills' global.json, git, and
 # `gh auth login` (skill-validator's Copilot SDK uses gh creds).
-grounding check-agents                # validate AGENTS.md line budget
-eng/run-evals.sh System.CommandLine
+grounding run system-commandline --source skill --eval-mode holistic --runs 5 \
+  -m "claude-haiku-4.5 claude-sonnet-4.6 claude-opus-4.8"
 ```
 
-`run-evals.sh` clones `dotnet/skills` at the pinned SHA into `./.tools`, builds
-`skill-validator`, and caches it per-SHA, so only the first run pays the build cost.
+`run-evals.sh` clones `dotnet/skills` at the pinned SHA into `./.tools`, builds `skill-validator`, and
+caches it per-SHA, so only the first run pays the build cost. Package repos may also provide their own
+`run.sh` / `run.ps1` wrappers around the same command.
 
 ### Keeping content arms tool-clean
 
-For a clean **content** measurement the agent must not substitute a tool for the document, so eval runs
+For a clean **content** measurement the agent must not substitute a tool for the skill set, so eval runs
 **scrub `~/.dotnet/tools` from the agent's PATH** (removing `dotnet-inspect`, `ildasm`, `ilspycmd`) while
 keeping the system `dotnet`/`dnx`. Tool availability — e.g. a `dotnet-inspect` pointer — is a **separate
-lever**, layered in deliberately as its own arm, not part of the baseline / Missing Manual / Brochure /
-Textbook content comparison. (Verify post-hoc: the `di` signal in `grounding analyze` must be `0` on the
-content arms.)
+lever**, layered in deliberately as its own arm, not part of the baseline-vs-grounded content comparison.
+(Verify post-hoc: the `di` signal in `grounding analyze` must be `0` on the grounded arm.)
 
 ## Adding a package
 
-1. `grounding/<slug>/AGENTS.md` — the grounding content.
-2. `grounding/<slug>/meta.yaml` — `name` (== `<slug>`), `package`, `description`.
-3. `tests/<slug>/eval.yaml` — one or more scenarios.
-4. `tests/<slug>/<fixture project(s)>` — the task, with a `dotnet test` correctness gate.
-5. `grounding check-agents` then `eng/run-evals.sh <slug>`.
+1. `grounding/<slug>/SKILL.md` — the base package skill.
+2. Optional domain skills/support files under `grounding/<slug>/`.
+3. `grounding/<slug>/meta.yaml` — `name` (== `<slug>`), `package`, `description`.
+4. `grounding/<slug>/eval.yaml` — CT-24 scenarios.
+5. `grounding/<slug>/fixtures/...` — task fixtures with a `dotnet test` or `dotnet run` correctness gate.
+6. Run `grounding run <slug> --source skill --eval-mode holistic --runs 5`.
 
 ## Channel-matrix runs
 
-The delivery-channel study (raw package → NuGet MCP → shipped `AGENTS.md` → resident-index MCP)
-is driven by [`eng/run-channel-matrix.sh`](../eng/run-channel-matrix.sh) and summarized by
-`grounding channels extract`. See
-[`docs/recommendation.md`](recommendation.md) for the results and
-[`data/README.md`](../data/README.md) for the channel definitions.
+The historical delivery-channel study (raw package → NuGet MCP → resident-index MCP) is driven by
+[`eng/run-channel-matrix.sh`](../eng/run-channel-matrix.sh) and summarized by `grounding channels
+extract`. It is delivery archaeology, not the live ship path. See
+[`docs/recommendation.md`](recommendation.md) for the results and [`data/README.md`](../data/README.md)
+for the channel definitions.

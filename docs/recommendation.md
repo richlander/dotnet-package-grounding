@@ -1,12 +1,14 @@
 # Recommendation: should we author package grounding, and should the NuGet MCP change?
 
-> **New here?** This doc summarizes the package-grounding recommendation for decision-makers: write small
-> `AGENTS.md` files, ship them in packages, and have NuGet MCP (the package context server) surface them.
-> For **how we now grade and ship**, read the ratified **[quality-card model](./quality-card-model.md)**:
-> return + efficiency, do no harm, and a ≥20% economic win.
+> **New here?** This doc summarizes the package-grounding recommendation for decision-makers: author
+> package **SKILL.md skill sets** and, where NuGet participates, expose package context through pull
+> retrieval. For **how we now grade and ship**, read the ratified
+> **[quality-card model](./quality-card-model.md)**: return + efficiency, do no harm, and a ≥20%
+> economic win.
 
 **Audience:** NuGet v-team. **Date:** 2026-06-20. **Status:** Findings complete (2 tasks × 5
-channels × 2 tiers, runs=3).
+channels × 2 tiers, runs=3). The channel data below is historical delivery-mechanism evidence; the
+live artifact is a pull-installed, removable SKILL.md skill set.
 
 This is the executive summary of the package-grounding study. It answers **two team decisions**
 — *(1) do we write grounding content for packages?* and *(2) does the NuGet MCP need to change?*
@@ -23,33 +25,49 @@ cell is in [`data/`](../data/).
 
 This study exists to answer two decisions. Both answers are **yes**, and the data says *why*.
 
-### Q1 — Should we author and ship grounding content (`AGENTS.md`) in NuGet packages? **Yes.**
+### Current evaluation frame
 
-A small, *complete* `AGENTS.md` (~3.5 KB) is **size-invariant** and, delivered through the MCP,
-beats serving the README on **both** model tiers — and flips the weak tier from a failing run to
-a passing one (Markout Haiku: README path passes but costs more; `AGENTS.md` path is leaner; the
-README *without* MCP **fails**). Conversely, the README is a **liability**: high-variance and
-high-ceiling for weak models, an efficiency tax for strong ones.
+The ratified eval is **grounded SKILL.md skill set vs baseline**: same agent, same suite, skill set
+installed versus not installed. Suite = **CT-24**; repeats = `k = 5`; models =
+`claude-haiku-4.5`, `claude-sonnet-5`, and `claude-opus-4.8`.
+
+| Model | Mean yield | Reliability ΔP | Per-$ IET geomean | Per-day duration | Gates |
+| --- | ---: | ---: | ---: | ---: | --- |
+| Haiku | 0.533 → 0.942 | +0.263 | ×0.20 [0.18, 0.33] | ×0.28 | harm 0.000 vs null 3.2; econ upper ×0.33 |
+| Sonnet | 0.775 → 1.000 | +0.191 | ×0.26 [0.23, 0.35] | ×0.21 | harm 0.000 vs null 2.2; econ upper ×0.35 |
+| Opus | 0.883 → 1.000 | +0.117 ⚠ | ×0.40 [0.35, 0.52] | ×0.38 | harm 0.000 vs null 1.2; econ upper ×0.52 |
+
+All three clear the do-no-harm gate and the economic-materiality bar (`≤ ×0.80` per-dollar upper
+bound). Opus reliability is prior-sensitive; treat that lift as supportive.
+
+### Q1 — Should we author package grounding as SKILL.md skill sets? **Yes.**
+
+A small, *complete* grounding body (~3.5 KB in the Markout channel study) is **size-invariant** and,
+when pulled through the measured MCP channel, beats serving the README on **both** model tiers — and
+flips the weak tier from a failing run to a passing one (Markout Haiku: README path passes but costs
+more; the grounding-doc path is leaner; the README *without* MCP **fails**). Conversely, the README
+is a **liability**: high-variance and high-ceiling for weak models, an efficiency tax for strong ones.
 
 We have **worked examples for four real packages**, each with a backing report:
 
 | Package | Authored grounding | Why it was written that way (report) |
 |---------|--------------------|--------------------------------------|
-| Markout | [`grounding/markout/AGENTS.md`](../grounding/markout/AGENTS.md) | [`reports/markout.md`](reports/markout.md) — non-resident; a no-reflection-fallback trap |
-| System.CommandLine | [`grounding/system-commandline/AGENTS.md`](../grounding/system-commandline/AGENTS.md) | [`reports/system-commandline.md`](reports/system-commandline.md) — beta4→3.x migration breakage |
-| System.Text.Json | [`grounding/system-text-json/AGENTS.md`](../grounding/system-text-json/AGENTS.md) | [`reports/system-text-json.md`](reports/system-text-json.md) — model-resident; what the model *lacks* |
-| Microsoft.Extensions.AI | [`grounding/microsoft-extensions-ai/AGENTS.md`](../grounding/microsoft-extensions-ai/AGENTS.md) | [`reports/microsoft-extensions-ai.md`](reports/microsoft-extensions-ai.md) — function-invocation surface |
+| Markout | [`grounding/markout/`](../grounding/markout/) | [`reports/markout.md`](reports/markout.md) — non-resident; a no-reflection-fallback trap |
+| System.CommandLine | [`grounding/system-commandline/`](../grounding/system-commandline/) | [`reports/system-commandline.md`](reports/system-commandline.md) — beta4→3.x migration breakage |
+| System.Text.Json | [`grounding/system-text-json/`](../grounding/system-text-json/) | [`reports/system-text-json.md`](reports/system-text-json.md) — model-resident; what the model *lacks* |
+| Microsoft.Extensions.AI | [`grounding/microsoft-extensions-ai/`](../grounding/microsoft-extensions-ai/) | [`reports/microsoft-extensions-ai.md`](reports/microsoft-extensions-ai.md) — function-invocation surface |
 
 The authoring rule (only write what the model *provably* lacks) is in
 [`authoring-principles.md`](authoring-principles.md). **Caveat — content alone is not enough:**
-an `AGENTS.md` shipped without a delivery channel is **invisible** (raw lookup reads the README
-anyway, and Haiku fails — Channel A′, Step 2). Writing it only pays off when the MCP delivers it.
+a historical package doc without a delivery channel was **invisible** (raw lookup read the README
+anyway, and Haiku failed — Channel A′, Step 2). Authoring pays off when the agent has a pull path to
+the grounding.
 
 ### Q2 — Should the NuGet MCP change? **Yes — one addition, and one non-feature to avoid.**
 
 The current `NuGet.Mcp.Server` is already most of the way there: we **verified by direct call**
-that `get_package_context` prefers `AGENTS.md` over the README when present
-(`nuget-context://…/AGENTS.md` vs `nuget-readme://…/README.md`). **Keep that.**
+that `get_package_context` prefers the package grounding resource over the README when present, and
+falls back to the README otherwise. **Keep that retrieval preference.**
 
 **The shape of the proposal:** make the NuGet MCP a small, *skill-inspired* delivery system —
 grounding **progressively projected** into agent context in two layers, exactly as a skill is. A
@@ -59,7 +77,7 @@ activation (its body loads when the agent chooses it). The MCP can mirror that:
 | Skill layer | NuGet-MCP equivalent (what we recommend) |
 |-------------|-------------------------------------------|
 | `SKILL.md` frontmatter — always loaded, free | a **resident index of the project's direct package dependencies** in the `get_package_context` tool description (which of *those* packages have grounding, one line each) |
-| `SKILL.md` body — loaded only on activation | the package's **`AGENTS.md` body**, fetched on demand when the agent self-selects |
+| `SKILL.md` body — loaded only on activation | the package grounding body, fetched on demand when the agent self-selects |
 
 The agent thus sees *what grounding exists* for free and pulls *the grounding itself* only when it
 decides it needs it — package-granular progressive disclosure, no always-on context tax.
@@ -68,7 +86,7 @@ decides it needs it — package-granular progressive disclosure, no always-on co
 the restored project*.** Not the full transitive graph, not the package universe — just the handful
 of packages the project directly references, which the host already knows from the project file and
 restored assets. That set is small (typically a few to a few dozen lines, one per direct dependency
-that ships grounding), exactly the packages in play, and free to keep resident. The transitive
+with grounding), exactly the packages in play, and free to keep resident. The transitive
 closure would be too large to project and mostly irrelevant; the direct-dependency set is the
 natural, bounded, already-known subset — the whole reason the resident index can sit in the tool
 description at no recurring cost. What should change concretely:
@@ -78,7 +96,7 @@ description at no recurring cost. What should change concretely:
   This is Channel **D** — the cheapest
   channel on the weak tier and on the harder multi-package task (multi-package Opus **92k IET**
   vs 188k raw-lookup, **−51%**; Haiku **286k** vs 939k, **−70%**), statistically tied with serving
-  `AGENTS.md` on the easy strong-tier cell, and the **only** channel that surfaces silent,
+  the grounding body on the easy strong-tier cell, and the **only** channel that surfaces silent,
   compile-clean gotchas. The agent self-gates: it declines when it already knows the package and
   retrieves when it doesn't, at **zero** extra tool calls. Treat discovery as an input; **abstain
   to on-demand when no project file is given** — one narrow rule, never a heuristic stack.
@@ -90,16 +108,17 @@ description at no recurring cost. What should change concretely:
 
 ---
 
-## The setup: four delivery channels
+## The historical setup: four delivery channels
 
-We hold the *task* and the *content* fixed and vary only **how the grounding reaches the agent**.
+These A/A′/B/C/D measurements hold the *task* and *content* fixed and vary only **how the grounding
+reaches the agent**. They are delivery-mechanism evidence, not the current live packaging model.
 
-| Ch | Delivery mechanism | `AGENTS.md` in package | What the agent sees |
+| Ch | Delivery mechanism | Historical package doc | What the agent sees |
 |----|--------------------|------------------------|---------------------|
 | **A**  | raw package on disk (no MCP) | absent | finds + reads the **README** |
-| **A′** | raw package on disk (no MCP) | **present** | **still reads the README** (AGENTS.md is *invisible*) |
+| **A′** | raw package on disk (no MCP) | **present** | **still reads the README** (grounding doc is *invisible*) |
 | **B**  | real `NuGet.Mcp.Server` `get_package_context` | absent | server returns the **README** |
-| **C**  | real `NuGet.Mcp.Server` `get_package_context` | **present** | server returns the **`AGENTS.md`** |
+| **C**  | real `NuGet.Mcp.Server` `get_package_context` | **present** | server returns the **grounding body** |
 | **D**  | our controlled MCP (`get_package_context` + **resident index**) | served on demand | curated grounding, self-gated |
 
 Two tasks: **Markout M1** (a genuinely non-resident single package — a source-generated
@@ -140,7 +159,7 @@ when comparing a *resident* channel (MCP) against a *loaded* one (skill/CLI). Se
 
 ---
 
-## Step 1 — Baseline: raw package and NuGet MCP, with no `AGENTS.md` (A, B)
+## Step 1 — Baseline: raw package and NuGet MCP, with no grounding body (A, B)
 
 > *Claim: with no curated grounding, both the raw package and the NuGet MCP fall back to the
 > README. The package is "self-teaching" only to the extent its README is — which is expensive
@@ -162,46 +181,44 @@ baseline cost rose with README size (and a too-small/truncated README was *also*
 incompleteness → the agent spelunks the nupkg and the XML doc). The lesson is not "smaller
 README" — it is "stop making the README the interface."
 
-## Step 2 — A shipped `AGENTS.md` is invisible to raw lookup (A′)
+## Step 2 — A package doc is invisible to raw lookup without delivery (A′)
 
-> *Claim: simply putting `AGENTS.md` in the package is not enough. Without a delivery channel
+> *Claim: simply placing a grounding doc in the package is not enough. Without a delivery channel
 > that points at it, the agent doesn't discover it — it reads the README anyway.*
 
-<!-- DATA: Markout A' (AGENTS present in cache, baseline arm still reads README) -->
-**Markout M1, raw lookup with `AGENTS.md` present in the package (runs=3).**
+<!-- DATA: Markout A' (grounding doc present in cache, baseline arm still reads README) -->
+**Markout M1, raw lookup with grounding doc present in the package (runs=3).**
 
-| tier | A — README only | A′ — `AGENTS.md` present, raw lookup | outcome |
+| tier | A — README only | A′ — grounding doc present, raw lookup | outcome |
 |------|---:|---:|---|
-| Opus  | 78k IET (397k tEst) / 23 tools (✓) | 124k IET (633k) / 26 tools (✓) | AGENTS.md **0 reads**; cost *up* |
-| Haiku | 49k (172k) / 12 tools (✓) | 62k (239k) / 14 tools (**✗ failed**) | AGENTS.md **0 reads**; task **not completed** |
+| Opus  | 78k IET (397k tEst) / 23 tools (✓) | 124k IET (633k) / 26 tools (✓) | grounding doc **0 reads**; cost *up* |
+| Haiku | 49k (172k) / 12 tools (✓) | 62k (239k) / 14 tools (**✗ failed**) | grounding doc **0 reads**; task **not completed** |
 
 The agent never opened the curated doc sitting right next to the README, and the weak tier
 actually **failed** the task (`taskCompleted=false`) while drowning in the README.
 
-With `AGENTS.md` sitting right next to the README in the restored package, the raw-lookup agent
-**ignored it** and mined the README regardless. So "ship `AGENTS.md`" is necessary but not
-sufficient: the package needs a **delivery channel** that surfaces the curated doc. That is the
-job of the MCP.
+With the grounding doc sitting right next to the README in the restored package, the raw-lookup agent
+**ignored it** and mined the README regardless. So a file placed in a package is not sufficient: the agent needs a **pull delivery channel** that
+surfaces the curated body. That was the job tested through the MCP.
 
-## Step 3 — A well-crafted `AGENTS.md`, delivered by the NuGet MCP (C)
+## Step 3 — A well-crafted grounding body, delivered by the NuGet MCP (C)
 
-> *Claim: once `AGENTS.md` ships AND the NuGet MCP serves it, the agent gets the targeted doc in
+> *Claim: once the grounding body is available and the NuGet MCP serves it, the agent gets the targeted doc in
 > one call — cheaper for strong models, and a correctness rescue for weak ones.*
 
 <!-- DATA: Markout C vs A/B; Haiku rescue -->
-**Markout M1, `AGENTS.md` shipped and served by the real NuGet MCP (runs=3).**
+**Markout M1, grounding body served by the real NuGet MCP (runs=3).**
 
-| tier | A′ — shipped but undelivered | B — MCP → README | C — MCP → `AGENTS.md` |
+| tier | A′ — present but undelivered | B — MCP → README | C — MCP → grounding body |
 |------|---:|---:|---:|
 | Opus  | 124k IET (633k tEst) / 26 (✓) | 38k (118k) / 8 (✓) | **28k (105k) / 7 (✓)** |
 | Haiku | 62k (239k) / 14 (**✗**) | 40k (147k) / 8 (✓) | **39k (122k) / 9 (✓)** |
 
-Delivering the `AGENTS.md` flips the weak-tier outcome from **fail → pass** and beats serving the
+Delivering the grounding body flips the weak-tier outcome from **fail → pass** and beats serving the
 README (C < B on both tiers: Opus 28k<38k, Haiku 39k<40k IET). The concise pattern is legible
 where the 488-line README is not. The selection is the upstream server's own behavior, verified
 by a direct call ([`data/markout/nuget-mcp-delivery-proof.md`](../data/markout/nuget-mcp-delivery-proof.md)):
-it returns `nuget-context://Markout/0.13.6/AGENTS.md` when the package ships `AGENTS.md`, and
-falls back to `nuget-readme://.../README.md` otherwise.
+it returns the package grounding resource when present, and falls back to the README otherwise.
 
 ## Step 4 — Our custom MCP, with a skill-oriented (resident-index) mode (D)
 
@@ -215,7 +232,7 @@ falls back to `nuget-readme://.../README.md` otherwise.
 task the two curated channels are close; D wins the weak tier outright and ties C on the strong
 tier:
 
-| tier | C — NuGet MCP → AGENTS | D — custom MCP (resident index) |
+| tier | C — NuGet MCP → grounding body | D — custom MCP (resident index) |
 |------|---:|---:|
 | Opus  | **28k IET (105k tEst) / 7** | 31k (91k) / 8 |
 | Haiku | 39k (122k) / 9 | **31k (106k) / 8** |
@@ -241,17 +258,17 @@ harness estimate; ✓/✗ = `taskCompleted`; *save* = weighted-IET reduction vs.
 | Ch | delivery | Opus IET (tEst) / tools | save | Haiku IET (tEst) / tools | done |
 |----|----------|---:|---:|---:|:--:|
 | **A**  | raw pkg → README | 78k (397k) / 23 | — | 49k (172k) / 12 | ✓ |
-| **A′** | raw pkg, AGENTS present (invisible) | 124k (633k) / 26 | −60% | 62k (239k) / 14 | **✗** |
+| **A′** | raw pkg, grounding doc present (invisible) | 124k (633k) / 26 | −60% | 62k (239k) / 14 | **✗** |
 | **B**  | real NuGet MCP → README | 38k (118k) / 8 | 51% | 40k (147k) / 8 | ✓ |
-| **C**  | real NuGet MCP → `AGENTS.md` | **28k (105k) / 7** | **64%** | 39k (122k) / 9 | ✓ |
+| **C**  | real NuGet MCP → grounding body | **28k (105k) / 7** | **64%** | 39k (122k) / 9 | ✓ |
 | **D**  | custom MCP (resident index) | 31k (91k) / 8 | 60% | **31k (106k) / 8** | ✓ |
 
 Two effects compound, in order of magnitude: **(1) channel** — moving from raw filesystem lookup
 to *any* one-shot MCP retrieval is the big win (~2× on Opus, even on weighted IET that discounts
-the baseline's cheap cache reads); **(2) content** — serving the curated `AGENTS.md` instead of
+the baseline's cheap cache reads); **(2) content** — serving the curated grounding body instead of
 the README, and adding the resident index, refines it further and rescues the weak tier. On the
 strong tier C and D are within noise; on the weak tier D is cheapest. Channel A′ is the cautionary
-cell: shipping `AGENTS.md` **without** a delivery channel costs more than doing nothing and still
+cell: a package doc **without** a delivery channel costs more than doing nothing and still
 fails Haiku.
 
 > Multi-package triage channel data (A/B/D) is captured in
@@ -275,10 +292,11 @@ channel gap. (Channels A′/C are omitted on this task by design — see *Method
 
 ## Recommendation & design implications for the NuGet MCP
 
-- **Author** a small, complete `AGENTS.md` per package (see
+- **Author** a small, complete SKILL.md skill set per package (see
   [`authoring-principles.md`](authoring-principles.md): only what the model provably lacks).
-- **Ship** it in the `.nupkg` (root). It is size-invariant value; the README stays for humans.
-- **Deliver** it via one `get_package_context` **body tool** whose description carries a
+- **Install** it by pull into the consuming repo: opt-in, removable, and organized as a base skill plus
+  domain skills. The README stays for humans.
+- **If NuGet participates in retrieval, expose** one `get_package_context` **body tool** whose description carries a
   **resident, per-direct-dependency index** built from the **project file** the host already
   knows — the *summary layer* of a skill-style progressive disclosure, projected for free; the
   body is pulled on demand. Treat discovery as an input; **abstain to on-demand when no project is
@@ -309,5 +327,5 @@ channel gap. (Channels A′/C are omitted on this task by design — see *Method
   cross-channel gap — not single-cell IET.
 - Channel C on the multi-package task is omitted by design (fragile 3-cache injection at
   migration versions; the Markout anchor demonstrates C cleanly).
-- The Markout package cache was mutated for the experiment (`AGENTS.md` injected/removed,
+- The Markout package cache was mutated for the historical experiment (grounding doc injected/removed,
   README restored); reproducible via the runner.

@@ -43,7 +43,7 @@ cacheReadTokens(turn N + 1) ~= inputTokens(turn N) - 10
 That pattern means the previous turn's gross input becomes the next turn's cached prefix. The small `~10` token delta appears to be prompt-boundary slop.
 
 | Probe | Transition | input(N) | cacheRead(N+1) | Delta | Coverage |
-|---|---:|---:|---:|---:|---:|
+| --- | ---: | ---: | ---: | ---: | ---: |
 | 10k chars | 1→2 | 9,564 | 9,554 | -10 | 99.895% |
 | 10k chars | 2→3 | 12,146 | 12,136 | -10 | 99.918% |
 | 10k chars | 3→4 | 14,719 | 14,709 | -10 | 99.932% |
@@ -78,7 +78,7 @@ By default (`--iet-model auto`) the analyzer picks the cost model **per run** fr
 produced it, so a single card can mix models and price each faithfully:
 
 | Model family | Cost model | Why |
-|---|---|---|
+| --- | --- | --- |
 | Claude / Opus / Sonnet / Haiku (and unknown) | `anthropic` | Copilot conversational cache: fresh suffix is effective cache-write. |
 | GPT / OpenAI / o-series | `openai` | OpenAI cached-input pricing: no cache-write premium, 6× output. |
 
@@ -130,7 +130,7 @@ Under this model, no prompt input is charged at the `1.00` base-input rate in no
 ## The named models
 
 | Model | Formula | Use |
-|---|---|---|
+| --- | --- | --- |
 | `anthropic` | `1.25*(input-cacheRead) + 0.10*cacheRead + 5.00*output` | Claude/Copilot conversational cache. Auto-selected for Claude families. |
 | `openai` | `1.00*(input-cacheRead) + 0.10*cacheRead + 6.00*output` | OpenAI cached-input models with no cache-write premium. Auto-selected for GPT/o-series. |
 | `no-cache` | *modifier* → `1.00*input + <scheme>*output` | Input repriced to base rate; output stays the scheme's own (`5×` Anthropic, `6×` OpenAI). See above. |
@@ -162,7 +162,8 @@ cost metric; sizes stay in tokens, costs in IET/$, so no row mixes dimensions.
 
 Outcome and validity:
 
-* `tasks correct` / `func passed`: did grounding keep (or improve) correctness — the only ship gate.
+* `tasks correct` / `func passed`: did grounding keep (or improve) correctness. These feed the
+  RETURN axis and the do-no-harm gate; shipping also requires the economic-materiality gate.
 * `nuget-cache reads (archaeology)`: tool calls into `~/.nuget/packages` — the agent reading or
   decompiling the restored package binary because the grounding did not tell it what it needed. The
   sharp "grounding was insufficient" signal; grounding should drive it toward `0`.

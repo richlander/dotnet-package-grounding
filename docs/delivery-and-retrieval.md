@@ -8,11 +8,12 @@
 **Date:** 2026-06-20
 **Status:** Findings complete. Companion to [`authoring-principles.md`](./authoring-principles.md)
 (which covers *what* to write); this doc covers *how the content reaches the agent* and
-*whether it costs anything when it shouldn't*.
+*whether it costs anything when it shouldn't*. The live delivery model is pull-installed, opt-in,
+removable SKILL.md skill sets; A/A′/B/C/D below are historical delivery-mechanism measurements.
 
 ## TL;DR
 
-A grounding `AGENTS.md` is only valuable if the agent reads it **when it helps** and skips it
+A grounding SKILL.md skill set is only valuable if the agent reads it **when it helps** and skips it
 **when it doesn't**. We built a controlled MCP server that serves our grounding through a
 single tool and varied only the tool's *retrieval gate*, then measured the agent's **call
 behavior** across packages and model tiers. Findings:
@@ -50,10 +51,9 @@ behavior** across packages and model tiers. Findings:
 **Design implication for the NuGet MCP:** expose grounding as **one `get_package_context` body
 tool**, and pair it with a **resident index built from a project file** — a
 `get_project_grounding_index(projectPath)` the *host* calls and pushes into context (a
-one-line-per-direct-dependency manifest from each `AGENTS.md` frontmatter). Treat discovery as an
+one-line-per-direct-dependency manifest from each skill description). Treat discovery as an
 **input**: build the index only from a project the host already knows, and **abstain to on-demand
-when none is given** — one narrow rule, never a heuristic stack. **Ship `AGENTS.md` in the
-package.** Do *not* add a separate `summarize_package_context` *tool*: gating the index behind an
+when none is given** — one narrow rule, never a heuristic stack. **Install the SKILL.md skill set in the consuming repo.** Do *not* add a separate `summarize_package_context` *tool*: gating the index behind an
 agent call makes peeking an on-ramp (frontier models pull everything) or dead weight (weak models
 ignore it). The resident index gives costless selection + decline-by-default, and is the only
 channel that surfaces silent gotchas the compiler can't flag.
@@ -62,7 +62,7 @@ channel that surfaces silent gotchas the compiler can't flag.
 
 [`authoring-principles.md`](./authoring-principles.md) establishes that grounding should
 contain *only what the model provably lacks*. But even perfect content has a delivery cost:
-if every agent pulls a package's full `AGENTS.md` on every task, confident models pay a
+if every agent pulls a package's full skill body on every task, confident models pay a
 "frontier tax" (extra input/thinking tokens) for content they didn't need. The question this
 doc answers is whether the *retrieval mechanism* can make grounding **cost-free when it's
 useless and available when it's needed** — i.e. behave like retrieval-augmented generation
@@ -76,7 +76,7 @@ We frame delivery as a ladder, each rung isolating one variable:
    *force-injects* the content as a skill. Measures the **content-value ceiling**; cannot
    model an agent *declining* to read.
 2. **Raw NuGet MCP** (`NuGet.Mcp.Server`) — the real server. Its `get_package_context` prefers
-   the installed package's `AGENTS.md`, returns the **full body verbatim**, all-or-nothing,
+   the installed package's grounding body, returns the **full body verbatim**, all-or-nothing,
    behind a fixed **task-type** gate ("call when the user asks about a package").
 3. **Our controlled MCP** (`grounding mcp`) — a faithful stand-in for #2 with
    one knob: the tool description (the *gate*) is the experimental variable, and we can switch
@@ -85,7 +85,7 @@ We frame delivery as a ladder, each rung isolating one variable:
 ## The instrument
 
 `grounding mcp` is a dependency-free stdio MCP server. It serves a
-package's grounding by resolving `packageName` to that unit's `AGENTS.md`. The retrieval
+package's grounding by resolving `packageName` to that unit's grounding file. The retrieval
 **gate** is selected by the `GROUNDING_GATE` environment variable:
 
 | Gate | Tools | WHEN-TO-CALL |
@@ -93,7 +93,7 @@ package's grounding by resolving `packageName` to that unit's `AGENTS.md`. The r
 | `task_type` | 1 (`get_package_context`) | "call whenever the user asks about a package" — mimics today's NuGet MCP |
 | `uncertainty_version` | 1 (`get_package_context`) | "call when not confident of the current API for the installed version, or the version may post-date your training" |
 | `progressive` | 2 (`summarize_package_context` + `get_package_context`) | a cheap summary tool and a full-body tool; the agent decides after reading the summary |
-| `resident_index` | 1 (`get_package_context`) | the body tool's description carries a free, always-in-context manifest (one line per package, from `AGENTS.md` frontmatter); the agent reads the index for free and calls only for a relevant package — the faithful skills mechanic (§8) |
+| `resident_index` | 1 (`get_package_context`) | the body tool's description carries a free, always-in-context manifest (one line per package, from skill/grounding frontmatter); the agent reads the index for free and calls only for a relevant package — the faithful skills mechanic (§8) |
 
 The unit that attaches the server ships **no inline grounding** (an inert `SKILL.md`), so the
 content arrives *only* if the agent chooses to call a tool. Every call is logged (tool name,
@@ -106,12 +106,12 @@ The `progressive` gate ports skills' progressive disclosure to MCP:
 
 | Skill mechanic | Progressive MCP |
 | --- | --- |
-| `SKILL.md` frontmatter (name + description) — always loaded, free | `summarize_package_context` — returns the `AGENTS.md` YAML frontmatter |
+| `SKILL.md` frontmatter (name + description) — always loaded, free | `summarize_package_context` — returns the historical grounding-doc YAML frontmatter |
 | `SKILL.md` body — loaded only on activation | `get_package_context` — returns the body (frontmatter stripped) |
 
-This is why `AGENTS.md` now carries **YAML frontmatter** (`name` + `description`): it is the
-shipped artifact, and that frontmatter *is* the cheap summary channel. The decision moves out
-of the tool description and into the agent's judgement after a cheap peek.
+This is why the current SKILL.md artifact carries **YAML frontmatter** (`name` + `description`):
+frontmatter is the cheap summary channel, while the body is pulled only on activation. The historical
+MCP experiment tested whether a separate summary call could emulate that mechanic.
 
 > **We tested this hypothesis and it did not hold.** The summary channel does *not* function as
 > a selective filter — agents either pull everything after peeking (Opus) or ignore the summary
@@ -146,7 +146,7 @@ where the body of the cost is real.
 All runs use the skill-validator harness (pinned commit
 `5d717dbdd1998cdf88e7542eef52c5517cbefdb9`), agent = the tier under test, judge =
 `claude-opus-4.6`. Each scenario runs three arms: **baseline** (no grounding, no MCP),
-**skilledIsolated**, and **skilledPlugin** (both attach the MCP; isolated = push, plugin =
+**skilledIsolated**, and **skilledPlugin** (both attach the MCP; isolated = force-loaded historical arm, plugin =
 discover-and-read). Two scenarios anchor the work:
 
 - **M1** — migrate a real `System.CommandLine` `2.0.0-beta4` CLI to `3.x` (a *version-delta*
@@ -289,7 +289,7 @@ We ran T1 against the **real `NuGet.Mcp.Server`** (`dnx NuGet.Mcp.Server --yes`;
 instrument. Three confirmations:
 
 - **Content:** `get_package_context` for `System.CommandLine` returns a `nuget-readme://…`
-  resource — the **package README**, *not* an `AGENTS.md` (these packages ship none, so the
+  resource — the **package README**, *not* a grounding doc (these packages ship none, so the
   server falls back to the README). The README shows the 3.x API shape but **none of the
   curated gotcha** — i.e. the real server under-delivers exactly the silent/obscure content our
   authoring principles target.
@@ -356,7 +356,7 @@ compile clean and fail silently. The resident-index design is the only one that 
 ### 8. The faithful skills design: resident index + one body tool
 
 We implemented the faithful port as the `resident_index` gate: **one** `get_package_context`
-tool, with the per-package manifest (each `AGENTS.md`'s frontmatter `description`) baked into
+tool, with the per-package manifest (each grounding file's frontmatter `description`) baked into
 the tool's description — so it is always in context, free, no agent action. We re-ran **T2b**
 (`System.CommandLine` build break + `System.Text.Json` *silent* case bug + benign
 `Microsoft.Extensions.AI`) at runs=3. Call behavior (the robust signal) is decisive:
@@ -399,7 +399,7 @@ for weak models on silent bugs** (it surfaces compile-clean gotchas the compiler
 The good end of the spectrum is the **resident index + one body tool**; the two-tool
 progressive is the broken middle.
 
-## Discovery & feasibility: how a resident index ships
+## Discovery & feasibility: how a resident index is delivered
 
 The lab result (§8) assumes the host *already knows* the installed package set. In production
 that is the hard part — and the trap is solving it with a pile of fragile heuristics (parse CI
@@ -428,8 +428,8 @@ told to build `src/dotnet-inspect`) are exactly the ones where the target is alr
 
 1. `get_project_grounding_index(projectPath)` — the **host** calls this once when a project is
    targeted (project open / build command), and **pushes the returned manifest into context**.
-   The manifest is one line per direct dependency that ships grounding (its `AGENTS.md`
-   frontmatter). Because the *host* drives this call deterministically — not the agent on a
+   The manifest is one line per direct dependency that has grounding (its skill description
+   or grounding frontmatter). Because the *host* drives this call deterministically — not the agent on a
    judgement call — it sidesteps the under-firing we measured against the real server (§6): the
    index becomes resident the same way skills' frontmatter is, without relying on the agent to
    decide to fetch it.
@@ -451,26 +451,26 @@ beta-style code. (The authoritative MSBuild query, `msbuild -getItem:PackageRefe
 works but forces a restore of the project graph and is slow — prefer the text read.)
 
 **The one residual NuGet-side ask.** Text tells you *which* packages and versions, but not
-*whether* a package ships an `AGENTS.md` or *what* its summary line is. That needs either the
+*whether* a package has grounding or *what* its summary line is. That needs either the
 package restored into the global-packages folder (read the frontmatter locally) or — the clean
-enabler — **NuGet exposing `AGENTS.md` frontmatter as service-side metadata** (registration leaf
+enabler — **NuGet exposing grounding frontmatter as service-side metadata** (registration leaf
 or a dedicated grounding resource), so `get_project_grounding_index` can build the manifest from
 the csproj alone, pre-restore. This is the same restore boundary that already exists today:
-NuGet's own `get_package_context` serves `AGENTS.md` only for locally-installed packages and
+NuGet's own `get_package_context` serves a grounding body only for locally-installed packages and
 falls back to a remote README otherwise (§6). So the resident index adds **no new restore
 dependency for content** — only a desire to read frontmatter cheaply, which a small metadata
 addition solves.
 
 ## Implications for NuGet MCP design
 
-1. **Ship grounding as one `get_package_context` body tool — *not* a `summarize` + `get`
+1. **Expose grounding as one `get_package_context` body tool — *not* a `summarize` + `get`
    pair.** A separate summary *tool* gates the index behind a call, which makes peeking an
    on-ramp (frontier models pull everything) or dead weight (weak models ignore it). It never
    beat the single tool across M1/R1/T1/T2b.
 2. **Pair the body tool with a *resident* index — push it, don't gate it.** Add a
    `get_project_grounding_index(projectPath)` tool the **host** calls once per targeted project
-   and pushes into context: a one-line-per-direct-dependency manifest from each `AGENTS.md`
-   frontmatter. The agent then calls the single `get_package_context` for bodies. This is the
+   and pushes into context: a one-line-per-direct-dependency manifest from each skill description
+   or grounding frontmatter. The agent then calls the single `get_package_context` for bodies. This is the
    actual skills mechanic — "a skill system, given a project file." Validated in §8: it strictly
    dominates the two-tool progressive and is the **only** delivery that surfaces a silent,
    compile-clean gotcha to a weak model (which otherwise triages on the compiler alone and never
@@ -480,8 +480,8 @@ addition solves.
    host already knows (IDE active project, or a `dotnet build|run` target); **abstain to
    on-demand when none is provided.** One narrow, testable rule — never a heuristic stack
    (CI-YAML parsing, exe-root detection, graph walking). See *Discovery & feasibility*.
-4. **Make `AGENTS.md` self-contained with YAML frontmatter** (`name` + `description`). It is the
-   shipped artifact and the resident-summary channel; it should not depend on harness-only
+4. **Make the SKILL.md skill set self-contained with YAML frontmatter** (`name` + `description`). It is
+   the shipped artifact and the resident-summary channel; it should not depend on harness-only
    metadata. To let the index be built pre-restore, expose that frontmatter as **service-side
    package metadata**.
 5. **Don't engineer the WHEN-TO-CALL string.** Across permissive and strict gates the retrieval
@@ -491,10 +491,10 @@ addition solves.
    grounding case. Prefer an uncertainty/version-delta framing.
 6. **Keep agent instructions clean.** No "use the NuGet MCP" prompt. Register the tool / push
    the manifest; the model self-selects from normal context.
-7. **Auto-delivered grounding is Pareto-safe** *because* the model only pays for the body when
+7. **Pull-delivered grounding is quality-card-safe** *because* the model only pays for the body when
    it pays off: it declines on resident tasks (where taking it would only cost) and retrieves on
    non-resident tasks (where it rescues correctness). This is the strongest argument for
-   shipping `AGENTS.md` in core packages by default.
+   authoring skill sets for core packages and installing them opt-in.
 8. **Log call behavior in production.** P(full) per package and per model tier is a cheap,
    continuous read on whether a package's grounding is earning its cost.
 

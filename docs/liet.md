@@ -1,11 +1,12 @@
 # The Levelized IET Curve
 
 > **New here?** The LIET chart shows how grounding cost changes as tasks get harder, so teams can compare
-> baseline, `AGENTS.md`, and `SKILL.md` (the complete textbook) at the same difficulty. For tabular
-> grading and ship decisions, read the ratified **[quality-card model](./quality-card-model.md)**; it is
+> baseline, grounded `SKILL.md`, and the optional analysis-only `SKILL.md` oracle at the same
+> difficulty. For tabular grading and ship decisions, read the ratified
+> **[quality-card model](./quality-card-model.md)**; it is
 > the tabular superset of this live reference chart.
 
-*A shared cost axis for comparing grounding documents, and a name for the metric.*
+*A shared cost axis for comparing grounding conditions, and a name for the metric.*
 
 > **Ladder alignment (read first).** This doc predates the `Fails → Satisfies → Delivers` ladder and
 > speaks in binary "correct." Map it onto the ratified quality-card model: **"correct / answered" =
@@ -19,14 +20,14 @@
 
 IET collapses many token kinds into one honest total per session. But a *single* IET number — or a mean IET across answered questions — throws away the one axis that carries the grounding story: **difficulty**. Worse, averaging across difficulty can invert the truth. Take a four-rung ladder:
 
-| Rung | baseline correct? | baseline IET | `AGENTS.md` correct? | `AGENTS.md` IET |
-|---|---|---:|---|---:|
+| Rung | baseline correct? | baseline IET | grounded correct? | grounded IET |
+| --- | --- | ---: | --- | ---: |
 | 1 (easy) | ✓ | 1000 | ✓ | 400 |
 | 2 (easy) | ✓ | 1200 | ✓ | 500 |
 | 3 (hard) | ✗ | — | ✓ | 2500 |
 | 4 (hard) | ✗ | — | ✓ | 3000 |
 
-Mean IET over each arm's own correct set: baseline = 1100, `AGENTS.md` = 1600. The scalar says grounding is *worse* — even though it costs less than half on every shared rung and unlocked two rungs baseline could not reach at any price. The mean inverted a total domination, because the two arms were averaged over different-difficulty populations. The better document is punished for the difficulty of the rungs it alone climbed.
+Mean IET over each arm's own correct set: baseline = 1100, grounded = 1600. The scalar says grounding is *worse* — even though it costs less than half on every shared rung and unlocked two rungs baseline could not reach at any price. The mean inverted a total domination, because the two arms were averaged over different-difficulty populations. The better grounding condition is punished for the difficulty of the rungs it alone climbed.
 
 The difficulty axis is not noise to average away. It is the signal. Keep it on the x-axis and the inversion disappears.
 
@@ -44,42 +45,42 @@ Grounding wins on a rung exactly when the knowledge-gap cost it *removes* exceed
 
 **Well-known package — gap ≈ 0 at low difficulty.** Baseline is cheap on the easy rungs because the model already knows them, so grounding there is pure doc tax: a genuine **harm region**. The gap opens only as difficulty exceeds the model's training, and that is where grounding starts winning — so here the curves genuinely **cross**:
 
-| Rung | baseline | `AGENTS.md` | region |
-|---|---:|---:|---|
+| Rung | baseline | grounded `SKILL.md` | region |
+| --- | ---: | ---: | --- |
 | 1 (easy, known) | 300 | 550 | harm — pure tax, baseline wins |
 | 2 (easy, known) | 350 | 580 | harm |
 | 3 (hard, gap opens) | 2000 | 900 | win — crossover between rungs 2 and 3 |
 | 4 (hard, unknown) | ✗ | 1200 | unlock |
 
-Minimizing per-rung IET correctly prefers baseline on rungs 1–2 and grounding on 3–4. The crossover rung is where `AGENTS.md` begins to pay its way; everything left of it is the harm region your Pareto rule exists to catch — and which the niche example, by construction, cannot show.
+Minimizing per-rung IET correctly prefers baseline on rungs 1–2 and grounding on 3–4. The crossover rung is where grounded `SKILL.md` begins to pay its way; everything left of it is the harm region the do-no-harm gate exists to catch — and which the niche example, by construction, cannot show.
 
-This also corrects a tempting misread of `SKILL.md`. The oracle is a ceiling on **reach** — it should answer every rung — but it is *not* a floor on cost. It carries the largest doc tax and the smallest knowledge-gap cost, so on easy rungs it is often the *worst* value, not the best. `SKILL.md` pays IET; usually it pays the most.
+This also corrects a tempting misread of `SKILL.md`. The oracle is a ceiling on **reach** — it should answer every rung — but it is *not* a floor on cost. It carries the largest doc tax and the smallest knowledge-gap cost, so on easy rungs it is often the *worst* value, not the best. the `SKILL.md` oracle pays IET; usually it pays the most.
 
-## The idea: put every document on one cost axis
+## The idea: put every grounding condition on one cost axis
 
-Plot IET against ladder rung, one curve per arm — baseline, `AGENTS.md`, and the `SKILL.md` oracle — on shared axes. This is the LCOE chart applied to grounding. In levelized-cost-of-energy, every generation technology is drawn on one \$/kWh axis so heterogeneous sources become comparable and you read the story from curve shapes and crossings, not from one figure. Here every document is drawn on one IET-per-answered-rung axis, and the same reading applies.
+Plot IET against ladder rung, one curve per arm — baseline, grounded `SKILL.md`, and the optional analysis-only `SKILL.md` oracle — on shared axes. This is the LCOE chart applied to grounding. In levelized-cost-of-energy, every generation technology is drawn on one \$/kWh axis so heterogeneous sources become comparable and you read the story from curve shapes and crossings, not from one figure. Here every grounding condition is drawn on one IET-per-answered-rung axis, and the same reading applies.
 
-The property both charts share: **comparison happens at equal difficulty.** Two energy curves are compared at the same year; two grounding curves at the same rung. No curve is credited or penalized for operating in a different regime than another.
+The property both charts share: **comparison happens at equal difficulty.** Two energy curves are compared at the same year; two grounding curves are compared at the same rung. No curve is credited or penalized for operating in a different regime than another.
 
 ![Figure 1: the LIET curve for a well-known package](liet-curve-figure.svg)
 
-*Figure 1 — well-known-package regime. The line shapes are meaningful, not decorative: the oracle (`SKILL.md`) rises **gently** — that slope is irreducible difficulty, the cost even perfect knowledge must pay as questions harden. Baseline is **flat while the model knows the package, then spikes** as its knowledge gap opens, and fails after rung 3. `AGENTS.md` sits **above** the envelope on the easy rungs (open markers — the harm region, where it is pure doc tax and baseline wins), **crosses** as baseline spikes, then **rides under** the envelope with a slight upward knee of its own. The vertical marker is the handoff rung, where the cheapest competitor switches from baseline to the oracle. A niche package looks different — no harm region, no crossover, baseline exiting immediately — as described above.*
+*Figure 1 — well-known-package regime. The line shapes are meaningful, not decorative: the `SKILL.md` oracle rises **gently** — that slope is irreducible difficulty, the cost even perfect knowledge must pay as questions harden. Baseline is **flat while the model knows the package, then spikes** as its knowledge gap opens, and fails after rung 3. Grounded `SKILL.md` sits **above** the envelope on the easy rungs (open markers — the harm region, where it is pure doc tax and baseline wins), **crosses** as baseline spikes, then **rides under** the envelope with a slight upward knee of its own. The vertical marker is the handoff rung, where the cheapest competitor switches from baseline to the oracle. A niche package looks different — no harm region, no crossover, baseline exiting immediately — as described above.*
 
 ## Reading the curve
 
 Each feature answers a question the spec currently asks qualitatively:
 
-**Oracle slope = irreducible difficulty.** `SKILL.md`'s *slope* (not its height) tracks the cost that is the question's fault rather than the document's — a day-100 question costs more even with perfect knowledge. Its high *intercept* is the doc tax. Keep those two separate; conflating them is what made an earlier draft read as "SKILL is free."
+**Oracle slope = irreducible difficulty.** The `SKILL.md` oracle's *slope* (not its height) tracks the cost that is the question's fault rather than the grounding condition's — a day-100 question costs more even with perfect knowledge. Its high *intercept* is the doc tax. Keep those two separate; conflating them is what made an earlier draft read as "SKILL is free."
 
-**Value delivered = baseline − `AGENTS.md`** at each shared rung. What grounding is worth, in IET, at that difficulty.
+**Value delivered = baseline − grounded** at each shared rung. What grounding is worth, in IET, at that difficulty.
 
-**Oracle gap = `AGENTS.md` − `SKILL.md`.** Value remaining — how much a fuller document could still recover.
+**Oracle gap = grounded − `SKILL.md` oracle.** Value remaining — how much a fuller skill set could still recover.
 
-**Generalization = how closely `AGENTS.md` tracks the oracle as difficulty rises.** A document that generalizes stays a roughly constant distance above `SKILL.md`. One overfit to the easy rungs hugs the oracle at the bottom then peels upward — its **excess slope over the oracle is the generalization deficit**, measured in tokens rather than asserted.
+**Generalization = how closely grounded `SKILL.md` tracks the oracle as difficulty rises.** A skill set that generalizes stays a roughly constant distance above the `SKILL.md` oracle. One overfit to the easy rungs hugs the oracle at the bottom then peels upward — its **excess slope over the oracle is the generalization deficit**, measured in tokens rather than asserted.
 
-**Shared-region slope = efficiency.** In the table, rungs 1→2 cost +100 for `AGENTS.md` vs +200 for baseline. Grounding is not just lower, it is *flatter* — it flattens the difficulty gradient, helping more as questions harden.
+**Shared-region slope = efficiency.** In the table, rungs 1→2 cost +100 for grounded `SKILL.md` vs +200 for baseline. Grounding is not just lower, it is *flatter* — it flattens the difficulty gradient, helping more as questions harden.
 
-**The knee = the divergence rung.** Where a curve bends sharply upward is where grounding stops carrying the model and the model starts paying its own way in reasoning and exploration. The knee summarizes *reach* better than "reached rung 16," because two documents can reach rung 16 with completely different curves — cheap-then-cliff vs expensive-throughout — and only the knee tells them apart. "Which rungs did you stand on strongly" is everything left of the knee.
+**The knee = the divergence rung.** Where a curve bends sharply upward is where grounding stops carrying the model and the model starts paying its own way in reasoning and exploration. The knee summarizes *reach* better than "reached rung 16," because two arms can reach rung 16 with completely different curves — cheap-then-cliff vs expensive-throughout — and only the knee tells them apart. "Which rungs did you stand on strongly" is everything left of the knee.
 
 ## What the per-rung number is measured on
 
@@ -105,21 +106,21 @@ Instead, compute where a failed arm *would have had to* land to remain worth cho
 
 Per rung, the hurdle is the **competitor envelope** — the lower boundary of every *other* participant's IET that answered correctly:
 
-```
+```text
 hurdle(rung) = min( IET of each other arm that Delivered at rung )
 ```
 
-`AGENTS.md` **pays its way on a rung iff its IET there is below this envelope.** Where it sits under the line, it is the document worth shipping at that difficulty; where it pokes above, it is dominated *at that difficulty* by something cheaper that also works, and you can read by how much and decide whether to train it down or concede the rung.
+Grounded `SKILL.md` **pays its way on a rung iff its IET there is below this envelope.** Where it sits under the line, it is the grounding condition worth keeping at that difficulty; where it pokes above, it is dominated *at that difficulty* by something cheaper that also works, and you can read by how much and decide whether to train it down or concede the rung.
 
 Two consequences make this the spine of the ship decision:
 
-**The binding competitor switches identity as difficulty rises.** On easy rungs the envelope is set by *baseline* — grounding must beat "the model already knew it," a bar it often can't clear because the doc tax is pure overhead there. On hard rungs baseline has dropped out, so the envelope is set by `SKILL.md` — grounding must beat "just ship the textbook." The **handoff rung**, where the binding hurdle passes from baseline to oracle, is where `AGENTS.md`'s reason to exist changes from *cheaper than knowing nothing* to *cheaper than knowing everything*. It is arguably the single most important point on the chart for a ship/no-ship call.
+**The binding competitor switches identity as difficulty rises.** On easy rungs the envelope is set by *baseline* — grounding must beat "the model already knew it," a bar it often can't clear because the doc tax is pure overhead there. On hard rungs baseline has dropped out, so the envelope is set by `SKILL.md` — grounding must beat "just use the oracle ceiling." The **handoff rung**, where the binding hurdle passes from baseline to oracle, is where the grounded skill set's reason to exist changes from *cheaper than knowing nothing* to *cheaper than the oracle ceiling*. It is arguably the single most important point on the chart for a ship/no-ship call.
 
-**It defines a maximum, not a minimum, price.** If `SKILL.md` answers rung 6 at 4000 IET, then 4000 is the *most* `AGENTS.md` may spend to answer rung 6 and still justify existing — above that, ship the textbook and skip the missing manual. The band between `AGENTS.md` and the envelope is a training target with a built-in stop: close the gap until you are under the line, not to zero, because under the line is where "worth maintaining" already lives and further compression is effort past the point it changes the decision.
+**It defines a maximum, not a minimum, price.** If `SKILL.md` answers rung 6 at 4000 IET, then 4000 is the *most* grounded `SKILL.md` may spend to answer rung 6 and still justify existing — above that, use the oracle ceiling and skip further expansion. The band between grounded `SKILL.md` and the envelope is a training target with a built-in stop: close the gap until you are under the line, not to zero, because under the line is where "worth maintaining" already lives and further compression is effort past the point it changes the decision.
 
-![Figure 2: the max price of generalization on a rung AGENTS.md fails](liet-curve-figure-2.svg)
+![Figure 2: the max price of generalization on a rung grounded SKILL.md fails](liet-curve-figure-2.svg)
 
-*Figure 2 — the same chart when `AGENTS.md` fails rung 6. It answers rungs 1–5 (last filled marker), then has no correct answer at rung 6, so **no point is plotted there** — the failed rung is not extrapolated, exactly as baseline was not. What *is* drawn is the ceiling: the oracle's measured cost at rung 6 is the **maximum price of generalization**, the most a future `AGENTS.md` may spend to answer that rung and still beat "just ship `SKILL.md`." Anything under the ceiling (green) pays its way; anything over it (red) means shipping the textbook is cheaper. The ceiling is a measured value from an arm that succeeded, never a guess about the arm that failed — which is the whole point.*
+*Figure 2 — the same chart when grounded `SKILL.md` fails rung 6. It answers rungs 1–5 (last filled marker), then has no correct answer at rung 6, so **no point is plotted there** — the failed rung is not extrapolated, exactly as baseline was not. What *is* drawn is the ceiling: the oracle's measured cost at rung 6 is the **maximum price of generalization**, the most a future grounded `SKILL.md` may spend to answer that rung and still beat "just use the oracle ceiling." Anything under the ceiling (green) pays its way; anything over it (red) means the oracle ceiling is cheaper. The ceiling is a measured value from an arm that succeeded, never a guess about the arm that failed — which is the whole point.*
 
 *(Both figures are generated from synthetic datasets by the grounding tool itself — `eng/gen-liet-figures.py` runs `grounding analyze --view liet --svg --oracle-from-plugin` — so they render through the same code path as real eval curves.)*
 
@@ -127,7 +128,7 @@ This retires the survivorship problem cleanly, which is the tell that it is the 
 
 ## Total IET is a product, not a target
 
-"Low per-rung IET and low total IET" is a coherent joint goal **only within a like-for-like comparison** — same rungs answered. The moment two arms answer different numbers of rungs, total IET stops being a fair target, because the higher-capability arm legitimately spends more by doing more work. On the table above, minimizing total IET picks *baseline* (2200 vs 6400) — the weaker document — the same inversion as the mean.
+"Low per-rung IET and low total IET" is a coherent joint goal **only within a like-for-like comparison** — same rungs answered. The moment two arms answer different numbers of rungs, total IET stops being a fair target, because the higher-capability arm legitimately spends more by doing more work. On the table above, minimizing total IET picks *baseline* (2200 vs 6400) — the weaker arm — the same inversion as the mean.
 
 So treat total IET as the *product* of two independent objectives, not a third target:
 
@@ -138,7 +139,7 @@ Total IET is an output of those two. As a standalone target it rewards doing les
 
 ## What it answers in the spec
 
-- **Pareto across models.** Plot Haiku-grounded and Opus-grounded IET(rung) on shared axes. A Pareto violation appears as *curves crossing* — a rung where an "improvement" made one model more expensive than before. A scalar buries this; the curve makes it impossible to miss and localizes it to a difficulty band to inspect.
+- **Cross-model cost monotonicity.** Plot Haiku-grounded and Opus-grounded IET(rung) on shared axes. A cost regression appears as *curves crossing* — a rung where a grounding change made one model more expensive than before. A scalar buries this; the curve makes it impossible to miss and localizes it to a difficulty band to inspect.
 - **Ladder self-audit.** If the difficulty ordering is real — and it is meant to be an emergent, observed property — then IET(rung) should be roughly monotonic on each arm's own passed rungs. A rung that consistently costs more than the rungs above it is evidence it is mis-placed or malformed. The metric audits the ladder it runs on; non-monotonicity is a bad-question detector, and it is also the gate for trusting any envelope or slope read.
 
 ## Recommended name
@@ -149,11 +150,11 @@ Reclaim your own coinage, corrected: **Levelized IET (LIET)** — IET per **Deli
 
 The vocabulary that comes with it:
 
-- **LIET curve** — the per-arm IET(rung) plot; the family (baseline / `AGENTS.md` / `SKILL.md`) is the deliverable.
+- **LIET curve** — the per-arm IET(rung) plot; the family (baseline / grounded `SKILL.md` / optional `SKILL.md` oracle) is the deliverable.
 - **Competitor envelope** — the per-rung lower boundary of the other arms; the **maximum price of generalization**.
 - **Handoff rung** — where the binding hurdle passes from baseline to oracle; the ship-decision pivot.
 - **Divergence rung** — the knee; the headline scalar for reach.
-- **Oracle gap** — distance to `SKILL.md`; value remaining and the generalization measure.
+- **Oracle gap** — distance to the `SKILL.md` oracle; value remaining and the generalization measure.
 - **Shared-region slope** — efficiency on mutually-correct ground.
 
 These are the honest scalar reduction of the curve. Every one is difficulty-aware by construction, so unlike Mean IET none can invert a domination.
@@ -168,4 +169,4 @@ These are the honest scalar reduction of the curve. Every one is difficulty-awar
 
 ## One line for the spec
 
-*IET tells you what a session cost. The LIET curve tells you how that cost scales with difficulty for each document — on one shared axis where baseline, `AGENTS.md`, and the `SKILL.md` oracle all compete — its divergence rung tells you how far each carries the model, and its competitor envelope tells you the most `AGENTS.md` may spend on a rung before you should ship the textbook instead.*
+*IET tells you what a session cost. The LIET curve tells you how that cost scales with difficulty for each grounding condition — on one shared axis where baseline, grounded `SKILL.md`, and the `SKILL.md` oracle all compete — its divergence rung tells you how far each carries the model, and its competitor envelope tells you the most grounded `SKILL.md` may spend on a rung before the oracle ceiling is cheaper.*

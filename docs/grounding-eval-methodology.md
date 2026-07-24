@@ -1,122 +1,156 @@
-# Grounding eval methodology — measuring, deciding, and shipping package grounding
+# Grounding eval methodology
 
-> **New here?** This doc explains how we test a package's grounding file and decide whether a change ships.
-> For **how we now grade and ship**, read the ratified **[quality-card model](./quality-card-model.md)**:
-> return + efficiency, with do no harm + a ≥20% cost win. Legacy names below (`BETTER/NEUTRAL/WORSE`,
-> "Pareto gate", "judge-floor") predate it — read them as history; the card is current.
+> **New here?** Grounding is both the technique and its measurement. We compare the same agent with a
+> package `SKILL.md` skill set installed against the same agent without it. For grading and shipping,
+> use the ratified [quality-card model](./quality-card-model.md).
 
-This is the standalone reference for how we evaluate package **grounding content** (an `AGENTS.md`
-that ships in a package root) and decide whether it ships. It covers (1) the methodology, (2) the
-terms we use or redefine, (3) the **threshold gate** that decides whether a change ships, and (4) the
-copy-paste eval dump that carries the evidence (e.g. into a PR).
+This document defines the evaluation approach for package grounding. It covers the evaluation contrast,
+the CT-24 suite, run discipline, confounds, and the evidence a PR must carry. The shipped artifact under
+this model is a pull-installed skill set: a base skill named for the package plus domain skills, with a
+root meta-skill orchestrating install into the consuming repo.
 
-Core rule: **a grounding change is a claim, and a claim ships with its evidence.** An `AGENTS.md` edit
-without a reproducible eval behind it is not reviewable. This matches the rigor we hold code PRs to —
-see [dotnet-inspect#1209](https://github.com/richlander/dotnet-inspect/pull/1209) for the shape we are
-matching: a *Changes* summary, a `Baseline | … | Delta` table, a representative check, and an explicit
-*Validation* block. Broader context:
-[aspire#18437 (comment)](https://github.com/microsoft/aspire/pull/18437#issuecomment-4782880736).
+Core rule: **a grounding change is a claim, and the claim ships with evidence.** A skill-set edit without
+a reproducible grounded-vs-baseline eval is not reviewable.
 
----
+## 1. Evaluation contrast
 
-## 1. Methodology
+There are exactly two arms:
 
-We reuse the [`dotnet/skills`](https://github.com/dotnet/skills) **skill-validator** harness to run a
-**baseline vs. grounded** evaluation over a fixed set of scenarios. We name the arms by the **grounding
-content** supplied — and force-feed it — *not* by skill-validator's internal delivery mechanism:
-
-| Our arm | Content (force-fed) | What it answers |
+| Arm | Setup | Question |
 | --- | --- | --- |
-| **baseline** | none | the control — model knowledge only (web blocked) |
-| **Missing Manual** | `AGENTS.md` | does the compact, co-located doc fill the gap? |
-| **Brochure** | `README.md` | is the human README usable by an agent? |
-| **Textbook** | `SKILL.md` | (rung 2) does the full guide recover what the compact doc can't? |
+| **baseline** | Same agent, no package skill set installed | What does the model already know or recover on its own? |
+| **grounded** | Same agent, package `SKILL.md` skill set installed | What changes when the package teaches the missing facts? |
 
-**Why these names (and not skill-validator's).** skill-validator's own arms are named by *loader scope* —
-`baseline` (nothing loaded), `isolated` (only the target skill loaded), `plugin` (everything loaded, the
-agent self-selects). Those are **internal-facing `dotnet/skills` mechanism names** that conflate *content*
-with *delivery* (`plugin` moves both at once), so we replace them with **outward-facing, grounding-specific**
-names keyed to the document under test. Mechanically each content arm *is* skill-validator's `isolated`
-mode fed a different document (`grounding run --source agents|readme|…`); we read that arm and **relabel it
-by content**. skill-validator's `plugin` arm (everything loaded, the agent self-selects — the "shelf") is a
-**separate delivery axis**, not a content arm, and is omitted from content cards.
+No README comparison arm is part of this methodology. Historical data that measured a doc shipped inside
+the package should be read as measurements of *the grounding doc* from the old delivery experiment, not
+as current delivery guidance.
 
-A pairwise LLM judge scores rubric quality; the harness also records tokens, cost, tool calls, and
-assertion pass/fail. Mechanics live in [`harness.md`](./harness.md). We read results with
-`grounding analyze` (full table) or `grounding analyze --card` (the PR dump — see [scoring.md](./scoring.md)).
+The contrast is pull delivery: the skill set is opt-in, installed into the consuming repo, and removable.
+Push-style always-on package delivery is not a current ship target.
 
-Because the judge is **pairwise**, **baseline is the anchor**: each content arm's quality is rendered
-*relative to* baseline (`baseline.judgeResult.overallScore`). That is why skill-validator's own
-`summary.md` shows the grounded arms' quality as a **delta over baseline** rather than a standalone
-"Quality (Baseline)" column — baseline is the zero-point, not omitted (its score is in `results.json` and
-in the terminal table). `grounding analyze` prints **baseline quality as its own column** when you want the
-absolute view.
+## 2. Suite and repetition
 
-**Two confounds keep the baseline from being a clean control.** First, a package's `README.md`/`AGENTS.md`
-are packed inside its nupkg, so any `dotnet build` restores them to `~/.nuget/packages`, where the baseline
-can read them (archaeology) — so **the baseline is partly self-grounded and the measured gap understates
-grounding's value** (treat every delta as a *lower bound*; see [harness.md](./harness.md)). Second, to keep
-**content** arms about the *document* and not a tool, eval runs **scrub `~/.dotnet/tools` from the agent's
-PATH** (removing `dotnet-inspect`/`ildasm`/`ilspycmd`, keeping system `dotnet`/`dnx`). Tool availability is
-a **separate lever**, layered in deliberately as its own arm — not part of the content comparison.
+The benchmark suite is **CT-24**, an opaque 24-task workflow ladder. Keep the label opaque in infra docs;
+it names the suite, not a document tier.
 
-### Three question tiers, the arms that run them, and a cost-tiered ladder
+Run discipline:
 
-Three **nested** question tiers, named for the doc that should clear each (`BR ⊂ MM ⊂ CT`):
+- `k = 5` repeats for every `(task, arm, model)` cell.
+- Models: `claude-haiku-4.5`, `claude-sonnet-5`, and `claude-opus-4.8`.
+- Hold prompts, assertions, package version, judge configuration, and tool policy fixed across arms.
+- Treat a result as model-relative; do not generalize a frontier-model null result to cheaper agents.
 
-| Tier | Size | Role |
-| --- | --- | --- |
-| **Brochure (BR)** | **6** | smoke test — fast sanity for any doc |
-| **MM** (Missing Manual) | **12** (6 + 6) | what `AGENTS.md` should clear — and, being broader than the smoke 6, the **overfit guard** |
-| **CT** (Complete Textbook) | **24** (12 + 12) | the full exam; the top 12 are **`SKILL.md` territory** |
+The real command shape is:
 
-A **cost-tiered, opt-in ladder** — run as much as the question warrants:
+```bash
+grounding run <slug> --source skill --eval-mode holistic --runs 5
+```
 
-| Rung | Arms | Tier | Question |
-| --- | --- | --- | --- |
-| **0 — smoke** | baseline vs Missing Manual | BR-6 | does grounding beat none, quickly? |
-| **1 — remit** | baseline · Brochure · Missing Manual | MM-12 | does `AGENTS.md` clear its remit without overfitting; is the README usable? |
-| **2 — full** (optional) | baseline · Missing Manual · Brochure · **Textbook** | CT-24 | where does `AGENTS.md` fall off, and **what do `SKILL.md`'s extra tokens buy** (`AGENTS.md`@24 vs `SKILL.md`@24)? |
+Add `--model` values as needed for the three model tiers. The command name and flags above match the
+current CLI; do not rename mid-transition commands in docs.
 
-**Brochure (BR-6)** is the cheap smoke; **MM-12** is the overfit guard (a compact doc tuned to the smoke 6 must still
-generalize to 12); **CT-24** runs the real `SKILL.md` (so it **doubles as a skill eval**) and, by also
-running `AGENTS.md` across all 24, measures the Textbook's marginal value. The **Brochure** arm *is* the
-README usability test (it replaces the older "source-diff card"): if the README-grounded agent fails a
-question or is forced into archaeology, that is a **README bug to fix in the same PR** — *if an AI given
-only the README can't answer it, an untrained human can't either.*
+## 3. What the harness records
 
-> **Sizing — double is the north star.** 6 / 12 / 24 is the **starting** size, chosen because eval is
-> expensive. The aspirational target is **double** — 12 / 24 / 48 — for sharper overfit and falloff
-> signal, but we **defer it until more packages, users, and feedback motivate the cost**. Start small;
-> scale the tiers when the evidence demands it.
+The harness should preserve enough per-run evidence to build the quality card:
 
----
+- outcome on the `Fails < Satisfies < Delivers` ladder;
+- functional assertions and, where applicable, approach assertions;
+- input, cache-read, cache-write, and output tokens;
+- IET and dollar cost;
+- duration and turn count;
+- tool calls, web access, and local package archaeology;
+- provenance: package version, skill content hash, prompts, assertions, model, judge, and run count.
 
-## 2. Terms we use or redefine
+Mechanics live in [harness.md](./harness.md). The grading model lives in
+[quality-card-model.md](./quality-card-model.md).
 
-| Term | Meaning here |
+## 4. Grading and shipping
+
+The quality card has two axes.
+
+### RETURN
+
+RETURN measures whether grounding produces more usable work:
+
+- graded yield on the ladder `Fails < Satisfies < Delivers`;
+- capability wins where only the grounded arm delivers;
+- reliability `ΔP` on the shared-success set;
+- loss mass for tasks the baseline delivered but grounding damaged.
+
+### EFFICIENCY
+
+EFFICIENCY measures what a delivered unit costs:
+
+- per-dollar IET over delivered runs as the gated headline;
+- duration per day as a co-headline, reported but not gated;
+- variance and resourcefulness as explanatory signals.
+
+### Ship gates
+
+A skill-set change ships only when both gates pass:
+
+1. **Do no harm** — loss mass must clear the null-95 baseline.
+2. **Economic materiality** — the per-dollar credible-interval upper bound must be `≤ ×0.80`, meaning a
+   credible cost cut of at least 20%.
+
+Do not replace these with a single aggregate score. Report the card rows that support the claim.
+
+## 5. Metric vocabulary
+
+| Term | Meaning |
 | --- | --- |
-| **Grounding** | A compact, package-specific `AGENTS.md` that ships in the package root and makes the package self-teaching for an agent. Records only what the model is *proven to lack* — not model-resident knowledge. |
-| **The three docs** | A package ships **two** grounding documents at its root — `README.md` = **Brochure** (humans; may market/onboard) and `AGENTS.md` = **Missing Manual** (co-located, always-on RAG gap-filler). A third, `SKILL.md` = **Complete Textbook** (opt-in, narrative full guide), is kept as a **repo asset used as the eval ceiling** — *not* shipped in the package. See [authoring-principles §2d](./authoring-principles.md). At eval time the harness **synthesizes a transient** per-unit `SKILL.md` **wrapper** — scaffolding holding whichever content an arm force-feeds (skill-validator just requires that filename) — and cleans it up; it is never committed. Author `AGENTS.md`, then validate the budget with `grounding check-agents`. |
-| **arm names (content, not mechanism)** | Arms are named by the document supplied — **baseline** / **Missing Manual** (`AGENTS.md`) / **Brochure** (`README.md`) / **Textbook** (`SKILL.md`), all force-fed. We do **not** use skill-validator's loader-scope names `isolated`/`plugin` (§1 explains why and gives the mapping). `plugin` (everything loaded, agent self-selects — the "shelf") is a separate **delivery** axis, omitted from content cards. |
-| **resourcefulness (archaeology)** | Out-of-sandbox lookups the agent must make to recover API knowledge that grounding would supply inline — web fetch/search **plus** local NuGet-cache rummaging / decompiling DLLs. Measured **objectively** from the timeline (not the judge). **High = the agent had to be resourceful; grounding's job is to drive it to 0, so lower is the win, not a loss.** Cards show it as one **resourcefulness (archaeology)** row; the **web** portion alone is a hard gate guard (a grounded run must never resort to the internet). |
-| **success** | A scenario is **solved** for an arm iff every functional assertion passes **and** the judge's overall quality clears the **≥4 floor** ("meets expectations"). Reported per arm as a rate (e.g. `6/6`). The headline **value** metric. The judge's 1–5 score enters **only** as this pass/fail floor — its subjective 4→5 top band is discarded (see [scoring.md](./scoring.md)). |
-| **quality** (judge `overallScore` 1–5) | Used **only** as the ≥4 success floor above — never as a reported metric or a baseline diff. Its top ~1 point is subjective and instruction-sensitive (see [scoring.md](./scoring.md)), so it cannot grade harm. |
-| **func** | Functional assertions passed (build + file + run-output regex). A **value** metric; the objective correctness signal that, with the ≥4 floor, defines `success`. |
-| **tok** | Gross tokens (`input + output`); `input` *includes* cache reads. Inflated by cache re-reads, so not the harm by itself. |
-| **IET** | **Input-Equivalent Tokens** — a price-weighted cost stick that maps 1:1 onto [Anthropic's four billed categories](https://platform.claude.com/docs/en/about-claude/pricing): `(input − cacheRead) + 0.1·cacheRead + 1.25·cacheWrite + 5·output`. The SDK's `inputTokens` is **cache-read-inclusive** (verified: cacheRead never exceeds it), so `input − cacheRead` = Anthropic's **Base Input Tokens** at **1×** (the unit); cache read = **0.1×**, 5-min cache write = **1.25×**, output = **5×** — *uniform and exact* across current Claude models (Opus 4.8 $5→$25, Sonnet $3→$15, Haiku 4.5 $1→$5). So `IET × input_price ≈ $`. Weighting **output 5×** is the point: output is the expensive, grounding-sensitive class, and an unweighted count would undercount exactly the savings grounding delivers. Our headline cost stick (see `README.md`) and the **frontier harm number** (see [scoring.md](./scoring.md)). `tok` (gross) and `iet` bracket the spend; `cost` sits between. |
-| **cost** | Premium-request multiplier (cache-discounted). The truest single harm proxy. |
-| **output tok** | Output/thinking tokens — the most expensive *per-token* class (≈5× input) and the one grounding most reduces. Weighted 5× inside IET, and **also** kept as its own visible guard row (see [scoring.md](./scoring.md)) lest an output-only blow-up be masked when input nets down. |
-| **Normative metric** | A quantity we *claim* as value or harm: `success`, `func`, `resourcefulness`, `tok`, `iet`, `cost`, `secs`. A conclusion may rest only on these. |
-| **Informative signal** | Corroborating behavioral data that *explains* a metric move but is never the claim: `web`, `tools`, `turns`, `cache` (bash rummaging `~/.nuget/packages`), `di`, `mcp`, `bash`. A tool call adds nothing to the bill on its own; many signals together trace the narrative arc (archaeology, cache-reflection, retry loops). |
-| **warm / cold cache** | Whether the package is restored on disk. For build-based scenarios the agent restores it within its first few tool calls, so **starting cache state is not a variable** — treat it as warm (see harness.md). |
-| **verify-close** | A package-specific grounding line that makes the agent surface the final code/API calls, fixing a *verifiability artifact* where the judge underscores efficient grounded runs it can't see (see [nugetfetch report](./reports/nugetfetch.md)). |
-| **Pareto gate / tier** | The ship rule (see [scoring.md](./scoring.md)). **mini tier** (λ low — weaker/cheaper model that *needs* grounding): **success** is the binding constraint, tokens are cheap → require the card to grade **BETTER** here. **frontier tier** (λ high — strong model that doesn't need it): success is near ceiling → require **not WORSE** (BETTER or NEUTRAL) here. |
+| **Grounding** | The technique and measurement of installing package-specific skill docs so agents can use package facts they otherwise lack. |
+| **Skill set** | The shipped artifact: package base skill plus domain skills, all using `SKILL.md` frontmatter and progressive disclosure. |
+| **Baseline** | The same agent without the package skill set installed. |
+| **Grounded** | The same agent with the package skill set installed. |
+| **Resourcefulness** | Web, local package-cache rummaging, decompilation, or other archaeology used to rediscover facts grounding should supply. Lower is better. |
+| **IET** | Input-Equivalent Tokens: `(input − cacheRead) + 0.1·cacheRead + 1.25·cacheWrite + 5·output`. It maps to Anthropic's billed categories and weights output at 5×. |
+| **Cost** | IET multiplied by the model's input price; the primary spend proxy. |
+| **Duration** | Wall-clock time. It is a co-headline because developer latency matters, but it is not a ship gate. |
+| **Normative metrics** | RETURN and EFFICIENCY rows that can carry a claim: graded yield, reliability, loss mass, IET, cost, and duration. |
+| **Informative signals** | Tool mix, turns, cache reads, web use, and archaeology. They explain behavior but do not decide shipping alone. |
 
----
+## 6. Confounds and how to read them
 
-## Scoring, grading, and shipping
+### Baseline self-grounding through restored packages
 
-The grade model (**BETTER / NEUTRAL / WORSE**), the tier-aware **ship gate** (require BETTER on the mini
-tier, *not WORSE* on the frontier tier), the copy-paste **cards**, the **PR contents + checklist**, and
-the judge-floor finding live in **[`scoring.md`](./scoring.md)**.
+Older experiments packed a grounding doc in the package. A build could restore that package into the
+local NuGet cache, letting the baseline discover the doc through archaeology. That makes the baseline
+partly self-grounded and understates the value of explicit grounding. Treat those historical deltas as
+lower bounds.
+
+### Tool availability
+
+To keep the contrast about grounding content rather than tooling, evals should hold tool availability
+constant across arms. When a tool is the intervention, make it a separate experiment.
+
+### Warm cache
+
+Build-based scenarios usually restore the package during the first few tool calls, so starting cache state
+is not an independent variable. Record it, but do not treat it as a separate arm unless the task is
+explicitly about restore behavior.
+
+### Judge and assertion discipline
+
+The card should grade only requirements that are visible in the prompt and reducible to assertions. Use
+human review and one-time judge audits to validate prompt/assertion coverage. Do not use subjective style
+or elegance as a ship gate.
+
+### Model relativity
+
+Grounding value depends on the agent. The same package fact can be redundant for a frontier model and a
+large win for a cheaper model. Always report results per model and avoid fleet-wide claims unless all
+three model tiers support them.
+
+## 7. Evidence package for PRs
+
+A grounding PR should include:
+
+- the grounded-vs-baseline claim;
+- the command, run count, models, package version, and dataset locations;
+- the quality card: RETURN, EFFICIENCY, and the two ship gates;
+- representative failures or successes that explain the movement;
+- any confounds, especially archaeology or tool-policy differences;
+- validation that the current command names and flags are real.
+
+Use [templates/canonical-grounding-pr.md](./templates/canonical-grounding-pr.md) as the fill-in shape.
