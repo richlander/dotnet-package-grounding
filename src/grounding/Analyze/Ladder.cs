@@ -8,11 +8,14 @@ namespace Grounding.Analyze;
 // Consumes the harness per-run capture (metrics.perRun[]) to score the Fails → Satisfies → Delivers
 // ladder per task, then renders the ratified two-axis model:
 //   Axis 1 (return):   yield pˣ = Kˣ/k;  ΔP = Pᵍ − Pᵇ;  ΔP|both on the both-productive set.
-//   Axis 2 (cost):     levelized Lˣ = Σcost / Kˣ on the shared set S, compared paired via the
-//                      geometric mean of ratios rᵢ = Lᵍ/Lᵇ (Simpson guard = pooled cross-check).
+//   Axis 2 (cost):     two efficiency rulers, paired geo-mean of ratios rᵢ = Lᵍ/Lᵇ on shared set S —
+//                      per-dollar IET (levelized Lˣ = Σcost/Kˣ, fused/retry-taxed; the gate quantity)
+//                      and per-day duration (delivered-only, no retry tax; a co-headline). Simpson
+//                      guard = pooled cross-check.
 //   Claims:            C1 capability (grounded-only unlocks), C2 reliability (ΔP|both),
 //                      C3 efficiency (geo-mean ratio), C4 fidelity (Delivers rate), C5 σ_g/σ_b.
-//   Hard gate:         per-task material regression OR suite loss-mass Σ max(−Δpᵢ, 0).
+//   Gates:             (1) do-no-harm — suite loss-mass Σ max(−Δpᵢ, 0) vs null-calibrated threshold;
+//                      (2) economic — certified ≥20% per-dollar reduction (geo-mean CrI upper ≤ ×0.80).
 //
 // Stage 1: Delivers == Satisfies (the model's proxy) until the delivers-tier assertions land, so
 // C4 is 1.0 by construction and is labelled as not-yet-measured. Bands (beta-binomial posterior +
@@ -31,13 +34,18 @@ internal sealed class Ladder
     public Ladder(TextWriter o) => _o = o;
 
     // One arm's outcome on one task: k runs, of which Sat satisfy and K deliver; per-run IET/cost.
-    private sealed record ArmTask(int k, int Sat, int Deliv, List<long> AllIet, List<long> DelivIet)
+    private sealed record ArmTask(int k, int Sat, int Deliv, List<long> AllIet, List<long> DelivIet,
+                                  List<long> AllSecs, List<long> DelivSecs)
     {
         public double P => k > 0 ? (double)Deliv / k : 0.0;                 // yield
         public bool Productive => Deliv >= 1;                                // K ≥ 1
         public double SumAllIet => AllIet.Count > 0 ? AllIet.Sum() : 0.0;
-        public double Levelized => Deliv >= 1 ? SumAllIet / Deliv : double.NaN; // Lˣ = Σcost/Kˣ
+        public double Levelized => Deliv >= 1 ? SumAllIet / Deliv : double.NaN; // Lˣ = Σcost/Kˣ (fused: retry tax)
         public double MedianDelivIet => Median(DelivIet);
+        // Duration is an efficiency ruler like IET but DELIVERED-ONLY (no retry tax): a giving-up
+        // run's clock is noise, so we time only the good runs. Mean delivered wall-clock, else NaN.
+        public double LevelizedDur => Deliv >= 1 && DelivSecs.Count > 0 ? (double)DelivSecs.Sum() / DelivSecs.Count : double.NaN;
+        public double MedianDelivSecs => Median(DelivSecs);
     }
 
     private sealed record TaskRow(string Name, ArmTask B, ArmTask G);
@@ -163,18 +171,28 @@ internal sealed class Ladder
         double totB = s.Sum(r => r.B.MedianDelivIet);
         double totG = s.Sum(r => r.G.MedianDelivIet);
 
+        // per-day ruler: delivered-only duration (mean delivered wall-clock), paired geo-mean.
+        var durRatios = s.Select(r => r.G.LevelizedDur / r.B.LevelizedDur).Where(x => x > 0 && !double.IsNaN(x)).ToList();
+        double durGeo = durRatios.Count > 0 ? Math.Exp(durRatios.Average(Math.Log)) : double.NaN;
+        double totBsec = s.Sum(r => r.B.MedianDelivSecs);
+        double totGsec = s.Sum(r => r.G.MedianDelivSecs);
+
         bool notEstimable = bands is { } b0 && b0.EstimabilityRate < 0.95;
-        _o.WriteLine("| quantity | goal | value | 95% CrI |");
-        _o.WriteLine("|----------|------|-------|---------|");
-        _o.WriteLine($"| geo-mean ratio rᵢ = Lᵍ/Lᵇ (typical multiplier) | ↓ | {Mult(geo)} | {(notEstimable ? "not estimable" : CiMult(bands?.Geo))} |");
-        _o.WriteLine($"| pooled ΣLᵍ/ΣLᵇ (Simpson guard) | ↓ | {Mult(pooled)} | — |");
-        _o.WriteLine($"| Total IET on S (median-delivered) | ↓ | {K(totB)} → {K(totG)} ({SignedPct(totB > 0 ? (totG - totB) / totB * 100 : 0)}) | — |");
+        _o.WriteLine("| ruler | quantity | goal | value | 95% CrI |");
+        _o.WriteLine("|-------|----------|------|-------|---------|");
+        _o.WriteLine($"| per-$ | geo-mean IET ratio rᵢ = Lᵍ/Lᵇ (typical, **gate**) | ↓ | {Mult(geo)} | {(notEstimable ? "not estimable" : CiMult(bands?.Geo))} |");
+        _o.WriteLine($"| per-$ | pooled ΣLᵍ/ΣLᵇ (Simpson guard) | ↓ | {Mult(pooled)} | — |");
+        _o.WriteLine($"| per-$ | Total IET on S (median-delivered) | ↓ | {K(totB)} → {K(totG)} ({SignedPct(totB > 0 ? (totG - totB) / totB * 100 : 0)}) | — |");
+        _o.WriteLine($"| per-day | geo-mean duration ratio (delivered-only, co-headline) | ↓ | {Mult(durGeo)} | {CiMult(bands?.DurGeo)} |");
+        _o.WriteLine($"| per-day | Total duration on S (median-delivered) | ↓ | {Secs(totBsec)} → {Secs(totGsec)} ({SignedPct(totBsec > 0 ? (totGsec - totBsec) / totBsec * 100 : 0)}) | — |");
         if (geo > 0 && pooled > 0 && Math.Sign(Math.Log(geo)) != Math.Sign(Math.Log(pooled)))
             _o.WriteLine("\n> ⚠ Simpson flag: geo-mean and pooled ratios disagree in direction — a size-mix effect. Trust the paired geo-mean.");
         if (bands is { } bn)
         {
-            _o.WriteLine($"\n_Geo-mean band is paired inside the same nested bootstrap (joint (delivered, cost) redraw; " +
-                         $"S\\* recomputed per iteration). Estimability rate {bn.EstimabilityRate:0.0%}" +
+            _o.WriteLine($"\n_Both geo-mean bands are paired inside the same nested bootstrap (S\\* recomputed per " +
+                         $"iteration). IET is the fused per-dollar ratio (all-run cost ÷ deliveries — retry tax baked in) " +
+                         $"and gates the ≥20% premium; duration is delivered-only (no retry tax — a giving-up run's clock " +
+                         $"is noise) and co-headlines. Estimability rate {bn.EstimabilityRate:0.0%}" +
                          (notEstimable ? " < 95% → Axis 2 reported not estimable rather than banding a biased subset." : ".") + "_");
         }
         _o.WriteLine("\n_Total (arithmetic median) and the levelized ratio answer different questions and will not match._\n");
@@ -226,6 +244,21 @@ internal sealed class Ladder
         }
         _o.WriteLine("\n_Loss mass is truncation-biased (≥0 under the null), so the gate trips on the " +
                      "null-calibrated threshold, not on literal zero._");
+
+        // Economic materiality gate: a certified ≥20% per-dollar (levelized, yield-fused) reduction —
+        // the minimum premium that justifies authoring + ongoing maintenance cost. IET is the singular
+        // economic gate; duration (per-day) is a co-headline, not a gate.
+        if (bands is { } bg)
+        {
+            const double prem = 0.80;   // ×0.80 = a 20% reduction
+            bool estimable = bg.EstimabilityRate >= 0.95;
+            bool clears = estimable && bg.Geo.Hi <= prem;
+            _o.WriteLine("\n### Economic gate — ≥20% per-dollar premium (materiality)\n");
+            _o.WriteLine($"- Certified when the 95% CrI **upper bound** of the fused per-dollar ratio (geo-mean Lᵍ/Lᵇ) " +
+                         $"sits at or below ×{prem.ToString("0.00", Inv)} (a certified ≥20% IET reduction, not just the point estimate). " +
+                         $"Upper bound **{(estimable ? Mult(bg.Geo.Hi) : "n/a")}** → gate **{(clears ? "clears ✅" : "fails ⛔")}**.");
+            _o.WriteLine("- _A real-but-small win (e.g. 8%) clears do-no-harm yet fails here — correctly \"not worth maintaining.\"_");
+        }
     }
 
     // ---- bands: beta-binomial posterior + one nested finite-suite bootstrap ---
@@ -237,7 +270,7 @@ internal sealed class Ladder
 
     private sealed record Bands(
         Ci DpAll, Ci DpBoth, Ci DpBothJeffreys,
-        Ci Geo, double EstimabilityRate,
+        Ci Geo, Ci DurGeo, double EstimabilityRate,
         double LossNull95);
 
     // Per-arm log-cost model for a task: lognormal(μ, σ) fit on all-run IET (all k runs' cost sit in
@@ -266,6 +299,34 @@ internal sealed class Ladder
         return double.IsNaN(s) || s <= 0 ? 0.3 : s;   // conservative default when the suite is degenerate
     }
 
+    // Delivered-only log-duration model (no retry tax): lognormal(μ,σ) fit on delivered-run seconds,
+    // falling back to all-run seconds for location when the arm never delivered, and a pooled per-arm
+    // σ for spread when a single/zero delivered run gives no dispersion.
+    private static (double mu, double sig) DurModel(ArmTask a, double pooledSig)
+    {
+        var logs = a.DelivSecs.Where(x => x > 0).Select(x => (double)Math.Log(x)).ToList();
+        if (logs.Count == 0) logs = a.AllSecs.Where(x => x > 0).Select(x => (double)Math.Log(x)).ToList();
+        if (logs.Count == 0) return (double.NaN, pooledSig);
+        double mu = logs.Average();
+        double sig = logs.Count >= 2 ? Sd(logs) : pooledSig;
+        if (double.IsNaN(sig) || sig <= 0) sig = pooledSig;
+        return (mu, sig);
+    }
+
+    private static double PooledDurSigma(IEnumerable<ArmTask> arms)
+    {
+        var res = new List<double>();
+        foreach (var a in arms)
+        {
+            var logs = a.DelivSecs.Where(x => x > 0).Select(x => (double)Math.Log(x)).ToList();
+            if (logs.Count < 2) continue;
+            double m = logs.Average();
+            res.AddRange(logs.Select(l => l - m));
+        }
+        double s = Sd(res);
+        return double.IsNaN(s) || s <= 0 ? 0.3 : s;
+    }
+
     private static Bands ComputeBands(List<TaskRow> rows)
     {
         int n = rows.Count;
@@ -274,21 +335,26 @@ internal sealed class Ladder
         double poolG = PooledSigma(rows.Select(r => r.G));
         var bc = rows.Select(r => CostModel(r.B, poolB)).ToArray();
         var gc = rows.Select(r => CostModel(r.G, poolG)).ToArray();
+        double poolBd = PooledDurSigma(rows.Select(r => r.B));
+        double poolGd = PooledDurSigma(rows.Select(r => r.G));
+        var bd = rows.Select(r => DurModel(r.B, poolBd)).ToArray();
+        var gd = rows.Select(r => DurModel(r.G, poolGd)).ToArray();
 
         var dpAll = new List<double>(BootIters);
         var dpBoth = new List<double>(BootIters);
         var geo = new List<double>(BootIters);
+        var durGeo = new List<double>(BootIters);
         int nonEstimable = 0;
 
         // Primary pass: uniform Beta(1,1) prior.
-        BootstrapPass(rows, rng, bc, gc, 1.0, dpAll, dpBoth, geo, ref nonEstimable);
+        BootstrapPass(rows, rng, bc, gc, bd, gd, 1.0, dpAll, dpBoth, geo, durGeo, ref nonEstimable);
 
-        // Jeffreys Beta(½,½) sensitivity — ΔP|both only.
+        // Jeffreys Beta(½,½) sensitivity — ΔP|both only (duration carries no prior readout).
         var dpBothJ = new List<double>(BootIters);
         var dpAllJ = new List<double>(BootIters);
         var geoJ = new List<double>(BootIters);
         int junk = 0;
-        BootstrapPass(rows, rng, bc, gc, 0.5, dpAllJ, dpBothJ, geoJ, ref junk);
+        BootstrapPass(rows, rng, bc, gc, bd, gd, 0.5, dpAllJ, dpBothJ, geoJ, null, ref junk);
 
         // Null-calibrated loss-mass gate: both arms redrawn from pooled p̃ᵢ, finite-suite.
         var lossNull = new List<double>(NullIters);
@@ -311,7 +377,7 @@ internal sealed class Ladder
         double estRate = (double)(BootIters - nonEstimable) / BootIters;
         return new Bands(
             Ci95(dpAll), Ci95(dpBoth), Ci95(dpBothJ),
-            Ci95Mult(geo), estRate,
+            Ci95Mult(geo), Ci95Mult(durGeo), estRate,
             Stats.Percentile(lossNull, 0.95));
     }
 
@@ -320,13 +386,15 @@ internal sealed class Ladder
     // recomputed each iteration — a task with K*=0 for either arm leaves S* that iteration).
     private static void BootstrapPass(
         List<TaskRow> rows, Rng rng, (double mu, double sig)[] bc, (double mu, double sig)[] gc,
-        double priorAB, List<double> dpAll, List<double> dpBoth, List<double> geo, ref int nonEstimable)
+        (double mu, double sig)[] bd, (double mu, double sig)[] gd,
+        double priorAB, List<double> dpAll, List<double> dpBoth, List<double> geo,
+        List<double>? durGeo, ref int nonEstimable)
     {
         int n = rows.Count;
         for (int b = 0; b < BootIters; b++)
         {
-            double sumDpAll = 0, sumDpBoth = 0, sumLnR = 0;
-            int cntBoth = 0;
+            double sumDpAll = 0, sumDpBoth = 0, sumLnR = 0, sumLnRdur = 0;
+            int cntBoth = 0, cntDur = 0;
             for (int i = 0; i < n; i++)
             {
                 int kb = rows[i].B.k, kg = rows[i].G.k;
@@ -345,11 +413,22 @@ internal sealed class Ladder
                     if (lb > 0 && lg > 0) { sumLnR += Math.Log(lg / lb); }
                     sumDpBoth += pg - pb;
                     cntBoth++;
+
+                    // Duration ratio is DELIVERED-ONLY: mean of K* delivered-run draws (no retry tax).
+                    if (durGeo is not null && !double.IsNaN(bd[i].mu) && !double.IsNaN(gd[i].mu))
+                    {
+                        double db = 0, dgv = 0;
+                        for (int r = 0; r < Kb; r++) db += Math.Exp(rng.NextNormal(bd[i].mu, bd[i].sig));
+                        for (int r = 0; r < Kg; r++) dgv += Math.Exp(rng.NextNormal(gd[i].mu, gd[i].sig));
+                        double ldb = db / Kb, ldg = dgv / Kg;
+                        if (ldb > 0 && ldg > 0) { sumLnRdur += Math.Log(ldg / ldb); cntDur++; }
+                    }
                 }
             }
             dpAll.Add(sumDpAll / n);
             if (cntBoth > 0) { dpBoth.Add(sumDpBoth / cntBoth); geo.Add(Math.Exp(sumLnR / cntBoth)); }
             else nonEstimable++;
+            if (durGeo is not null && cntDur > 0) durGeo.Add(Math.Exp(sumLnRdur / cntDur));
         }
     }
 
@@ -374,12 +453,16 @@ internal sealed class Ladder
             int del = pr.Count(o => o.Delivers);
             var all = pr.Select(o => o.Iet).ToList();
             var deliv = pr.Where(o => o.Delivers).Select(o => o.Iet).ToList();
-            return new ArmTask(pr.Count, sat, del, all, deliv);
+            var allSecs = pr.Select(o => o.Secs).ToList();
+            var delivSecs = pr.Where(o => o.Delivers).Select(o => o.Secs).ToList();
+            return new ArmTask(pr.Count, sat, del, all, deliv, allSecs, delivSecs);
         }
         // Fallback: no per-run capture — treat the averaged arm as a single k=1 outcome.
         bool ok = row.Ft > 0 && row.Fp == row.Ft;
         var one = new List<long> { row.Iet };
-        return new ArmTask(1, ok ? 1 : 0, ok ? 1 : 0, one, ok ? one : new List<long>());
+        var oneSec = new List<long> { row.Secs };
+        return new ArmTask(1, ok ? 1 : 0, ok ? 1 : 0, one, ok ? one : new List<long>(),
+                           oneSec, ok ? oneSec : new List<long>());
     }
 
     private static string PickGroundedArm(List<Scenario> scenarios)
@@ -413,6 +496,7 @@ internal sealed class Ladder
     private static string Mult(double x) => double.IsNaN(x) ? "n/a" : $"×{x.ToString("0.00", Inv)}";
     private static string SignedPct(double p) => (p >= 0 ? "+" : "") + p.ToString("0", Inv) + "%";
     private static string K(double v) => Math.Abs(v) >= 1000 ? (v / 1000.0).ToString("0.0", Inv) + "k" : v.ToString("0", Inv);
+    private static string Secs(double v) => double.IsNaN(v) ? "n/a" : v.ToString("0", Inv) + "s";
 
     private static string ShortName(string full)
     {
