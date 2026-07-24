@@ -99,6 +99,57 @@ in parentheses for traceability. Full derivation:
 [`docs/recommendation.md`](docs/recommendation.md) (Metric) and
 [`docs/delivery-and-retrieval.md`](docs/delivery-and-retrieval.md).
 
+## How we measure the lift: the quality card
+
+We want two things from a grounding change: proof it **helps**, and a number we can **trust**. The
+hard part is that a coding agent's behavior on a task isn't a bell curve — it's **multi-modal**. Run
+the same task five times and the runs don't scatter around an average; they land in distinct
+*modes*: some deliver a working, idiomatic result, some produce broken or off-spec output, some
+flail and give up. Averaging a "score" across those modes is meaningless — the mean sits in a valley
+no run ever occupies. (The analogy: a school measuring classrooms whose grade distributions are
+multi-modal can't summarize them with a single median; it has to name the modes first.)
+
+So we **define the modes by contract** instead of discovering them from noise. Every run is graded
+on a fixed ladder — **Fails → Satisfies → Delivers** — where the tiers are *verifiable
+requirements* (did it use the taught API, hit the technical constraints, and functionally work),
+never subjective taste. Then we measure two **independent** axes behind two gates:
+
+- **Return — how often it delivers** (scored over *all* runs). Over `k` runs per task, an arm's
+  **yield** is `K/k` (delivered runs). Grounding's return lift is the change in yield, baseline →
+  grounded. Because five runs is a noisy estimate of a rate, we report it as a **band** (a 95%
+  credible interval), not a point — so *mode-jumping between runs shows up as reliability*, exactly
+  where it belongs.
+- **Efficiency — the price *and* speed of a delivery** (scored over *delivered* runs only). Among
+  runs that deliver, we levelize two rulers and band each as a paired, per-task geometric-mean ratio,
+  grounded vs. baseline: **per-dollar** cost in [IET](#how-we-measure-cost-iet) — the fused price that
+  carries the retry tax, and our economic headline — and **per-day** duration (wall-clock on one fixed
+  host, so the machine constant cancels in the ratio). This is where a good skill pays for itself: it
+  stops the agent from decompiling the package and web-searching the API. Cost gates; speed
+  co-headlines.
+- **Gate 1 — do no harm.** Grounding must not cause a **material regression** on any task (one the
+  baseline delivered but the grounded arm doesn't). We calibrate the gate against a null model, so
+  normal run-to-run noise can't trip it — only a real, sustained loss.
+- **Gate 2 — earn its keep.** The per-dollar win must clear a **≥20% floor with confidence** (the
+  band's upper bound ≤ ×0.80), the minimum premium that repays authoring the skill and maintaining
+  it as models drift. This is the number a semiconductor CEO would put on an earnings slide — a
+  committed margin, not a curve. A real-but-tiny 8% win passes *do no harm* yet fails here —
+  correctly "not worth maintaining."
+
+Two rules keep the card honest. **Never price or time an empty mode:** if an arm never delivers a
+task, we do *not* invent a cost or a duration for it — that's a **capability gap** (a coverage row: a
+task grounding *unlocks*), counted separately from the efficiency axis, never averaged into it. (This
+is why return is scored over all runs but efficiency only over deliveries.) And **only the certified
+path is graded** — deterministic, verifiable requirements — so the headline numbers don't ride on
+judge opinion. The full model, the band procedure, and the claims-to-evidence taxonomy are in
+[`docs/quality-card-model.md`](docs/quality-card-model.md) (spec:
+[`docs/quality-card-spec.md`](docs/quality-card-spec.md)); a worked three-model result is
+[Markout CT-24](https://github.com/richlander/markout/blob/skills/markout-consumer/grounding/markout/results.md).
+
+The consistent finding across model tiers: **grounding buys more as capability falls.** At the
+frontier the model is already near the ceiling, so the win is almost entirely **efficiency** (a
+delivery gets cheaper and faster); for weaker models it's **both** — grounding unlocks tasks they
+never delivered *and* slashes the cost and time of the ones they did.
+
 ## What "grounding" is — and what it is not
 
 Several different files get called `AGENTS.md` or `SKILL.md`. They live in different places,
