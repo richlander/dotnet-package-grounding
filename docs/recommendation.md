@@ -1,5 +1,10 @@
 # Recommendation: should we author package grounding, and should the NuGet MCP change?
 
+> **New here?** This doc summarizes the package-grounding recommendation for decision-makers: write small
+> `AGENTS.md` files, ship them in packages, and have NuGet MCP (the package context server) surface them.
+> For **how we now grade and ship**, read the ratified **[quality-card model](./quality-card-model.md)**:
+> return + efficiency, do no harm, and a ≥20% economic win.
+
 **Audience:** NuGet v-team. **Date:** 2026-06-20. **Status:** Findings complete (2 tasks × 5
 channels × 2 tiers, runs=3).
 

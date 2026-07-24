@@ -1,5 +1,10 @@
 # Grounding eval methodology — measuring, deciding, and shipping package grounding
 
+> **New here?** This doc explains how we test a package's grounding file and decide whether a change ships.
+> For **how we now grade and ship**, read the ratified **[quality-card model](./quality-card-model.md)**:
+> return + efficiency, with do no harm + a ≥20% cost win. Legacy names below (`BETTER/NEUTRAL/WORSE`,
+> "Pareto gate", "judge-floor") predate it — read them as history; the card is current.
+
 This is the standalone reference for how we evaluate package **grounding content** (an `AGENTS.md`
 that ships in a package root) and decide whether it ships. It covers (1) the methodology, (2) the
 terms we use or redefine, (3) the **threshold gate** that decides whether a change ships, and (4) the

@@ -1,5 +1,10 @@
 # IET token model
 
+> **New here?** This doc explains Input Equivalent Tokens (IET): a way to translate cached input,
+> fresh input, and output tokens into one cost-like unit for comparing runs. For **how we now grade
+> and ship** grounding changes, read the ratified **[quality-card model](./quality-card-model.md)**:
+> return + efficiency, with do no harm + a ≥20% cost win.
+
 Input Equivalent Tokens (IET) is the token cost model used by the grounding analyzer. It converts the token classes reported by Copilot into one comparable unit: base input tokens. The goal is to compare grounding arms by cost-shaped token work, not by raw gross token count.
 
 ## Why raw input is not enough

@@ -1,5 +1,10 @@
 # Grounding lifecycle — the team playbook for create / update / delete / evaluate
 
+> **New here?** This playbook tells teams when to create, update, delete, or evaluate package grounding
+> and what evidence a PR should carry. For **how we now grade and ship**, read the ratified
+> **[quality-card model](./quality-card-model.md)**: return + efficiency, with do-no-harm and ≥20%
+> economic-win gates. Legacy grade names (`BETTER/NEUTRAL/WORSE`) and single-gate language below predate that model — read them as history; the card is current.
+
 This is the **baseline the NuGet package-grounding v-team uses** to create, change, and retire package
 grounding (`AGENTS.md` files that ship in a package root). It is the operational "what to do, and when"
 guide. The measurement rules it leans on — the ship gate, the terms, the harness — live in

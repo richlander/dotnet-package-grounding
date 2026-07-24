@@ -1,11 +1,18 @@
 # Scoring, grading, and the grounding PR
 
-How an eval run becomes a **ship / no-ship decision** and a reviewable PR: the grade model
-(**BETTER / NEUTRAL / WORSE**), the tier-aware Pareto gate, the copy-paste cards, the PR contents and
-checklist, and why quality is a floor not a score. The *approach* these grade — the arms, the two
-regimes, and the three-rung ladder — is in
+How an eval run becomes a **ship / no-ship decision** and a reviewable PR: the grade model, the ship
+gate, the copy-paste cards, the PR contents and checklist, and why quality is a floor not a score. The
+*approach* these grade — the arms, the two regimes, and the three-rung ladder — is in
 [`grounding-eval-methodology.md`](./grounding-eval-methodology.md).
 
+> **Superseded grade names.** This doc's `BETTER / NEUTRAL / WORSE` verdict and single **Pareto gate**
+> predate the ratified **[quality-card model](./quality-card-model.md)**, which grades a **two-axis**
+> win (return + efficiency) and ships on **two gates** — **do no harm** (no material baseline-only
+> regression) plus **economic materiality** (a certified **≥20%** per-dollar cost cut). Read the
+> BETTER/NEUTRAL/WORSE material below as the historical single-grade rubric; the card model is current.
+> The specific thresholds here (e.g. the fixed **25%** win caps) are superseded by the card's ≥20%
+> economic gate.
+>
 > **Arm naming.** This doc and the `grounding analyze` cards still speak of a single grounded
 > "**AGENTS.md** arm" vs **baseline**, and a "**source-diff** (AGENTS.md vs README.md)" comparison.
 > Under the current content-arm naming (methodology §1), read those as the **Missing Manual** arm and

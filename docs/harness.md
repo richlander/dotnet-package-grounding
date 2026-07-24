@@ -1,5 +1,10 @@
 # The measurement harness
 
+> **New here?** This doc explains how the repo runs repeatable evals: what gets built, what data
+> is produced, and where each metric comes from. For **how we now grade and ship**, read the
+> ratified **[quality-card model](./quality-card-model.md)**: return + efficiency, with do-no-harm
+> and ≥20% economic-win gates.
+
 How this repo **builds and runs** the [`dotnet/skills`](https://github.com/dotnet/skills)
 `skill-validator` to measure whether grounding helps. The root [`README`](../README.md) covers
 *what* grounding is and the findings; this file covers *how* the evals run.

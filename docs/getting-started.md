@@ -1,5 +1,9 @@
 # Getting started
 
+> **Want the scoring model first?** How a run is graded and shipped is the
+> **[quality-card model](./quality-card-model.md)** (two axes — return + efficiency — and two ship
+> gates). This doc is the hands-on path: build the CLI, author a unit, run the ladder, read the card.
+
 This repo is **generic infrastructure** for evaluating NuGet package *grounding* — it ships no
 grounding content of its own. You point it at a package (or a repo with candidate grounding) and
 measure whether the grounding helps an AI agent use the package correctly. Concepts live in
