@@ -110,16 +110,18 @@ no run ever occupies. (The analogy: a school measuring classrooms whose grade di
 multi-modal can't summarize them with a single median; it has to name the modes first.)
 
 So we **define the modes by contract** instead of discovering them from noise. Every run is graded
-on a fixed ladder — **Fails → Satisfies → Delivers** — where the tiers are *verifiable
+on a fixed ladder — **Fails < Satisfies < Delivers** — where the tiers are *verifiable
 requirements* (did it use the taught API, hit the technical constraints, and functionally work),
 never subjective taste. Then we measure two **independent** axes behind two gates:
 
-- **Return — how often it delivers** (scored over *all* runs). Over `k` runs per task, an arm's
-  **yield** is `K/k` (delivered runs). Grounding's return lift is the change in yield, baseline →
-  grounded. Because five runs is a noisy estimate of a rate, we report it as a **band** (a 95%
-  credible interval), not a point — so *mode-jumping between runs shows up as reliability*, exactly
-  where it belongs.
-- **Efficiency — the price *and* speed of a delivery** (scored over *delivered* runs only). Among
+- **Return — how often it delivers** (over **all `k` runs of each task** — a failed run stays in as
+  a scored 0). An arm's **yield** on a task is `K/k` (its delivered runs out of `k`); the suite figure
+  is the equal-weight mean of those per-task yields (equal *task* weight, not equal run weight).
+  Grounding's return lift is the change in yield, baseline → grounded. Because five runs is a noisy
+  estimate of a rate, we report it as a **band** (a 95% credible interval), not a point — so
+  *mode-jumping between runs shows up as reliability*, exactly where it belongs.
+- **Efficiency — the price *and* speed of a delivery** (over **delivered runs only** — a task's
+  denominator is its `K` deliveries, so a mode an arm never reached is never priced or timed). Among
   runs that deliver, we levelize two rulers and band each as a paired, per-task geometric-mean ratio,
   grounded vs. baseline: **per-dollar** cost in [IET](#how-we-measure-cost-iet) — the fused price that
   carries the retry tax, and our economic headline — and **per-day** duration (wall-clock on one fixed

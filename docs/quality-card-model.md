@@ -33,7 +33,7 @@ evidential strength, never over-claimed as a certified band.
 | **C1** | **Capability** — grounding unlocks work the baseline did not produce | Tasks the ungrounded agent did not produce this batch (`Kᵇ = 0`) become productive under grounding (`Kᵍ ≥ 1`) | **Axis 1**, grounded-only partition — a capability win with **no competitor** (no cost ratio); reported as descriptive evidence, not a margin-certified band |
 | **C2** | **Reliability** — grounding wins more *consistently* | Higher yield `pˣ = Kˣ/k`: flaky `2/5` wins become dependable `5/5` | **Axis 1**, `ΔP = Pᵍ − Pᵇ` judged against its risk band — **margin-certified** |
 | **C3** | **Efficiency** — a **Delivered** unit costs less to produce | Lower **levelized** cost per full-price unit — retry tax and entry fee included | **Axis 2**, geometric-mean cost ratio on the shared set `S` — **margin-certified** |
-| **C4** | **Fidelity** — grounding uses the *taught* approach, not a hand-rolled equivalent | On the `Fails → Satisfies → Delivers` ladder, more working runs reach **Delivers** (did it as asked), not just **Satisfies** (workable but hand-rolled) | **Independently reported:** the **per-task** `Delivers`-among-working rate — `Kᵢᵈᵉˡ / #{Satisfies ∪ Delivers}ᵢ` — **averaged equal-weight over tasks with ≥ 1 working run** (a *run-pooled* rate mix-weights tasks by working-run count and breaks Invariant 1 — the same Simpson trap the cost axis avoids; the pooled figure is kept only as a memo). Isolates fidelity from function; `Delivers` is also the full-price gate feeding every yield. Not estimable for a task with zero working runs |
+| **C4** | **Fidelity** — grounding uses the *taught* approach, not a hand-rolled equivalent | On the `Fails < Satisfies < Delivers` ladder, more working runs reach **Delivers** (did it as asked), not just **Satisfies** (workable but hand-rolled) | **Independently reported:** the **per-task** `Delivers`-among-working rate — `Kᵢᵈᵉˡ / #{Satisfies ∪ Delivers}ᵢ` — **averaged equal-weight over tasks with ≥ 1 working run** (a *run-pooled* rate mix-weights tasks by working-run count and breaks Invariant 1 — the same Simpson trap the cost axis avoids; the pooled figure is kept only as a memo). Isolates fidelity from function; `Delivers` is also the full-price gate feeding every yield. Not estimable for a task with zero working runs |
 | **C5** | **Predictability** — grounding makes cost *steadier*, not just lower | Lower run-to-run cost variance under grounding: `σ_g < σ_b` (arm-specific log-cost SD) | **Memo** read alongside Axis 2 — the variance ratio `σ_g/σ_b` with its band; a reported-not-gated signal (pooled `σ_within` sizes the margin; the *arm-specific* pair tests C5) |
 
 Two guardrails ride alongside the claims, because "delivers value" is not the same as "does no harm":
@@ -98,7 +98,7 @@ trust it) and **cost** (understood at depth, per unit delivered). Neither alone 
   retry tax and entry fee included — versus the alternative? — adjudicates **C3 efficiency** (with
   **C5 predictability** as a memo alongside).
 
-(**C4 fidelity** is not a separate axis — it lives in the **unit definition**: the `Fails → Satisfies →
+(**C4 fidelity** is not a separate axis — it lives in the **unit definition**: the `Fails < Satisfies <
 Delivers` ladder gates yield on `Delivers` and reports the `Satisfies`-vs-`Delivers` split as the
 fidelity signal.)
 
@@ -108,7 +108,7 @@ fidelity signal.)
 - Each `(task, arm)` is run `k` times as a **fixed batch** (here `k = 5`) — *not* "retry until first
   success then stop." Fixed-batch is what the harness does and makes reliability order-independent
   (only *how many* runs passed matters, not which).
-- **The unit is graded on an ascending ladder — `Fails → Satisfies → Delivers`.** Each run is scored
+- **The unit is graded on an ascending ladder — `Fails < Satisfies < Delivers`.** Each run is scored
   against **two gates**: does it *satisfy* (the output works — every functional-correctness assertion
   passes) and does it *deliver* (it did what was asked — used the taught API, not a hand-rolled
   equivalent). A run's grade is the **highest gate it clears**:
@@ -596,7 +596,7 @@ The card derives from this chart; documenting it fixes the model's meaning in on
 
 - **No per-all-tasks blend** (`Σcost/N`) — mixes unsolved tasks into the denominator; meaningless.
 - **No binary "pass/fail" collapse** — a task's outcome is its yield `Kᵢˣ/k` on the
-  `Fails → Satisfies → Delivers` ladder; `K = 0` (delivered no unit) is the only task-level failure.
+  `Fails < Satisfies < Delivers` ladder; `K = 0` (delivered no unit) is the only task-level failure.
 - **No shared subtracted floor.** Difficulty is controlled by *pairing* — each task against its own
   baseline — not by subtracting a suite-wide reference level. A shared floor fails two ways: it is one
   constant subtracted from both arms, so it cancels in every `Δ` (`ΔE ≡ ΔR`) and adjusts nothing; and a

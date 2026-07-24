@@ -14,7 +14,7 @@ a re-run, since neither is recoverable from existing artifacts (see the model do
 
 - `N` tasks, `i = 1..N` (markout: `N = 24`); each `(task, arm)` run `k = 5` times (fixed batch).
 - Arms: `b` = baseline (ungrounded), `g` = grounded (arm under test, default `skilledPlugin`).
-- `Kᵢˣ ∈ {0..k}` = runs that **Deliver** — the **full-price unit** on the `Fails → Satisfies →
+- `Kᵢˣ ∈ {0..k}` = runs that **Deliver** — the **full-price unit** on the `Fails < Satisfies <
   Delivers` ladder (clears both gates: **satisfies** = all functional assertions pass, **delivers** =
   did it as asked / taught API, not a hand-rolled equivalent). Yield `pᵢˣ = Kᵢˣ / k` counts `Delivers`
   only. **Productive** = `Kᵢˣ ≥ 1`; **failed** = `Kᵢˣ = 0` only. A run that *satisfies* but does not
