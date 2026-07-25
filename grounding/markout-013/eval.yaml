@@ -1,8 +1,8 @@
 # Markout 0.13.7 (PRISTINE) — clean-baseline exam.
 #
-# Why 0.13.7: it is the last Markout whose nupkg packs README.md only (AGENTS.md
+# Why 0.13.7: it is the last Markout whose nupkg packs README.md only (agent-doc
 # packing began at 0.13.8). So the baseline arm cannot self-ground by reading a
-# packed AGENTS.md out of the restored NuGet cache — the baseline reflects the
+# packed agent doc out of the restored NuGet cache — the baseline reflects the
 # model's innate knowledge, and grounding's true value is measurable.
 #
 # Each scenario: a web-blocked agent must drive output THROUGH Markout (no hand-written

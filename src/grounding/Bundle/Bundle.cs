@@ -51,7 +51,7 @@ internal static partial class Bundle
         var sb = new StringBuilder();
         sb.Append($"# {unit} — tasks the grounding is evaluated on\n\n");
         sb.Append("Real jobs a developer asks an AI to do with this package. Each is gated by a\n");
-        sb.Append("build + run with a deterministic anchor, so the grounding (AGENTS.md) is proven\n");
+        sb.Append("build + run with a deterministic anchor, so the grounding (SKILL.md) is proven\n");
         sb.Append("to move an agent from \"fails / hand-rolls\" to \"uses the API correctly, first try.\"\n");
         sb.Append("Machine form + fixtures: `eval.yaml`. Regenerate results with `run.sh` — datasets\n");
         sb.Append("land in the grounding cache (`$GROUNDING_DATA_DIR`, not the repo); the distilled\n");
@@ -84,7 +84,7 @@ internal static partial class Bundle
         var root = RepoRoot.Find(); if (root is null) { Console.Error.WriteLine("no repo root"); return 1; }
         Directory.CreateDirectory(to);
         var gdir = Path.Combine(root, "grounding", unit);
-        File.Copy(Path.Combine(gdir, "AGENTS.md"), Path.Combine(to, "AGENTS.md"), true);
+        File.Copy(Path.Combine(gdir, "SKILL.md"), Path.Combine(to, "SKILL.md"), true);
         File.Copy(Path.Combine(root, "tests", unit, "eval.yaml"), Path.Combine(to, "eval.yaml"), true);
         CopyDir(Path.Combine(root, "tests", unit, "fixtures"), Path.Combine(to, "fixtures"));
         File.WriteAllText(Path.Combine(to, "TASKS.md"), RenderTasks(unit, Parse(Path.Combine(to, "eval.yaml"))));

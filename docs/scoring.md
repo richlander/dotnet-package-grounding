@@ -122,13 +122,8 @@ mid-transition repository constraints).
 ### Validation (reproducible)
 
 ```bash
-grounding check-agents
 grounding run <slug> --source skill --eval-mode holistic --runs 5
 ```
-
-The `grounding check-agents` command name is still literal in this repository; it validates historical
-grounding file formats while the codebase is mid-transition. Do not rename the command in docs unless
-`src/grounding/Program.cs` changes first.
 
 ## Reviewer checklist
 

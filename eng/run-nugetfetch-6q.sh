@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Run the NuGetFetch 6-question unit (N1-N6): baseline (ungrounded) vs grounded
-# (candidate AGENTS.md, delivered inline + as a plugin). NuGetFetch is a second unknown
-# library; this proves the grounding text BEFORE we publish AGENTS.md to the package.
+# (candidate grounding, delivered inline + as a plugin). NuGetFetch is a second unknown
+# library; this proves the grounding text BEFORE we publish it to the package.
 #
 # Metrics land in results.json; read them with: ./eng/grounding analyze <results.json>
 #   quality (judge), tokens, web calls, tool calls (incl dotnet-inspect / MCP), duration.

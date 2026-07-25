@@ -76,7 +76,6 @@ grounding run <slug> --source skill --eval-mode holistic --runs 5
 Optional, for mid-transition units that still use the legacy grounding-file budget check:
 
 ```bash
-grounding check-agents
 ```
 
 ## Reviewer checklist

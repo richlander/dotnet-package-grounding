@@ -1,11 +1,38 @@
-<svg viewBox="0 0 760 480" xmlns="http://www.w3.org/2000/svg" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
-  <rect width="760" height="480" fill="#ffffff"/>
+<svg viewBox="0 0 760 570" xmlns="http://www.w3.org/2000/svg" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+  <rect width="760" height="570" fill="#ffffff"/>
   <text x="382" y="30" text-anchor="middle" font-size="17" font-weight="700" fill="#0f172a">LIET curve — example (claude-haiku-4.5)</text>
-  <text x="382" y="49" text-anchor="middle" font-size="12" fill="#64748b">IET per correctly-answered rung. Failed rungs are not plotted; the ceiling is the max price to beat.</text>
   <line x1="100" y1="380" x2="664" y2="380" stroke="#334155" stroke-width="1.5"/>
   <line x1="100" y1="380" x2="100" y2="64" stroke="#334155" stroke-width="1.5"/>
-  <text x="382" y="430" text-anchor="middle" font-size="12" fill="#334155">rung (difficulty) →</text>
-  <text x="52" y="222" text-anchor="middle" font-size="12" fill="#334155" transform="rotate(-90 52 222)">IET (per correct answer) →</text>
+  <text x="92" y="384" text-anchor="end" font-size="10.5" fill="#64748b">0</text>
+  <line x1="100" y1="301" x2="664" y2="301" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="92" y="305" text-anchor="end" font-size="10.5" fill="#64748b">500</text>
+  <line x1="100" y1="222" x2="664" y2="222" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="92" y="226" text-anchor="end" font-size="10.5" fill="#64748b">1k</text>
+  <line x1="100" y1="143" x2="664" y2="143" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="92" y="147" text-anchor="end" font-size="10.5" fill="#64748b">1.5k</text>
+  <line x1="100" y1="64" x2="664" y2="64" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="92" y="68" text-anchor="end" font-size="10.5" fill="#64748b">2k</text>
+  <text x="382" y="438" text-anchor="middle" font-size="12" fill="#334155">rung (difficulty) →</text>
+  <text x="46" y="222" text-anchor="middle" font-size="12" fill="#334155" transform="rotate(-90 46 222)">IET per correct answer (tokens) →</text>
+  <line x1="664" y1="380" x2="664" y2="64" stroke="#94a3b8" stroke-width="1.2"/>
+  <line x1="664" y1="301" x2="668" y2="301" stroke="#94a3b8" stroke-width="1"/>
+  <text x="671" y="305" text-anchor="start" font-size="10" fill="#94a3b8">0.3s</text>
+  <line x1="664" y1="222" x2="668" y2="222" stroke="#94a3b8" stroke-width="1"/>
+  <text x="671" y="226" text-anchor="start" font-size="10" fill="#94a3b8">0.5s</text>
+  <line x1="664" y1="143" x2="668" y2="143" stroke="#94a3b8" stroke-width="1"/>
+  <text x="671" y="147" text-anchor="start" font-size="10" fill="#94a3b8">0.8s</text>
+  <line x1="664" y1="64" x2="668" y2="64" stroke="#94a3b8" stroke-width="1"/>
+  <text x="671" y="68" text-anchor="start" font-size="10" fill="#94a3b8">1s</text>
+  <text x="708" y="222" text-anchor="middle" font-size="10.5" fill="#94a3b8" transform="rotate(-90 708 222)">wall-clock per question (s), all rungs →</text>
+  <line x1="100" y1="240.4" x2="664" y2="240.4" stroke="#22c55e" stroke-width="1.4" stroke-dasharray="6 5" opacity="0.7"/>
+  <text x="106" y="236.4" font-size="10" fill="#16a34a">floor 883</text>
+  <g font-size="11" fill="#475569">
+    <line x1="112" y1="72" x2="134" y2="72" stroke="#dc2626" stroke-width="2.5"/><text x="140" y="76">baseline (archaeology only)</text>
+    <line x1="112" y1="88" x2="134" y2="88" stroke="#2563eb" stroke-width="2.5"/><text x="140" y="92">grounding doc (legacy)</text>
+    <line x1="112" y1="104" x2="134" y2="104" stroke="#d97706" stroke-width="2.5"/><text x="140" y="108">SKILL.md (oracle)</text>
+    <line x1="112" y1="120" x2="134" y2="120" stroke="#c4a484" stroke-width="1.6" stroke-dasharray="4 3"/><text x="140" y="124" font-style="italic">baseline time · s, right axis</text>
+    <line x1="112" y1="136" x2="134" y2="136" stroke="#5eaaa8" stroke-width="1.6" stroke-dasharray="4 3"/><text x="140" y="140" font-style="italic">grounded time · s, right axis</text>
+  </g>
   <g font-size="11" fill="#64748b" text-anchor="middle">
     <text x="100" y="398">1</text>
     <text x="212" y="398">2</text>
@@ -14,6 +41,22 @@
     <text x="551" y="398">5</text>
     <text x="664" y="398">6</text>
   </g>
+  <polyline points="100,380 212,380 325,380 438,380 551,380 664,380" fill="none" stroke="#c4a484" stroke-width="1.6" stroke-dasharray="4 3" opacity="0.85"/>
+  <circle cx="100" cy="380" r="2" fill="#c4a484" opacity="0.85"/>
+  <circle cx="212" cy="380" r="2" fill="#c4a484" opacity="0.85"/>
+  <circle cx="325" cy="380" r="2" fill="#c4a484" opacity="0.85"/>
+  <circle cx="438" cy="380" r="2" fill="white" stroke="#c4a484" stroke-width="1.2" opacity="0.85"/>
+  <circle cx="551" cy="380" r="2" fill="white" stroke="#c4a484" stroke-width="1.2" opacity="0.85"/>
+  <circle cx="664" cy="380" r="2" fill="white" stroke="#c4a484" stroke-width="1.2" opacity="0.85"/>
+  <text x="660" y="374" text-anchor="end" font-size="10" font-style="italic" fill="#c4a484">baseline time</text>
+  <polyline points="100,380 212,380 325,380 438,380 551,380 664,380" fill="none" stroke="#5eaaa8" stroke-width="1.6" stroke-dasharray="4 3" opacity="0.85"/>
+  <circle cx="100" cy="380" r="2" fill="#5eaaa8" opacity="0.85"/>
+  <circle cx="212" cy="380" r="2" fill="#5eaaa8" opacity="0.85"/>
+  <circle cx="325" cy="380" r="2" fill="#5eaaa8" opacity="0.85"/>
+  <circle cx="438" cy="380" r="2" fill="#5eaaa8" opacity="0.85"/>
+  <circle cx="551" cy="380" r="2" fill="#5eaaa8" opacity="0.85"/>
+  <circle cx="664" cy="380" r="2" fill="#5eaaa8" opacity="0.85"/>
+  <text x="660" y="374" text-anchor="end" font-size="10" font-style="italic" fill="#5eaaa8">grounding doc (legacy) time</text>
   <polyline points="100,222 212,214.1 325,190.4 438,166.7 551,143 664,119.3" fill="none" stroke="#d97706" stroke-width="2.5"/>
   <circle cx="100" cy="222" r="3.5" fill="#d97706"/>
   <circle cx="212" cy="214.1" r="3.5" fill="#d97706"/>
@@ -34,10 +77,18 @@
   <circle cx="438" cy="214.1" r="4" fill="#2563eb"/>
   <circle cx="551" cy="198.3" r="4" fill="#2563eb"/>
   <circle cx="664" cy="182.5" r="4" fill="#2563eb"/>
-  <text x="660" y="174.5" text-anchor="end" font-size="11.5" font-weight="700" fill="#2563eb">AGENTS.md</text>
+  <text x="660" y="174.5" text-anchor="end" font-size="11.5" font-weight="700" fill="#2563eb">grounding doc (legacy)</text>
   <g font-size="10.5" fill="#475569">
-    <circle cx="112" cy="456" r="4" fill="none" stroke="#2563eb" stroke-width="2"/><text x="122" y="460">AGENTS over ceiling (harm)</text>
-    <circle cx="290" cy="456" r="4" fill="#2563eb"/><text x="300" y="460">AGENTS under ceiling (pays its way)</text>
-    <text x="540" y="460" font-style="italic">failed rungs not plotted</text>
+    <circle cx="112" cy="462" r="4" fill="none" stroke="#2563eb" stroke-width="2"/><text x="122" y="466">grounding doc (legacy) over ceiling (harm)</text>
+    <circle cx="290" cy="462" r="4" fill="#2563eb"/><text x="300" y="466">grounding doc (legacy) under ceiling (pays its way)</text>
+    <text x="540" y="466" font-style="italic">failed rungs not plotted</text>
+  </g>
+  <text x="112" y="488" font-size="9.5" font-weight="700" fill="#334155">Metrics:</text>
+  <g font-size="9.5" fill="#334155">
+    <text x="120" y="502">• Correct answers: 3→6/6</text>
+    <text x="120" y="516">• Floor LIET: 883</text>
+    <text x="120" y="530">• LIET: -0→-207 (Δ −207)</text>
+    <text x="120" y="544">• Levelized duration: 0s→0s (Δ +0s)</text>
+    <text x="120" y="558">• Archaeology operations: 0→0 (n/a)</text>
   </g>
 </svg>

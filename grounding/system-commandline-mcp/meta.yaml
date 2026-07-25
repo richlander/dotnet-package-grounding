@@ -1,5 +1,5 @@
 # Metadata for the MCP-delivery experiment unit.
-# Unlike the other units, this one ships NO AGENTS.md (no forced inline grounding).
+# Unlike the other units, this one ships NO inline grounding (nothing forced into context).
 # The same System.CommandLine grounding content is served on demand by the
 # get_package_context MCP tool (see plugin.json + the grounding mcp server).
 name: system-commandline-mcp

@@ -1,5 +1,11 @@
 # Does `dotnet-inspect` fit our cost regime as a delivery channel?
 
+> **Legacy record (pre-pivot).** This report is a frozen measurement record from the
+> AGENTS.md era: the grounding under test was an AGENTS.md doc, and the instrument was the
+> older binary/min-of-arms scorer, not the graded-yield quality card. Its numbers are
+> reproduced verbatim from the raw verdicts and are **not** evidence for the authored
+> skill-shelf model. See `docs/quality-card-model.md` for the current methodology.
+
 **Date:** 2026-06-21
 **Question:** the package-grounding study delivers grounding through the **NuGet MCP**
 (`get_package_context`). [`dotnet-inspect`](https://github.com/richlander/dotnet-inspect) PR

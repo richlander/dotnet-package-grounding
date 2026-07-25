@@ -2,7 +2,7 @@ namespace Grounding;
 
 // Resolves where regenerable eval artifacts (datasets + raw skill-validator
 // results) are written. These are NOT committed to any repo: the tree holds
-// only inputs (AGENTS.md, eval.yaml, fixtures, TASKS.md, optional SKILL.md).
+// only inputs (SKILL.md, eval.yaml, fixtures, TASKS.md).
 // Datasets default to a durable, user-owned cache OUTSIDE the tree, overridable
 // via GROUNDING_DATA_DIR (or, per-run, `--out`). The distilled quality card is
 // the durable artifact and lives in the PR body, not the tree.

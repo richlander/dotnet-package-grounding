@@ -175,8 +175,8 @@ internal static partial class Behavior
     public static string ArmLabel(string key) => key switch
     {
         "baseline" => "Baseline",
-        "skilledIsolated" => "AGENTS (isolated)",
-        "skilledPlugin" => "AGENTS (grounding tool)",
+        "skilledIsolated" => "SKILL.md (isolated)",
+        "skilledPlugin" => "SKILL.md (grounding tool)",
         _ => key,
     };
 }

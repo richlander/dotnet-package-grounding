@@ -1,5 +1,5 @@
 # Metadata for the MCP-delivery experiment unit (multi-package triage scenario).
-# Like system-commandline-mcp this unit ships NO AGENTS.md: it only registers the
+# Like system-commandline-mcp this unit ships NO inline grounding: it only registers the
 # get_package_context MCP server (see plugin.json + the grounding mcp server), which
 # serves grounding for ALL packages in the index by name.
 #

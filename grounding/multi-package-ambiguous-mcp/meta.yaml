@@ -1,5 +1,5 @@
 # Metadata for the MCP-delivery experiment unit (ambiguous multi-package scenario, T2b).
-# Like the other -mcp units it ships NO AGENTS.md: it registers the get_package_context
+# Like the other -mcp units it ships NO inline grounding: it registers the get_package_context
 # MCP server (plugin.json + the grounding mcp server), which serves grounding for ALL
 # packages in the index by name.
 #

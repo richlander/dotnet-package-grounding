@@ -5,8 +5,8 @@ These are illustrative *synthetic* datasets (the "well-known package" regime fro
 docs/liet.md), fed through `grounding analyze --view liet --svg --oracle-from-plugin`
 so the figures are produced by the same renderer that draws real eval curves.
 
-  Figure 1: AGENTS.md answers all 6 rungs, riding under the oracle (efficiency premium).
-  Figure 2: identical, except AGENTS.md fails rung 6 -> no point plotted; the oracle's
+  Figure 1: grounding answers all 6 rungs, riding under the oracle (efficiency premium).
+  Figure 2: identical, except grounding fails rung 6 -> no point plotted; the oracle's
             cost there is drawn as the ceiling (max price of generalization).
 
 Run from the repo root:  python3 eng/gen-liet-figures.py
@@ -21,8 +21,8 @@ DOCS = os.path.join(ROOT, "docs")
 # so output = target // 5 reproduces the target IET. None = the arm fails that rung.
 BASELINE = [300, 350, 2000, None, None, None]   # flat while known, spikes, then drops out
 ORACLE   = [1000, 1050, 1200, 1350, 1500, 1650] # SKILL.md: gentle rise, high doc tax, answers all
-AGENTS_1 = [550, 580, 900, 1050, 1150, 1250]    # Figure 1: answers all 6, under the oracle
-AGENTS_2 = [550, 580, 900, 1050, 1150, None]    # Figure 2: fails rung 6
+SKILL_1 = [550, 580, 900, 1050, 1150, 1250]    # Figure 1: answers all 6, under the oracle
+SKILL_2 = [550, 580, 900, 1050, 1150, None]    # Figure 2: fails rung 6
 
 
 def arm(iet):
@@ -68,5 +68,5 @@ def gen(agents, out_svg):
 if __name__ == "__main__":
     if not os.path.exists(BIN):
         sys.exit(f"build the tool first: dotnet build src/grounding/grounding.csproj -c Release")
-    gen(AGENTS_1, os.path.join(DOCS, "liet-curve-figure.svg"))
-    gen(AGENTS_2, os.path.join(DOCS, "liet-curve-figure-2.svg"))
+    gen(SKILL_1, os.path.join(DOCS, "liet-curve-figure.svg"))
+    gen(SKILL_2, os.path.join(DOCS, "liet-curve-figure-2.svg"))

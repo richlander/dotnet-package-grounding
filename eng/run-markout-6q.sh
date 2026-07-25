@@ -7,13 +7,13 @@
 # context-less calls that do not compile). Any correct token must come from grounding —
 # the cleanest possible demonstration of grounding necessity. The 6 scenarios (see
 # tests/markout/eval.yaml) span the capability surface and are graded so the COMPACT
-# AGENTS.md covers M1-M5 while M6 (MarkoutLink / MarkoutValueMap / MarkoutSection.GroupBy)
+# The compact grounding covers M1-M5 while M6 (MarkoutLink / MarkoutValueMap / MarkoutSection.GroupBy)
 # is documented only in the BROAD skill — the wedge that keeps the broad arm non-redundant.
 #
 # THE 4 ARMS (and the unit/arm each comes from):
 #   1. baseline        no grounding, web-blocked          -> any unit's `baseline` arm
-#   2. nuget-mcp       compact AGENTS.md via real NuGet MCP -> markout-realmcp `skilledPlugin`
-#   3. dotnet-inspect  compact AGENTS.md via the CLI        -> prefer-dotnet-inspect skilled arm
+#   2. nuget-mcp       compact doc via real NuGet MCP -> markout-realmcp `skilledPlugin`
+#   3. dotnet-inspect  compact doc via the CLI            -> prefer-dotnet-inspect skilled arm
 #   4. broad-skill     full SKILL.md handed over inline     -> markout-broadskill `skilledIsolated`
 #
 # Running 3 grounding units yields all 4 arms:
@@ -21,9 +21,9 @@
 #   * grounding/markout-realmcp      -> nuget-mcp plugin (arm 2)
 #   * grounding/prefer-dotnet-inspect-> dotnet-inspect (arm 3)
 #
-# The published Markout 0.13.8 already ships AGENTS.md at the package root, so both the
+# The published Markout 0.13.8 already ships an agent doc at the package root, so both the
 # NuGet MCP (get_package_context) and `dotnet-inspect package Markout@0.13.8 --readme`
-# resolve the compact AGENTS.md naturally — no cache toggling required.
+# resolve the compact doc naturally — no cache toggling required.
 #
 # Prereqs: dotnet-inspect >= 0.12.0 on PATH (or available via `dnx dotnet-inspect`); the
 # skill-validator built once (eng/run-evals.sh); ambient Copilot auth (no API key needed).

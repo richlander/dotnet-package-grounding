@@ -4,7 +4,7 @@ using Grounding.Json;
 
 namespace Grounding.Analyze;
 
-// The content ledger — attribute AGENTS.md blocks to the FUNCTIONAL ASSERTIONS they cover, using
+// The content ledger — attribute SKILL.md blocks to the FUNCTIONAL ASSERTIONS they cover, using
 // the per-assertion baseline↔grounded diff as evidence. A filter over existing data (no re-run).
 //
 // Assertions are the precise, declared unit (not noisy dig-subjects). Per question each assertion
@@ -76,7 +76,7 @@ internal sealed partial class Ledger
             var iet = IetModels.For(model);
             var v = d.Verdicts is { Count: > 0 } ? d.Verdicts[0] : new Verdict();
             var docPath = ResolveDoc(docOverride, v.SkillPath, v.SkillName);
-            if (docPath is null) { _o.WriteLine($"ledger: could not resolve AGENTS.md for {Path.GetFileName(f)}."); continue; }
+            if (docPath is null) { _o.WriteLine($"ledger: could not resolve SKILL.md for {Path.GetFileName(f)}."); continue; }
             var blocks = Segment(File.ReadAllText(docPath));
             var distinctive = Distinctive(blocks);
             var scens = (v.Scenarios ?? new()).Select(s => BuildScen(s, iet, ietPremium)).Where(s => s is not null).Select(s => s!).ToList();
@@ -98,7 +98,7 @@ internal sealed partial class Ledger
             dirs.Add(Path.Combine(root, "grounding", skillName!));
         foreach (var dir in dirs)
         {
-            var p = Path.Combine(dir, "AGENTS.md");
+            var p = Path.Combine(dir, "SKILL.md");
             if (File.Exists(p)) return p;
         }
         return null;

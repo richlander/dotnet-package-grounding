@@ -324,6 +324,5 @@ The harness mechanics — building `skill-validator` from a pinned `dotnet/skill
 
 ```bash
 # Prereq: a .NET SDK matching dotnet/skills' global.json, git, and `gh auth login`.
-grounding check-agents                # validate every grounding file is within the line budget
 eng/run-evals.sh System.CommandLine
 ```

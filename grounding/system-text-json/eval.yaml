@@ -3,7 +3,7 @@ config:
 
 # =============================================================================
 # System.Text.Json — MM-12. A medium-major grounding packet covering the durable
-# STJ migration traps documented in AGENTS.md: case-sensitive deserialization,
+# STJ migration traps documented in the shelf: case-sensitive deserialization,
 # ignored fields, comments/trailing commas, null omission, indentation, custom
 # names, naming policies, enum strings, reference cycles, and source-generation
 # for AOT-safe serialization. HYPOTHESIS: J1/J3-J11 are mostly model-resident

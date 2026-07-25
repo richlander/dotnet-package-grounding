@@ -23,13 +23,11 @@ internal sealed partial class Cards
     // ---- shared headline-metric spec (Python _METRICS) -------------------
 
     private static string RawSuccess(ArmAgg a) => $"{a.Succ}/{a.N}";
-    // The grounded primary is AGENTS.md or SKILL.md depending on the run (README is a separate
-    // secondary arm). A run is homogeneous, so label from the arms: all-skill → SKILL.md,
-    // any-skill (mixed, unusual) → generic, else AGENTS.md.
+    // The grounded primary is SKILL.md (README is a separate secondary arm). Pre-pivot datasets
+    // shipped a different artifact, so anything that is not a skill renders as a neutral label
+    // rather than being relabelled as something it was not.
     private static string DocLabel(IReadOnlyList<LoadedArm> arms) =>
-        arms.Count > 0 && arms.All(a => a.IsSkill) ? "SKILL.md"
-        : arms.Any(a => a.IsSkill) ? "grounding doc"
-        : "AGENTS.md";
+        arms.Count > 0 && arms.All(a => a.IsSkill) ? "SKILL.md" : "grounding doc (legacy)";
 
     private static string RawFunc(ArmAgg a) => $"{a.Fp}/{a.Ft}";
     private static string RawCache(ArmAgg a) => $"{F0(a.Cache)} / {F0(a.NugetWeb)}";
@@ -171,7 +169,7 @@ internal sealed partial class Cards
             _o.WriteLine($"### Grounding eval — {a.SkillName} | `{a.Model}`\n");
         var mpref = NoTitle ? $"`{a.Model}` | " : "";
         var tokNote = gtok is { } t ? $" (~{t} tok, via grounding tool)" : "";
-        var docLabel = a.IsSkill ? "SKILL.md" : "AGENTS.md";
+        var docLabel = a.IsSkill ? "SKILL.md" : "grounding doc (legacy)";
         _o.WriteLine($"_{mpref}Baseline (no grounding) vs `{docLabel}`{tokNote}. Judge `{a.Judge}`. IET model {IetModels.CaptionFor(new[] { a.Model })}. Means across scenarios._\n");
         _o.WriteLine($"| Metric (goal) | Baseline | {docLabel} |");
         _o.WriteLine("| --- | ---: | ---: |");
@@ -191,7 +189,7 @@ internal sealed partial class Cards
             .OrderBy(a => a.Tier == "mini" ? 0 : 1).ThenBy(a => a.Model, StringComparer.Ordinal).ToList();
         if (arms.Count == 0)
         {
-            _o.WriteLine("--card needs at least one grounded dataset (AGENTS.md or SKILL.md; non-'readme' path)."); return;
+            _o.WriteLine("--card needs at least one grounded dataset (SKILL.md; non-'readme' path)."); return;
         }
         var docLabel = DocLabel(arms);
         var sn = arms[0].SkillName;
@@ -260,7 +258,7 @@ internal sealed partial class Cards
             + "**WORSE** = fewer tasks correct than baseline, or work IET / output inflated ≥20%; **NEUTRAL** = held. "
             + "A correctness regression forces WORSE (cheaper-but-wrong is never better); a doc can FAIL the gate yet be BETTER on efficiency._\n");
         _o.WriteLine("> Note: even ungrounded, the baseline self-grounds from the restored NuGet cache "
-            + "(README/AGENTS are packed in the nupkg) and the open web — so its resourcefulness count is a "
+            + "(the README and docs are packed in the nupkg) and the open web — so its resourcefulness count is a "
             + "**lower bound** and grounding's advantage is understated.\n");
         if (arms.Any(a => a.Agg[Arm].SkillCounts.Count > 0))
             _o.WriteLine("> **Skills pulled** (self-select from shelf, ×scenarios): "
@@ -271,7 +269,7 @@ internal sealed partial class Cards
     public void ModelDiff(IReadOnlyList<string> files)
     {
         var arms = files.Select(Loader.LoadArm).Where(a => !a.IsReadme).ToList();
-        if (arms.Count == 0) { _o.WriteLine("model-diff needs at least one grounded dataset (AGENTS.md or SKILL.md)."); return; }
+        if (arms.Count == 0) { _o.WriteLine("model-diff needs at least one grounded dataset (SKILL.md)."); return; }
         arms = arms
             .OrderBy(a => a.Tier == "mini" ? 0 : 1)
             .ThenBy(a => a.Model, StringComparer.Ordinal)
@@ -295,56 +293,27 @@ internal sealed partial class Cards
     public void SourceDiff(IReadOnlyList<string> files)
     {
         var loaded = files.Select(Loader.LoadArm).ToList();
-        // Pair AGENTS + README datasets by model; columns are models (mini first).
+        // Pair SKILL + README datasets by model; columns are models (mini first).
         var models = loaded.GroupBy(a => a.Model)
             .Select(g => (Model: g.Key,
-                          Agents: g.FirstOrDefault(a => !a.IsReadme && !a.IsSkill),
+                          Skill: g.FirstOrDefault(a => a.IsSkill),
                           Readme: g.FirstOrDefault(a => a.IsReadme)))
-            .Where(x => x.Agents is not null && x.Readme is not null)
-            .OrderBy(x => x.Agents!.Tier == "mini" ? 0 : 1).ThenBy(x => x.Model, StringComparer.Ordinal)
+            .Where(x => x.Skill is not null && x.Readme is not null)
+            .OrderBy(x => x.Skill!.Tier == "mini" ? 0 : 1).ThenBy(x => x.Model, StringComparer.Ordinal)
             .ToList();
         if (models.Count == 0)
         {
-            _o.WriteLine("source-diff needs an AGENTS.md + README dataset per model (a path containing 'readme').");
+            _o.WriteLine("source-diff needs a SKILL.md + README dataset per model (a path containing 'readme').");
             return;
         }
-        var sn = models[0].Agents!.SkillName;
+        var sn = models[0].Skill!.SkillName;
         if (!NoTitle) _o.WriteLine($"### Comparison to README.md — {sn}\n");
-        _o.WriteLine($"_Each cell: `AGENTS.md` − `README.md`, both via the grounding tool, baseline removed (− = AGENTS cheaper; + on success/func; lower archaeology = AGENTS more self-sufficient). Columns are models. Judge `{models[0].Agents!.Judge}`. IET model {IetModels.CaptionFor(models.Select(m => m.Model))}. Means across scenarios._\n");
+        _o.WriteLine($"_Each cell: `SKILL.md` − `README.md`, both grounded, baseline removed (− = the skill is cheaper; + on success/func; lower archaeology = the skill is more self-sufficient). Columns are models. Judge `{models[0].Skill!.Judge}`. IET model {IetModels.CaptionFor(models.Select(m => m.Model))}. Means across scenarios._\n");
         _o.WriteLine("| Metric (goal) | " + string.Join(" | ", models.Select(m => $"`{m.Model}`")) + " |");
         _o.WriteLine("| --- |" + string.Concat(Enumerable.Repeat(" ---: |", models.Count)));
         foreach (var (label, _, diff) in Spec)
-            _o.WriteLine($"| {label} | " + string.Join(" | ", models.Select(m => diff(m.Agents!.Agg[Arm], m.Readme!.Agg[Arm]))) + " |");
-        _o.WriteLine("| **verdict** | " + string.Join(" | ", models.Select(m => $"**{GradeLabel(m.Readme!.Agg[Arm], m.Agents!.Agg[Arm])}**")) + " |");
-    }
-
-    // AGENTS.md vs SKILL.md, per model: what the Textbook's extra tokens buy over the Missing
-    // Manual. Each cell is SKILL − AGENTS (both via the grounding tool, baseline removed), so a
-    // positive success/func Δ or lower archaeology is SKILL pulling ahead; − on IET/output/cost
-    // means SKILL is cheaper (usually it is not — that is the token cost you are weighing).
-    public void SkillDiff(IReadOnlyList<string> files)
-    {
-        var loaded = files.Select(Loader.LoadArm).ToList();
-        var models = loaded.GroupBy(a => a.Model)
-            .Select(g => (Model: g.Key,
-                          Agents: g.FirstOrDefault(a => !a.IsReadme && !a.IsSkill),
-                          Skill: g.FirstOrDefault(a => a.IsSkill)))
-            .Where(x => x.Agents is not null && x.Skill is not null)
-            .OrderBy(x => x.Agents!.Tier == "mini" ? 0 : 1).ThenBy(x => x.Model, StringComparer.Ordinal)
-            .ToList();
-        if (models.Count == 0)
-        {
-            _o.WriteLine("skill-diff needs an AGENTS.md + SKILL.md dataset per model (a path containing 'skill').");
-            return;
-        }
-        var sn = models[0].Agents!.SkillName;
-        if (!NoTitle) _o.WriteLine($"### SKILL.md over AGENTS.md — {sn}\n");
-        _o.WriteLine($"_Each cell: `SKILL.md` − `AGENTS.md`, both via the grounding tool, baseline removed (+ on success/func = the Textbook wins more tasks; lower archaeology = more self-sufficient; % for IET/output/cost, − = SKILL cheaper — the extra tokens are the price). Columns are models. Judge `{models[0].Agents!.Judge}`. IET model {IetModels.CaptionFor(models.Select(m => m.Model))}. Means across scenarios._\n");
-        _o.WriteLine("| Metric (goal) | " + string.Join(" | ", models.Select(m => $"`{m.Model}`")) + " |");
-        _o.WriteLine("| --- |" + string.Concat(Enumerable.Repeat(" ---: |", models.Count)));
-        foreach (var (label, _, diff) in Spec)
-            _o.WriteLine($"| {label} | " + string.Join(" | ", models.Select(m => diff(m.Skill!.Agg[Arm], m.Agents!.Agg[Arm]))) + " |");
-        _o.WriteLine("| **verdict** | " + string.Join(" | ", models.Select(m => $"**{GradeLabel(m.Agents!.Agg[Arm], m.Skill!.Agg[Arm])}**")) + " |");
+            _o.WriteLine($"| {label} | " + string.Join(" | ", models.Select(m => diff(m.Skill!.Agg[Arm], m.Readme!.Agg[Arm]))) + " |");
+        _o.WriteLine("| **verdict** | " + string.Join(" | ", models.Select(m => $"**{GradeLabel(m.Readme!.Agg[Arm], m.Skill!.Agg[Arm])}**")) + " |");
     }
 
     // ---- document H2H over the answerable space (the LIET insight) -------------------------
@@ -354,9 +323,8 @@ internal sealed partial class Cards
     // `(true/false)` correctness tag (a wrong answer still costs IET); `—` = the question was not in
     // that arm's dataset. The subset every arm answered is the efficiency-comparable set (mean-IET
     // footer); reach shows correctness capability; total IET is the per-arm session sum.
-    // Two tables per model:
-    //   1. baseline / README / AGENTS — does the Missing Manual pay its way over the Brochure.
-    //   2. baseline / AGENTS  / SKILL — what the Textbook's extra tokens buy over the Missing Manual.
+    // One table per model: baseline / README / SKILL — does the authored skill pay its way over
+    // the package's own README.
     // Secondary views: `--card` per document (baseline vs each over the full ladder) and `--view liet`
     // (the per-rung curve, all arms).
     public void H2H(IReadOnlyList<string> files)
@@ -376,7 +344,7 @@ internal sealed partial class Cards
             var iet = IetModels.For(model);
             var items = g.ToList();
             // Exactly one dataset per doc type within a (model, unit) group; grouping by unit
-            // prevents silently pairing AGENTS from one unit with README/SKILL from another, and
+            // prevents silently pairing a README from one unit with a SKILL from another, and
             // >1 match of a type is ambiguous — skip that type rather than pick an arbitrary one.
             ResultsFile? Pick(string kind, Func<string, bool> pred)
             {
@@ -385,27 +353,24 @@ internal sealed partial class Cards
                 if (m.Count > 1) { _o.WriteLine($"_(h2h: {m.Count} {kind} datasets for {unit}/`{model}` — ambiguous, skipping {kind}.)_\n"); return null; }
                 return m.FirstOrDefault();
             }
-            var agents = Pick("AGENTS", n => !n.Contains("readme") && !n.Contains("skill"));
             var readme = Pick("README", n => n.Contains("readme"));
             var skill = Pick("SKILL", n => n.Contains("skill"));
-            if (agents is null)
+            if (skill is null)
             {
-                _o.WriteLine($"_(h2h: no AGENTS dataset for {unit}/`{model}` — need a path without 'readme'/'skill'.)_\n");
+                _o.WriteLine($"_(h2h: no SKILL dataset for {unit}/`{model}` — need a path containing 'skill'.)_\n");
                 continue;
             }
             if (!NoTitle)
             {
-                var display = (agents.Verdicts is { Count: > 0 } ? agents.Verdicts[0].SkillName : null) ?? unit;
+                var display = (skill.Verdicts is { Count: > 0 } ? skill.Verdicts[0].SkillName : null) ?? unit;
                 _o.WriteLine($"### Document H2H (answerable questions) — {display} | `{model}`\n");
             }
             if (readme is not null)
-                EmitH2H("Missing Manual vs Brochure — does `AGENTS.md` pay its way over `README.md`", model, iet,
-                    ("baseline", agents, "baseline"), ("README.md", readme, Arm), ("AGENTS.md", agents, Arm));
-            if (skill is not null)
-                EmitH2H("Textbook premium — what `SKILL.md`'s extra tokens buy over `AGENTS.md`", model, iet,
-                    ("baseline", agents, "baseline"), ("AGENTS.md", agents, Arm), ("SKILL.md", skill, Arm));
-            if (readme is null && skill is null)
-                _o.WriteLine("_(h2h needs a README (`*readme*`) and/or SKILL (`*skill*`) dataset beside the AGENTS dataset.)_\n");
+                EmitH2H("Does `SKILL.md` pay its way over the package's `README.md`", model, iet,
+                    ("baseline", skill, "baseline"), ("README.md", readme, Arm), ("SKILL.md", skill, Arm));
+            else
+                EmitH2H("Grounded vs baseline", model, iet,
+                    ("baseline", skill, "baseline"), ("SKILL.md", skill, Arm));
         }
     }
 
@@ -491,7 +456,7 @@ internal sealed partial class Cards
             .OrderBy(x => x.Tier == "mini" ? 0 : 1).ThenBy(x => x.Model, StringComparer.Ordinal).ToList();
         if (arms.Count == 0)
         {
-            _o.WriteLine("doc-card needs at least one grounded dataset (AGENTS.md or SKILL.md; non-'readme' path).");
+            _o.WriteLine("doc-card needs at least one grounded dataset (SKILL.md; non-'readme' path).");
             return;
         }
         if (arms.Count > 1)
@@ -521,7 +486,7 @@ internal sealed partial class Cards
         var card = QualityCard.Build(b, g, a.Iet, GradeLabel(b, g));
         var gtok = Loader.GroundingTokens(a.SkillPath, a.SkillName);
         var tokNote = gtok is { } t ? $" (~{t} tok, via grounding tool)" : "";
-        var docLabel = a.IsSkill ? "SKILL.md" : "AGENTS.md";
+        var docLabel = a.IsSkill ? "SKILL.md" : "grounding doc (legacy)";
         if (!NoTitle) _o.WriteLine($"### Grounding eval — {a.SkillName} | `{a.Model}`\n");
         _o.WriteLine($"_Baseline (no grounding) → `{docLabel}`{tokNote}. Judge `{a.Judge}`. "
             + $"IET model {IetModels.CaptionFor(new[] { a.Model })}. Means across scenarios._\n");

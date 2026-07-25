@@ -18,9 +18,6 @@ sha="$(tr -d '[:space:]' < "$repo_root/eng/skill-validator.sha")"
 tools_dir="${TOOLS_DIR:-$repo_root/.tools}"
 unit="${1:-}"
 
-# Keep generated SKILL.md files in sync before evaluating.
-"$repo_root/eng/grounding" check-agents
-
 src_dir="$tools_dir/skills-src"
 bin_dir="$tools_dir/skill-validator-$sha"
 bin="$bin_dir/skill-validator"

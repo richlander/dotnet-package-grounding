@@ -1,5 +1,11 @@
 # How big are real package READMEs? A download-ranked survey
 
+> **Legacy record (pre-pivot).** This report is a frozen measurement record from the
+> AGENTS.md era: the grounding under test was an AGENTS.md doc, and the instrument was the
+> older binary/min-of-arms scorer, not the graded-yield quality card. Its numbers are
+> reproduced verbatim from the raw verdicts and are **not** evidence for the authored
+> skill-shelf model. See `docs/quality-card-model.md` for the current methodology.
+
 **Question.** Our [README-liability sweep](readme-liability.md) showed the shipped README is a
 token liability whose cost scales with its size. So: **how big are real package READMEs in
 practice**, and is the liability hypothetical or routine?

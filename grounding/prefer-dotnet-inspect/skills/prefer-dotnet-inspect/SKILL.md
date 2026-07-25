@@ -5,7 +5,7 @@ description: >-
   writing or editing code against it. Use whenever a task requires calling or implementing
   against a NuGet package's API — especially a package you are not fully confident about. The
   key rule: run `dotnet-inspect package <id>@<version> --readme`, which returns the package's
-  best shipped doc (AGENTS.md > README.md > PACKAGE.md), and prefer it over guessing or
+  best shipped doc, and prefer it over guessing or
   relying on training memory. This is a discovery directive only; it contains no
   package-specific API content.
 ---
@@ -31,8 +31,8 @@ Workflow when you must use a package whose API you are unsure of:
    dotnet-inspect package <id>@<version> --readme
    ```
 
-   `--readme` returns the single best shipped doc, preferring `AGENTS.md` (short,
-   agent-targeted) over `README.md` (long, human-oriented) over `PACKAGE.md`. Follow it
+   `--readme` returns the single best shipped doc, preferring a short, agent-targeted
+   one over `README.md` (long, human-oriented) over `PACKAGE.md`. Follow it
    directly — it is written for the version you are on.
 This keeps you on the package's intended, current API for the exact version referenced, and
 avoids reconstructing it from training memory or mining a long README.

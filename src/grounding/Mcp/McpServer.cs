@@ -3,7 +3,7 @@ using System.Text.Json.Nodes;
 
 namespace Grounding.Mcp;
 
-// Minimal stdio JSON-RPC 2.0 MCP server serving NuGet package grounding (AGENTS.md).
+// Minimal stdio JSON-RPC 2.0 MCP server serving NuGet package grounding (SKILL.md).
 // Stdio JSON-RPC MCP server. The WHEN-TO-CALL guidance in the tool
 // description is the experimental variable, selected by GROUNDING_GATE.
 internal static class McpServer
@@ -41,11 +41,11 @@ internal static class McpServer
         + "an installed NuGet package, without the full body. Cheap to call. Use it to decide "
         + "whether the package's full guidance is worth retrieving with get_package_context.";
     private const string ProgressiveFullDescription =
-        "Returns the full agent guidance (the package's AGENTS.md body) for an installed "
+        "Returns the full agent guidance (the package's SKILL.md body) for an installed "
         + "NuGet package. Call this only after summarize_package_context shows the guidance is "
         + "relevant to the task at hand.";
     private const string ResidentIndexBase =
-        "Returns the full agent guidance (AGENTS.md body) for an installed NuGet package. "
+        "Returns the full agent guidance (SKILL.md body) for an installed NuGet package. "
         + "Below is the always-available index of packages that ship guidance, with a one-line "
         + "summary of when each one matters. Read the index for free; call this tool only for a "
         + "package whose summary is relevant to the task. If no summary is relevant, do not call it.";
@@ -263,8 +263,8 @@ internal static class McpServer
         var seen = new HashSet<string>();
         foreach (var unit in Directory.EnumerateFileSystemEntries(GroundingDir).OrderBy(x => x, StringComparer.Ordinal))
         {
-            var agents = Path.Combine(unit, "AGENTS.md");
-            if (!File.Exists(agents)) continue;
+            var agents = UnitSkill(unit);
+            if (agents is null) continue;
             var (fm, _) = SplitFrontmatter(File.ReadAllText(agents));
             var fields = FrontmatterFields(fm);
             var name = fields.TryGetValue("name", out var nm) && nm.Length > 0 ? nm : Path.GetFileName(unit);
@@ -289,6 +289,19 @@ internal static class McpServer
         return string.Join("\n", lines);
     }
 
+    // A unit's grounding is its base authored skill: grounding/<unit>/skills/<unit>/SKILL.md.
+    // Falls back to a lone skill dir when the base skill is not named after the unit.
+    private static string? UnitSkill(string unitDir)
+    {
+        var skills = Path.Combine(unitDir, "skills");
+        if (!Directory.Exists(skills)) return null;
+        var named = Path.Combine(skills, Path.GetFileName(unitDir), "SKILL.md");
+        if (File.Exists(named)) return named;
+        var all = Directory.EnumerateDirectories(skills)
+            .Select(d => Path.Combine(d, "SKILL.md")).Where(File.Exists).ToList();
+        return all.Count == 1 ? all[0] : null;
+    }
+
     private static string Norm(string s) => new(s.ToLowerInvariant().Where(char.IsLetterOrDigit).ToArray());
 
     private static Dictionary<string, string> PackageIndex()
@@ -297,8 +310,8 @@ internal static class McpServer
         if (!Directory.Exists(GroundingDir)) return index;
         foreach (var unit in Directory.EnumerateFileSystemEntries(GroundingDir).OrderBy(x => x, StringComparer.Ordinal))
         {
-            var agents = Path.Combine(unit, "AGENTS.md");
-            if (!File.Exists(agents)) continue;
+            var agents = UnitSkill(unit);
+            if (agents is null) continue;
             index[Norm(Path.GetFileName(unit))] = agents;
             var meta = Path.Combine(unit, "meta.yaml");
             if (File.Exists(meta))
