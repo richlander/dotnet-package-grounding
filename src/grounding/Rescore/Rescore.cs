@@ -25,14 +25,8 @@ internal static class Rescore
         return freshIn + m.CacheReadTokens * CacheReadMult + m.CacheWriteTokens * CacheWriteMult + m.OutputTokens * wOut;
     }
 
-    private static double HaikuRatio(string model)
-    {
-        var s = model.ToLowerInvariant();
-        if (s.Contains("opus")) return 15.0;
-        if (s.Contains("sonnet")) return 3.0;
-        if (s.Contains("haiku")) return 1.0;
-        return 1.0;
-    }
+    // Single source of truth lives in Grounding.Channels.Economics -- do not fork the tiers.
+    private static double HaikuRatio(string model) => Grounding.Channels.Economics.HaikuRatio(model);
 
     private static double Q(Arm arm) => (arm.JudgeResult?.OverallScore ?? 0.0) / 5.0;
 
