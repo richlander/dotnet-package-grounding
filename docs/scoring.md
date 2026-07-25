@@ -1,175 +1,90 @@
 # Scoring, grading, and the grounding PR
 
-How an eval run becomes a **ship / no-ship decision** and a reviewable PR: the grade model, the ship
-gate, the copy-paste cards, the PR contents and checklist, and why quality is a floor not a score. The
-*approach* these grade — the arms, the two regimes, and the three-rung ladder — is in
-[`grounding-eval-methodology.md`](./grounding-eval-methodology.md).
+How an eval run becomes a **ship / no-ship decision** and a reviewable PR. The current grade model is
+not a single verdict label: it is the two-axis **[quality-card model](./quality-card-model.md)**, with
+explicit return and efficiency axes plus two ship gates.
 
-> **Superseded grade names.** This doc's `BETTER / NEUTRAL / WORSE` verdict and single **Pareto gate**
-> predate the ratified **[quality-card model](./quality-card-model.md)**, which grades a **two-axis**
-> win (return + efficiency) and ships on **two gates** — **do no harm** (no material baseline-only
-> regression) plus **economic materiality** (a certified **≥20%** per-dollar cost cut). Read the
-> BETTER/NEUTRAL/WORSE material below as the historical single-grade rubric; the card model is current.
-> The specific thresholds here (e.g. the fixed **25%** win caps) are superseded by the card's ≥20%
-> economic gate.
->
-> **Arm naming.** This doc and the `grounding analyze` cards still speak of a single grounded
-> "**AGENTS.md** arm" vs **baseline**, and a "**source-diff** (AGENTS.md vs README.md)" comparison.
-> Under the current content-arm naming (methodology §1), read those as the **Missing Manual** arm and
-> the **Brochure** comparison. The `analyze`/card tooling relabel is a tracked follow-up; the grade
-> logic is unchanged.
+> **Superseded framing.** Earlier versions of this doc used a single gate and verdict vocabulary,
+> README comparison arms, and a push-delivered package file. That framing is retired. Read this doc as
+> the current SKILL.md framing: a package carries a **base skill** named for the package plus **domain
+> skills**, and a root meta-skill orchestrates install using Anthropic Agent Skills conventions
+> (YAML frontmatter with `name` and a use-when `description`, then progressive disclosure into
+> supporting files).
 
 ---
 
-## The ship decision — require BETTER on the tier that needs it, not WORSE on the tier that doesn't
+## The ship decision — two axes, two gates
 
-Grounding is **auto-installed and un-removable**, so the verdict is a **Pareto gate**, not an average
-(authoring-principles §4). Modeled directly on the decompiler quality-diff card — which **requires a
-real win** (recovery up, malformed down) while holding harm rows (semantic defects, fidelity, pass
-bugs) at **zero tolerance** — the grounding gate is two-sided:
+Grounding is the technique and its measurement. The shipped artifact is a pull-installed,
+opt-in, removable **SKILL.md skill set** in the consuming repo. The eval is therefore the same agent
+with the skill set installed (**grounded**) versus not installed (**baseline**), not a README-vs-doc
+comparison.
 
-> **Ship iff** the change **materially helps the tier that needs grounding (mini)** **AND does no
-> meaningful harm to the tier that doesn't (frontier).** Rip it out iff it helps neither.
+The full scoring model lives in the **[quality-card model](./quality-card-model.md)**. In short:
 
-A complete decision therefore needs **two runs**: a mini-tier run (default `claude-haiku-4.5`) for the
-win, and a frontier-tier run (e.g. `claude-opus-*`) for the no-harm check. Each is n ≥ 3, model and
-judge named. The gate is evaluated on the **grounding-tool** arm (the `isolated` channel — only the
-target grounding loaded) vs **baseline**, on means across the unit's
-scenarios.
+- **RETURN** — graded yield on the ladder `Fails < Satisfies < Delivers`, plus reliability `ΔP` on the
+  shared-success set.
+- **EFFICIENCY** — per-dollar IET over delivered runs is the economic cost stick; per-day duration is a
+  co-headline, reported beside it but not used as the economic gate.
 
-> **The card grades; this section decides.** The `--card` conclusion is a single **uniform,
-> model-independent grade** of grounding's measured effect vs baseline — **BETTER / NEUTRAL / WORSE**
-> (the cards below) — the *same* rubric for haiku and opus. It deliberately does **not** encode shipping. The
-> tier-aware ship decision below is the **higher-level analysis** layered on top of those grades: we
-> *require* **BETTER** on the mini tier (it needs grounding) and merely *not* **WORSE** on the frontier
-> tier (it doesn't). A frontier **BETTER** is a welcome bonus, never a requirement. Reading the grade is
-> the card's job; deciding what the grade means for shipping is yours.
+A skill set ships only when both gates clear:
 
-### Mini tier — require BETTER (the win thresholds)
+1. **Do no harm:** loss mass must stay below the null-95 baseline.
+2. **Economic materiality:** the per-dollar IET credible-interval upper bound must be `≤ ×0.80`, i.e.
+   at least a certified 20% cost cut.
 
-Correctness may never regress; then at least one win axis must clear:
+Older fixed 25% win caps are superseded by the quality card's ≥20% economic gate.
 
-| Axis | Type | Threshold |
-| --- | --- | --- |
-| `tasks correct` | guard (hard) | Δ ≥ 0 — grounding must not solve fewer tasks |
-| `func` | guard (hard) | Δ ≥ 0 — no functional-assertion regression |
-| `web` | guard (hard) | grounded **web** calls = 0 (never resort to the internet; local cache peeks are allowed) |
-| `tasks correct` | **win** | Δ > 0 — solves tasks the baseline failed, **or** |
-| `iet` | **win** | ≥ 25% reduction vs baseline, **or** |
-| `cost` | **win** | ≥ 25% reduction vs baseline, **or** |
-| `resourcefulness` | **win** | eliminated (baseline > 0 → grounded 0) |
+## Headline quality card
 
-On the mini tier a large cost/IET reduction (or eliminated resourcefulness) with **task correctness held** **is**
-a legitimate ship — tokens are cheap, the binding constraint was the model otherwise flailing or
-failing. A task-correctness gain (solving tasks the baseline failed) is the strongest mini win.
+Suite: **CT-24**. Repeats: `k = 5`. Models: `claude-haiku-4.5`, `claude-sonnet-5`,
+`claude-opus-4.8`. Comparison: grounded SKILL.md skill set versus baseline.
 
-### Frontier tier — require *not WORSE* (a BETTER is a welcome bonus)
+| Model | Mean yield | Reliability ΔP | Per-$ IET geomean | Per-day duration geomean | Econ gate upper | Do-no-harm |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Haiku | 0.533 → 0.942 | +0.263 | ×0.20 [0.18, 0.33] | ×0.28 | ×0.33 | loss mass 0.000 vs null 3.2 |
+| Sonnet | 0.775 → 1.000 | +0.191 | ×0.26 [0.23, 0.35] | ×0.21 | ×0.35 | loss mass 0.000 vs null 2.2 |
+| Opus | 0.883 → 1.000 | +0.117 ⚠ | ×0.40 [0.35, 0.52] | ×0.38 | ×0.52 | loss mass 0.000 vs null 1.2 |
 
-The strong model rarely *needs* grounding, so this run is not **required** to be **BETTER** — it must
-only prove grounding does **no damage** (the card grades it **not WORSE**: BETTER or NEUTRAL). This is the
-direct analog of "no drop in recovery, no increase in malformed". But "not required to be better" is not
-"can't be better": if grounding makes even the frontier model **materially cheaper** (clears the same
-IET/cost win bar) with no regression, the card grades it **BETTER** on its own — same rubric as every
-model. Don't read a frontier NEUTRAL as failure and don't withhold a deserved BETTER; we cornered
-ourselves into only ever saying "no harm" on opus once, and the uniform grade fixes that.
+All three models clear the `×0.80` economic-materiality bar and the do-no-harm gate. The Opus
+reliability lift is prior-sensitive, so treat it as supportive rather than the primary headline.
 
-So, reading the **uniform card grade** for the frontier ship decision:
+## Running and reading an eval
 
-- **BETTER** — grounding pays off even here (cheaper, or eliminates resourcefulness, with task correctness held). Ships; a bonus.
-- **NEUTRAL** — task correctness held, no material efficiency win. **Ships** — this is all the frontier tier is required to show.
-- **WORSE** — fewer tasks correct, grounded web archaeology, or IET/cost/output inflated past the cap. **Blocks the ship.**
-
-**WORSE is bounded by a number, not a bool.** The headline harm metric is the **IET diff from baseline**
-(`IET_grounded − IET_baseline`, signed). It need not be zero — it carries a **hard cap** (a budget):
-grounding may cost a little more on a model that didn't need it, but not a lot (past the cap ⇒ WORSE). In
-practice the diff is usually *negative* (grounding makes even the frontier cheaper — which is what tips a
-NEUTRAL into a **BETTER**), so the cap rarely binds; it exists to catch a bloated grounding doc. We report
-the number so the effect is *tracked as a quantity*, not collapsed to a pass/fail.
-
-| Axis | Threshold |
-| --- | --- |
-| `tasks correct` | Δ ≥ 0 — grounding must not solve fewer tasks |
-| `func` | Δ ≥ 0 — no functional-assertion drop |
-| **`IET diff`** | **≤ hard cap** — `IET_grounded − IET_baseline` may not inflate past the budget (**the headline harm number**) |
-| `cost` | ≤ hard cap — grounded cost may not inflate past the budget |
-| `output tok` | shown as a visible row (`output tok (% of IET)`) — output overspend must be visible; output is priced 5× and is ~24–30% of IET |
-| `web` | grounded **web** calls = 0 (cache peeks allowed) |
-
-**Why IET, not output-tokens-only.** A natural objection: the harm we most fear is output/thinking
-overspend, so why not gate on output tokens alone? Because output is *not* the whole story of IET —
-under the price-weighted model (`IET = 1.25·(input − cacheRead) + 0.1·cacheRead + 5·output`) output is
-~24–30% of IET; the price-weighted input (fresh suffix + cheap cached prefix) is the rest. The **most
-likely grounding-induced harm on a strong model is input bloat** — a fat `AGENTS.md`, or one that
-induces large file reads / extra tool results — and it lands on *every* request. An output-only gate
-would be **blind to exactly that failure mode**. IET catches input bloat *and* output overspend (which
-it prices at 5×), while correctly discounting cache reads (0.1×, and any cache/input churn it hides
-reliably shows up in the informative signals — `Session turns`, `archaeology`, tool-turn activity).
-The one tradeoff: because IET still carries a large input component, a pure "reasons-in-circles" output
-blow-up could be partly masked if input nets down — so we keep **`output tok (% of IET)` as its own
-visible row**, and a small efficiency gain bought with a large output-token increase is still a **fail**.
-
-> These thresholds are the team's starting line (haiku/opus tiers, n=3). They are tunable in one place
-> — `GATE` in `grounding analyze` — and the analyzer applies them automatically per `--card`.
-
----
-
-## The eval dump (copy-paste into the PR)
-
-`grounding analyze` emits **three single-variable cards**, each isolating exactly one comparison so the
-data is trivial to read. Every card's first column is `Metric (goal)`: `(+)` means higher is better,
-`(-)` means lower is better, and `(context)` is explanatory. Each card also emits a **Conclusion**: a
-single **uniform, model-independent grade** of grounding's effect vs baseline, **BETTER / NEUTRAL /
-WORSE** (the same rubric for every model — the card grades, it does not decide shipping; that is the
-ship decision above). Grading keys off **objective axes only** (task correctness, web archaeology, cost/IET);
-there is **no judge-quality diff** (the judge-floor section below). A dataset whose filename contains
-`readme` is read as the **README arm**; one containing `skill` is the **SKILL.md arm**; a bare
-`<unit>.<model>.json` is the **AGENTS.md arm**.
-
-**Which delivery arm the cards grade: `isolated`.** Each run produces three arms — `baseline` (no
-grounding), `isolated` (only the target grounding loaded), and `plugin` (the whole skills shelf loaded,
-agent self-selects). All final graded cards use **`isolated`** (default; override with
-`GROUNDING_CARD_ARM`), because it is the **clean content measure**: it isolates the doc from the shelf,
-it is faithful to AGENTS.md's always-on co-located delivery, and it still charges single-skill
-activation (the `read grounding (%)` row). `plugin` is a **separate delivery/discovery axis** — "does
-the agent still find and pick the grounding among many?" — and is **contaminated** for units that share
-a grounding dir with unrelated skills, so it flatters/distorts the grade. Run `plugin` only as an
-explicit discovery sidebar (`GROUNDING_CARD_ARM=skilledPlugin`) on a curated shelf, never as the headline
-grade. The arm is applied to **both sides of every diff**, so `source-diff`/`skill-diff` always compare
-like-for-like (mixing isolated on one side with plugin on the other would conflate content with discovery).
-
-- **BETTER** — task correctness held and a real win: more tasks correct, resourcefulness eliminated, or IET/cost down ≥ 25%; no regression.
-- **NEUTRAL** — task correctness held, no material efficiency win.
-- **WORSE** — fewer tasks correct, grounded web archaeology, or cost/IET/output inflated past the cap.
-
-| Card | Flag | Holds fixed | Varies | Answers |
-| --- | --- | --- | --- | --- |
-| **Primary** | `--card` | one model | baseline → AGENTS.md | Does grounding help *this* model? (one card per model, graded BETTER/NEUTRAL/WORSE) |
-| **Model-diff** | `--model-diff` | AGENTS.md vs baseline | the model | Does the grade hold across tiers — side by side. |
-| **Source-diff** | `--source-diff` | one model, grounding-tool delivery | AGENTS.md vs README.md | A **usability test of the README** (not a floor to beat): does the README also answer every question with 0 archaeology? README failures are bugs to **fix in the same PR**. Once the README is complete, AGENTS's edge narrows to efficiency/retrieval. |
-| **Skill-diff** | `--skill-diff` | one model, grounding-tool delivery | SKILL.md vs AGENTS.md | What the **Complete Textbook's extra tokens buy** over the Missing Manual: does the fuller SKILL.md win more tasks / cut more archaeology, and at what added cost? |
-
-Cost model: by default (`--iet-model auto`) each dataset is priced by **its own model** — `anthropic`
-for Claude/Opus, `openai` for GPT — so an Opus-vs-GPT card is faithful in one render. Pass an explicit
-`--iet-model` to force one model for every column. See [iet-model.md](iet-model.md).
+The current run shape for the ratified comparison is:
 
 ```bash
-# primary, one card per model
-grounding analyze --card data/<unit>-6q/<unit>.n3.haiku.json data/<unit>-6q/<unit>.n3.opus.json
-# model-diff (AGENTS lift, models side by side)
-grounding analyze --model-diff data/<unit>-6q/<unit>.n3.haiku.json data/<unit>-6q/<unit>.n3.opus.json
-# source-diff (AGENTS − README, one model — usually the mini tier)
-grounding analyze --source-diff data/<unit>-6q/<unit>.n3.haiku.json data/<unit>-6q/<unit>-readme.n3.haiku.json
-# skill-diff (SKILL − AGENTS, per model — what the Textbook's extra tokens buy)
-grounding analyze --skill-diff data/<unit>/<unit>.opus.json data/<unit>/<unit>-skill.opus.json
+grounding run <slug> --source skill --eval-mode holistic --runs 5
 ```
 
-**Paste the cards verbatim** into the PR's *Metrics* section. The PR carries four: primary (mini), primary
-(frontier), model-diff, source-diff (mini). Example (NuGetFetch, mini primary):
+The analyzer still contains legacy card views, but the authoritative interpretation is the quality-card
+model above: report return, per-dollar IET, per-day duration, the economic upper bound, and loss mass.
+Where historical datasets measured a package-shipped doc, call it **the grounding doc** and treat it as
+a delivery-channel experiment, not the live delivery model.
+
+## Copy-paste PR card
+
+Paste a compact quality-card summary into the PR's *Metrics* section:
 
 ```text
-### Grounding eval — nugetfetch · `claude-haiku-4.5`
+### Grounding eval — <unit> · CT-24 · k=5
 
-| Metric (goal) | Baseline | AGENTS.md |
+| Model | Mean yield | Reliability ΔP | Per-$ IET geomean | Per-day duration | Gates |
+| --- | ---: | ---: | ---: | ---: | --- |
+| claude-haiku-4.5 | 0.533 → 0.942 | +0.263 | ×0.20 [0.18, 0.33] | ×0.28 | harm clear; econ upper ×0.33 |
+| claude-sonnet-5 | 0.775 → 1.000 | +0.191 | ×0.26 [0.23, 0.35] | ×0.21 | harm clear; econ upper ×0.35 |
+| claude-opus-4.8 | 0.883 → 1.000 | +0.117 ⚠ | ×0.40 [0.35, 0.52] | ×0.38 | harm clear; econ upper ×0.52 |
+```
+
+If a package-specific report also includes historical channel data, preserve its numbers but label the
+doc arm as **grounding doc** and link the frozen report rather than rewriting it.
+
+### Historical per-package card example
+
+NuGetFetch's earlier mini-tier primary card remains useful as a per-package metric dump. The framing is
+historical, but the quantities are preserved here with current naming:
+
+| Metric (goal) | Baseline | Grounding doc |
 | --- | ---: | ---: |
 | tasks correct (+) | 5/6 | 6/6 |
 | func passed (assertions) (+) | 17/18 | 18/18 |
@@ -185,107 +100,79 @@ grounding analyze --skill-diff data/<unit>/<unit>.opus.json data/<unit>/<unit>-s
 | Session IET (-) | 31816 | 17558 |
 | Session Cost (-) | 7.75 | 2.28 |
 
-> **Conclusion:** **BETTER** — tasks correct 6/6 vs 5/6, nuget-cache reads 31→0 (web 4→0), session IET -45%, cost -71%.
-```
-
-The card reads **outcome → detail → session summary** (the bottom three rows are the session totals:
-turns, IET, cost). Sizes are in tokens (`grounding load`, `output tok`), costs in IET/$ — no row mixes
-dimensions. `read grounding (%)` flags a grounded run that never invoked the `skill` tool (effectively
-baseline). See [`iet-model.md`](./iet-model.md#practical-card-interpretation) for the per-row guide.
-For the operational "which card for which lifecycle operation" guide, see
-[`grounding-lifecycle.md`](./grounding-lifecycle.md).
-
----
+Quality-card readout: tasks correct improved 5/6 → 6/6, nuget-cache reads fell 31 → 0, web calls
+fell 4 → 0, session IET fell 45%, and cost fell 71%.
 
 ## What a grounding PR contains
 
 | Artifact | Path |
 | --- | --- |
-| The grounding edit (body ≤ `eng/agents-line-limit.txt`, currently 60) | `grounding/<unit>/AGENTS.md` |
-| The matched n≥3 mini-tier dataset | `data/<unit>-6q/<unit>.n3.haiku.json` |
-| The matched n≥3 frontier-tier dataset (no-harm check) | `data/<unit>-6q/<unit>.n3.opus.json` |
-| The report | `docs/reports/<unit>.md` |
+| Base package skill | `grounding/<unit>/SKILL.md` |
+| Domain skills and supporting files | `grounding/<unit>/**` |
+| Matched grounded-vs-baseline dataset | `data/<unit>*/` |
+| Package report | `docs/reports/<unit>.md` |
 
 ### PR description format
 
-Use `.github/PULL_REQUEST_TEMPLATE.md`. Required sections: **Changes** (what changed, the scenario it
-supports, and that it is motivated by the metrics), **Metrics** (paste the `--card` dumps), **Analysis**
-(what grounding actually changes — usually eliminating the *resourcefulness* the agent otherwise spends to
-reach the **same** correct API, not preventing a wrong-API hallucination; verify the claim against the
-transcripts), **Validation** (the exact commands), **Caveats** (the cache self-grounding lower-bound +
-cache-state-not-a-variable).
+Use `.github/PULL_REQUEST_TEMPLATE.md`. Required sections: **Changes** (what changed and why the
+quality card motivated it), **Metrics** (paste the card summary), **Analysis** (what grounding changes
+in the transcripts), **Validation** (exact commands), and **Caveats** (sample size, cache state, and any
+mid-transition repository constraints).
 
 ### Validation (reproducible)
 
 ```bash
 grounding check-agents
-RUNS=3 eng/run-<unit>-6q.sh                                    # -> data/<unit>-6q/<unit>.haiku.json
-RUNS=3 MODELS=claude-opus-4.8 eng/run-<unit>-6q.sh            # frontier no-harm run
-grounding analyze --card data/<unit>-6q/<unit>.haiku.json
-cp data/<unit>-6q/<unit>.haiku.json data/<unit>-6q/<unit>.n3.haiku.json   # commit the matched run
+grounding run <slug> --source skill --eval-mode holistic --runs 5
 ```
 
----
+The `grounding check-agents` command name is still literal in this repository; it validates historical
+grounding file formats while the codebase is mid-transition. Do not rename the command in docs unless
+`src/grounding/Program.cs` changes first.
 
 ## Reviewer checklist
 
-- [ ] `AGENTS.md` within the line limit (`grounding check-agents` passes).
-- [ ] Datasets committed under `data/<unit>-6q/`; both `--card` dumps in the PR match them.
-- [ ] n ≥ 3; model and judge named, for **both** tiers.
-- [ ] Mini tier graded **BETTER** (more tasks correct, eliminated resourcefulness, or ≥25% cost/IET cut; no task/func/web regression).
-- [ ] Frontier tier graded **not WORSE** (BETTER or NEUTRAL — IET/cost/output under the cap; no task/func regression).
-- [ ] Claims cite normative metrics; signals only explain.
-- [ ] Grounding text is package-specific, justified by the package's actual trap.
-- [ ] Required caveats present; cache reads attributed per arm (not grepped).
-- [ ] `docs/reports/<unit>.md` updated.
+- [ ] The artifact is a pull-installed SKILL.md skill set: base skill plus domain skills.
+- [ ] Grounded and baseline runs use the same agent, same CT-24 suite, and `k = 5` repeats.
+- [ ] Models are named: Haiku, Sonnet, and Opus.
+- [ ] RETURN is reported as graded yield plus reliability ΔP.
+- [ ] EFFICIENCY reports per-dollar IET and per-day duration.
+- [ ] Do-no-harm gate clears: loss mass is below the null-95 baseline.
+- [ ] Economic-materiality gate clears: per-dollar credible-interval upper bound is `≤ ×0.80`.
+- [ ] Claims cite normative quality-card metrics; transcript/tool signals only explain the mechanism.
+- [ ] Frozen per-package reports are linked, not edited, when they contain historical channel data.
 
----
+## Why subjective quality is a floor, not a ship score
 
-## Why quality is a floor, not a score (the judge-subjectivity finding)
+Earlier cards tried to gate on a judge quality diff (`overallScore_grounded − overallScore_baseline`).
+We retired that. A correct solution (build + run + assertions pass) lands at **4–5 by construction**, so
+the judge's 1–5 score has only **~1 point of usable range** for correct work. That top band is
+subjective and instruction-sensitive, not a stable basis for a harm verdict.
 
-Earlier versions of these cards graded grounding on a **quality diff**
-(`overallScore_grounded − overallScore_baseline`). We retired that. A correct solution
-(build + run + assertions pass) lands at **4–5 by construction**, so the judge's 1–5 score has
-only **~1 point of usable range** for correct work — and that top band is **subjective and
-instruction-sensitive**, not a stable basis for a harm verdict.
-
-**Evidence.** We re-judged the *identical* set of opus-4.8 nugetfetch sessions (not one agent
-token changed) under four judge framings. The mean quality Δ (grounded − baseline) swung across a
-~0.45 range on judge wording alone:
+**Evidence.** We re-judged the *identical* set of Opus 4.8 NuGetFetch sessions under four judge
+framings. The mean quality Δ (grounded − baseline) swung across a ~0.45 range on judge wording alone:
 
 | Judge framing | mean quality Δ |
 | --- | ---: |
-| original (inline) | −0.15 → "WORSE" |
+| original (inline) | −0.15 → negative legacy label |
 | re-judge, same prompt | −0.017 (tie) |
 | + efficiency clause | +0.28 |
 | + path-neutrality clause | +0.10 |
 
-A metric that swings from "WORSE" to a clear win on wording alone cannot gate shipping.
+A metric that swings from a negative label to a clear win on wording alone cannot gate shipping.
 
-**The bias.** Reading the per-criterion reasoning, the judge **rewarded visible effort**: an
-ungrounded agent that reverse-engineers the API via reflection reads as "rigorous," while an agent
-that trusts the package's own shipped `AGENTS.md` was docked for "relying on an unverified external
-skill" — even on outcome criteria both arms satisfied. That is exactly backwards for grounding,
-whose entire value is to make that effort unnecessary.
+**The bias.** The judge rewarded visible effort: an ungrounded agent that reverse-engineers the API via
+reflection reads as "rigorous," while an agent that trusts the package's own grounding was docked for
+"relying on an unverified external skill" — even when both arms satisfied the outcome criteria. That is
+backwards for grounding, whose value is making that effort unnecessary.
 
-**The fix — two parts:**
+**The fix:**
 
-1. **Decompose quality into `tasks correct` + `resourcefulness`.** `tasks correct` uses the judge's score
-   *only* as a coarse ≥4 pass/fail floor (a robust judgment). `resourcefulness` — the "how hard did
-   it have to work" signal the top band was groping at — is measured **objectively** from the
-   timeline (archaeology), never from the judge. Grounding's job is to make resourcefulness
-   *unnecessary*, so lower-for-grounded is the win, never a quality penalty. Harm is then keyed on
-   objective axes only (task correctness, web archaeology, cost/IET).
+1. **Decompose quality into graded yield plus resourcefulness signals.** Yield is the normative floor;
+   archaeology, web use, tool turns, and IET explain how much effort the agent spent.
+2. **Debias the judge's floor.** Package grounding surfaced through SKILL.md or a trusted tool is a
+   first-class source, equal to reflection or reading source. Judge the result given the constraints,
+   not the difficulty of the path.
 
-2. **De-bias the judge's floor.** Even the ≥4 floor can be nudged by the effort bias (a grounded
-   scenario sat at 3.7 under the original judge, 4.3 under a de-biased one). Two judge-prompt clauses
-   correct it (proposed upstream to the skill-validator):
-   - **Source provenance:** package-shipped grounding (`AGENTS.md`/`SKILL.md` surfaced via a
-     tool/skill call) is a *trusted, first-class* source — equal to reflection or reading source. Do
-     not credit independent rediscovery, nor penalize relying on the package's own grounding.
-   - **Path neutrality:** judge the *result* given the constraints, not the difficulty of the path.
-     Equal correct-and-complete results are equal quality; effort is not a bonus and an easy path is
-     not a deficit.
-
-See [`authoring-principles.md`](./authoring-principles.md) for how this connects to *generating*
-grounding (eval-driven from a zero-grounding baseline, never a model-written draft).
+See [`authoring-principles.md`](./authoring-principles.md) for how this connects to generating
+grounding from a zero-grounding baseline rather than from a model-written draft.

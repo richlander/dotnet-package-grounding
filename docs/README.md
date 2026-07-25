@@ -4,9 +4,9 @@ Generic infrastructure for evaluating NuGet package **grounding**. Start at the 
 
 ## Primary
 
-- **[overview.md](./overview.md)** — **read this first**: the whole system in one pass — the three
-  documents (Brochure / Missing Manual / Complete Textbook), the three task tiers
-  (BR-6 / MM-12 / CT-24), and the eval-diff triangulation that gives each its confidence signal.
+- **[overview.md](./overview.md)** — **read this first**: the whole system in one pass — grounding
+  as a pull-installed `SKILL.md` skill set, measured **grounded vs baseline** on the CT-24 workflow
+  ladder across three model tiers, and graded with the quality card.
 - **[quality-card-model.md](./quality-card-model.md)** — **the measurement model** (start here for
   *how we judge*): the two axes (**RETURN** = graded yield + reliability, **EFFICIENCY** = per-dollar
   cost *and* per-day duration), the `Fails < Satisfies < Delivers` ladder, and the **two ship gates**
@@ -19,13 +19,12 @@ Generic infrastructure for evaluating NuGet package **grounding**. Start at the 
   ladder, read the card.
 - **[running-eval.md](./running-eval.md)** — point the harness at a package repo's grounding and read
   the result. Grounding lives in the target repo; the harness reads it in place (no packing).
-- **[grounding-eval-methodology.md](./grounding-eval-methodology.md)** — the *approach*: content arms
-  (baseline / Missing Manual / Brochure / Complete Textbook), the three nested tiers
-  (BR-6 / MM-12 / CT-24), the cost-tiered ladder, and the confounds.
-- **[delivery-methodology.md](./delivery-methodology.md)** — the *delivery axis* (orthogonal to
-  content): **push** (always-on `.agent.md` at t=0) vs **pull** (model-invoked `SKILL.md`). The
-  push-advantage identity `≈ effect × (1 − pull activation)`, the shared-pinned-baseline procedure,
-  and the anti-overclaim guardrails.
+- **[grounding-eval-methodology.md](./grounding-eval-methodology.md)** — the *approach*: the
+  **grounded-vs-baseline** contrast (same agent, `SKILL.md` skill set on vs off), the CT-24 workflow
+  ladder, k=5 repeats across model tiers, and the confounds.
+- **[delivery-methodology.md](./delivery-methodology.md)** — the *delivery axis*: grounding ships as
+  a **pull-installed** `SKILL.md` skill set (model-invoked, opt-in, removable). The
+  shared-pinned-baseline procedure and the anti-overclaim guardrails.
 - **[skill-shelf-methodology.md](./skill-shelf-methodology.md)** — the *holistic benchmark* and
   *composition-axis LIET*: how we evaluate a whole **shelf** of skills (agent self-selects) and
   attribute the shelf's score back to individual skills — the two paradigms (per-skill PR vs
@@ -40,8 +39,8 @@ Generic infrastructure for evaluating NuGet package **grounding**. Start at the 
 
 ## Supporting references
 
-- **[authoring-principles.md](./authoring-principles.md)** — how to write the three documents
-  (Brochure / Missing Manual / Complete Textbook).
+- **[authoring-principles.md](./authoring-principles.md)** — how to author a package's `SKILL.md`
+  skill set: what to include (the proven-lacking footguns), what to leave out, and the line budget.
 - **[delivery-and-retrieval.md](./delivery-and-retrieval.md)** — how grounding reaches the agent: the
   resident index, MCP delivery, and retrieval gates.
 - **[iet-model.md](./iet-model.md)** — how the analyzer maps Copilot token fields to IET, including

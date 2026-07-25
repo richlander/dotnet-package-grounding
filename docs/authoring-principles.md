@@ -1,402 +1,205 @@
-# Authoring principles for grounding docs
-
-> **New here?** This doc explains how to write grounding that earns its place: capture only package facts
-> an agent has proven it lacks, and keep each section retrievable on its own. For **how we now grade and
-> ship**, read the ratified **[quality-card model](./quality-card-model.md)**: return + efficiency, do no harm,
-> and a ≥20% economic win. Legacy threshold / "Pareto gate" language below predates that model — read it as history; the card is current.
-
-Grounding docs (`AGENTS.md`) are **not** READMEs. A README explains a package to a
-human from scratch; a grounding doc supplies *only* what an AI agent provably lacks.
-These principles keep the content tight, measurable, and worth its place in the
-`AGENTS.md` line budget.
-
-## 1. Record only what the model is proven to need (skip model-resident knowledge)
-
-Only include information that an agent has been **demonstrated** (by eval signal) to
-need and lack. If a web-blocked baseline already produces the correct answer, that
-material is *model-resident* and must **not** go in the grounding doc — it adds length,
-dilutes RAG matches, and buys no metric movement.
-
-Concretely: do **not** start from a model-written draft — that contaminates the very signal
-you need. A draft restates model-resident knowledge, so a grounded "win" may be an echo of
-what the model already knew, real gaps get masked, and confidently-wrong content can actively
-mislead the agent. Start from an **empty baseline**, run the eval, and watch where the frontier
-model fails outright or succeeds only by burning *resourcefulness* (web/cache archaeology,
-decompiling the package). Add grounding **only** at an observed gap, then re-run. The method is
-**additive** — every line earns its place because a measured failure demanded it — not
-subtractive (starting from a draft and proving each line *isn't* needed is harder and noisier).
-
-### Evidence (System.CommandLine unit)
-
-| Scenario | Baseline → Grounded | Improvement | Lesson |
-| --- | --- | --- | --- |
-| S1: `AcceptOnlyFromAmong` comparer overload | 5.0 → 5.0 | **−2.2%** | A "new in 3.x" member with a guessable name is model-resident. No signal. |
-| G1: greenfield CLI on 3.x | 5.0 → 5.0 | **+1.1%** | The model writes correct current-API CLIs from scratch (2.0 GA API == 3.x). Greenfield authoring is model-resident. No signal. |
-| M1: migrate a real 2.0.0-beta4 CLI to 3.x (compile-error gates) | 5.0 → 5.0 | **+6.4%** | After behavior gates gave the judge ground truth, the baseline migrates **correctly** (compile errors + reflection recover the member mapping). Residual signal is efficiency-only — below the 10% bar. |
-| M1 + silent-break trap (`new Option<T>("--n","desc")`: 2nd arg = alias in 3.x) | 5.0 → 5.0 | **+9.6%** (runs=5; isolated arm **+20.6%**) | A migration that *compiles but behaves wrong* defeats the compile-error safety net, and the **isolated** arm shows the grounding is genuinely valuable (+20.6%). But over 5 runs the strong baseline self-recovers the single trap (quality ties 5.0), and the gating **plugin** (discover-and-read) arm sits at +9.6% — just under the bar. Two levers remain: widen the gap (multiple traps) and close the isolated-vs-plugin delivery gap. |
-| M1 + silent-break, **doc refocused** to dense RAG-style migration/gotchas + sharper discovery description | 4.6 → 5.0 | **+15.1%** (runs=5; isolated **+22.6%**, plugin **+15.1%**) | Scoping the doc to migration/gotchas and tightening the discovery description **lifted the gating plugin arm from +9.6% → +15.1%** — delivery, not content, was the blocker. Now clears the bar, but variance is very high (CV=91%, one +21.8% run carries the mean): the signal is real and above threshold, magnitude is soft. |
-
-**Takeaway:** signal comes from *transforming code written against an API the model can
-no longer rely on* (migration) — and specifically from the parts a model **cannot recover
-locally**. A version-bump or removed-API migration is largely recoverable via compile
-errors + reflection (model-resident, efficiency-only signal). The durable signal is a
-**silent behavioral break**: code that compiles but is wrong, where only the grounding's
-gotcha prevents the defect. The improvement metric is quality-dominated (Quality 0.40 +
-OverallJudgment 0.30 = 70%; all efficiency dimensions only 10%), so clearing the bar
-requires moving *correctness*, not tokens.
-
-## 2. Optimize for RAG retrieval, not prose coherence
-
-The alternative to a single complete grounding doc is **section-based RAG with similarity
-matching**: an agent retrieves the *section* whose text is most similar to its task, not
-the whole document. So:
-
-- Spend **minimum** effort on narrative flow, transitions, and "completeness." A grounding
-  doc may read as a disjoint set of targeted sections — that is fine, even preferred.
-- Make each section **self-describing and keyword-dense** for the task it serves (e.g. a
-  migration section should name the old and new member identifiers verbatim, because those
-  are what an agent's query will match on).
-- Focus every section on *describing the missing model knowledge* needed to move the metric
-  to (at least) the success threshold — nothing more.
-
-This is the opposite of how we write `README.md` files, which are authored to be read
-top-to-bottom by a human.
-
-### 2a. The `description` frontmatter is the resident summary layer — make it a hook, not a copy
-
-The `AGENTS.md` YAML `description` is not part of the body; it is the **always-resident summary
-layer** of skill-style progressive disclosure (see
-[`delivery-and-retrieval.md`](delivery-and-retrieval.md)). Under the recommended NuGet-MCP design it
-is projected into the resident index for **every direct dependency, on every restore** — paid
-whether or not the agent ever pulls the body. So author it as a **discovery hook**, not a synopsis
-of the doc:
-
-> *Spec note:* the `agents.md` standard itself defines **no** frontmatter — an `AGENTS.md` is plain
-> markdown with conventional headings. Our YAML `name`/`description` are therefore **additive and
-> spec-compatible**, not a divergence: they are the skill-style projection inputs the NuGet-MCP
-> resident index consumes, and a spec-only consumer simply ignores them.
-
-
-- Carry exactly three things: **identity** (what the package is), **when to reach for it**, and the
-  **single differentiator that signals the model doesn't already know this** (for Markout: "looks
-  like System.Text.Json source generation but has no reflection fallback"). That hook is what drives
-  correct self-selection — and a *sharper* discovery description measurably lifted the gating arm
-  (§1 table, the M1 +9.6% → +15.1% refocus).
-- **Do not reproduce the body** in the description — no full code pattern, method signatures, or
-  exhaustive attribute/API enumerations. Those belong in the body, which is fetched on demand. A
-  description that already contains the how-to makes the body pull pointless and taxes the resident
-  layer for content most restores never use.
-- Sharper, not longer: a few sentences. The body carries the detail.
-
-### 2b. `README.md` is `HUMANS.md`; `AGENTS.md` is retrievable by construction (the asymmetry)
-
-The reason §2's "disjoint sections are fine" rule is *safe* — and not just a stylistic preference — is
-that `README.md` and `AGENTS.md` address **different readers with opposite priors**, so they are
-asymmetric in **content selection**, not merely tone:
-
-- **`README.md` is `HUMANS.md`.** It assumes an *untrained human* who wants a progressive narrative to
-  build intuition. It therefore **necessarily restates model-resident basics** (install, first API, the
-  conceptual ramp) and **depends on flow** — earlier sections set up later ones. That restatement is
-  *essential for a human* and *pure waste for an agent*, which already knows the basics and pays to read
-  past them. RAG over a README serves context-free fragments precisely because its meaning lives in the
-  flow.
-- **`AGENTS.md` is eponymous.** It assumes a *trained agent* whose sight on the problem fades only at the
-  **periphery** — gotchas, niche scenarios, and post-cutoff features the model was never trained on. So
-  it carries **only that non-resident delta** (§1) and can be authored as **independently retrievable
-  sections with no flow dependency**. Section-based / progressive projection is therefore **safe by
-  construction**, not a compromise.
-
-Two consequences for authoring:
-
-- **Do not try to make `README.md` "agentic."** "Improving the README" cannot produce `AGENTS.md`,
-  because the README's job is to include exactly the basics the agent must skip. Collapsing the two
-  wrecks the human document (the failure mode of size-culling + RAG-fragmenting a README under cost
-  pressure). Keep them separate and let each serve its reader.
-- **Author every `AGENTS.md` section as if it will be retrieved alone.** Assume the agent already has the
-  resident baseline; never write a section whose correctness depends on a human having read the section
-  above it.
-
-#### 2c. The eval is a usability test of the `README.md` — and it sets the authoring order
-
-`AGENTS.md` is an **emergent** document: it precipitates from where the eval questions make contact with
-the model's ignorance — the minimal non-resident set (§1). That dictates the order:
-
-1. **Author `AGENTS.md` first**, additively from the empty baseline, until it reaches full **success with
-   zero archaeology**. It is now a verified checklist of *exactly* the facts the model lacked.
-2. **Then run the README arm** (the source-diff card). Any question the README-grounded agent fails, or any
-   archaeology it forces, is a **README usability bug** — *if an AI given only the README can't answer it,
-   an untrained human can't either.*
-3. **Fix the README in the same PR**, using the finished `AGENTS.md` as the checklist of facts it must
-   cover — in **human prose**, not token-optimized and not "agentic" (§2b above). The README may be long;
-   it just has to be *complete*. Re-run to confirm it also reaches success + 0 archaeology.
-
-The opposite — starting from the big README and **mutating it to quality** — is the document-scale version
-of the draft-first trap (§1): no gap isolation, conflated concerns, and no signal for which edit closed
-the gap. And note the honest consequence: **once the README is complete, `AGENTS.md`'s advantage narrows
-to what it was always for — fewer tokens and section-retrievability, not correctness.** Declaring "AGENTS
-beats README" while the README is *broken* is a myopic claim; the real claim is efficiency over a
-*complete* README.
-
-
-
-Grounding is **auto-installed with the package and cannot be uninstalled** (it arrives via
-tooling such as NuGet MCP / `dotnet-inspect`, with no UX surface to inspect or disable it).
-That delivery model is what earns it a stricter authoring discipline than a skill — but the
-discipline is *not* "clear a higher quality bar." It is **scope**:
-
-- A package may speak with authority **only about its own surface**: which overload to prefer,
-  which member is a footgun, which identifiers changed across versions. It must **not** assert
-  how it composes with other components ("use this with ASP.NET + EF like so"). That is a
-  *multi-component workflow* — a **skill's** job, owned by whoever owns the integration.
-- Staying in-lane **bounds the blast radius**. A grounding doc that only ever names its own
-  package literally cannot mislead an agent about a package it never mentions. The harm surface
-  collapses to the package's own truth — which the author actually knows cold.
-- This resolves the "specific yet general" paradox: grounding is **general in applicability,
-  narrow in claims.** It states package-local facts and lets the agent compose them into the
-  hundreds of workflows that touch the package. Cross-component prose is exactly where it would
-  overreach *and* where RAG retrieval breaks down.
-
-> Rule of thumb: the moment a grounding section describes a workflow spanning components, it has
-> stopped being grounding and become a skill — cut it or move it. Grounding asserts *your*
-> facts, nothing else.
-
-#### 2d. Three documents, three distributions: `README.md`, `AGENTS.md`, `SKILL.md`
-
-§2b's asymmetry becomes a **three-way** split once a package also ships a `SKILL.md`. The three are
-**not** points on a "more vs less content" line — they differ by *who reads them and how they are
-distributed*:
-
-| Doc | Reader | Distribution | Shape | Nickname |
-| --- | --- | --- | --- | --- |
-| `README.md` | humans | pulled (you open it) | narrative, progressive, may market | **Brochure** |
-| `AGENTS.md` | trained agents | **co-located, always-on** | targeted RAG gap-fill | **Missing Manual** |
-| `SKILL.md` | agents (opt-in) | **opted-in** (you load it) | narrative, near-complete | **Complete Textbook** |
-
-The axis that matters is **RAG-gap-filler vs narrative-complete**, not size (by bytes it is usually
-`AGENTS.md` < `README.md` < `SKILL.md`). `README.md` and `SKILL.md` are the *same kind* of artifact —
-coherent documents meant to be **read** — for two different readers: the Brochure *sells and onboards*,
-the Textbook *teaches completely*. `AGENTS.md` is the odd one out: a **gap-filler** evaluated only as
-*(model + `AGENTS.md`)*, never standalone — the Missing Manual *fills gaps*.
-
-**Why the pressure differs — distribution, not taste.** A `SKILL.md` is **opt-in**: the agent chose to
-load it, so it can spend tokens to be *complete* — any reader, human or agent, should finish the task from
-it alone. `AGENTS.md` is a **co-location play**: it rides along always-on, unasked, so it must be the
-**best-behaved citizen** — minimal footprint, section-retrievable, recording only the non-resident delta
-(§1). That is why `AGENTS.md` is under the **most** pressure to stay lean, and why eval (which rewards
-frugality) is *safe* for it but must be **resisted** for `SKILL.md`, whose job is completeness.
-
-### Cross-package data point (System.Text.Json unit)
-
-| Scenario | Baseline → Grounded | Improvement | Lesson |
-| --- | --- | --- | --- |
-| N1: migrate a Newtonsoft.Json CLI to System.Text.Json; silent break = STJ is case-sensitive by default (Newtonsoft is case-insensitive) | 5.0 → 4.8 (isolated) / 4.0 (plugin) | **−12.5%** (runs=5; isolated −6.9%) | The baseline reliably adds `PropertyNameCaseInsensitive = true` on its own — STJ case-insensitivity is **the most-cited STJ gotcha, so it is model-resident**. Grounding adds no value (slightly negative). A *silent* break is necessary but **not sufficient**: it must also be *obscure* (under-documented) to be non-resident. |
-| N2: make a reflection-based STJ tool Native AOT compatible (`PublishAot=true` → reflection serialization disabled → throws at run time; fix = `JsonSerializerContext` source-gen) | 5.0 → 5.0 (quality tied) | **+7.9%** (runs=5; isolated +9.4%, plugin +7.9%) — under the bar | **Baseline objectively *fails* the task** (task-completion ✗ → ✓ with grounding): this content has real value. But the break is **LOUD** — it throws `InvalidOperationException` whose message literally says *"use the source generator APIs"* — so the model recovers to **equal final quality** (judge tie). The only durable, bar-relevant win is the 0.15-weighted task-completion delta, which nets +7.9% after discovery overhead. **A loud, self-describing break caps below the bar even when it genuinely improves task completion.** |
-
-The contrast with the SCL silent-break win is the key lesson: SCL's alias-vs-description
-shift earned signal because it is **both silent and obscure** (a rarely-discussed beta-era
-constructor change). STJ case-insensitivity is silent but **famous**, so the model already
-guards against it. And STJ × Native AOT is **non-resident but loud**: it announces its own
-fix at run time, so even though the baseline fails the task, it recovers to equal quality and
-the measured gain stays under threshold. When probing a package, target gotchas that are
-**silent (compile- and run-clean but wrong), obscure (rarely written about), AND not
-self-correcting at run time.** Drop any one and the signal collapses:
-
-| Property | SCL alias-vs-description | STJ case-insensitivity | STJ × Native AOT | M.E.AI function-invocation |
-| --- | --- | --- | --- | --- |
-| Silent (no error) | ✅ | ✅ | ❌ throws | ✅ empty output |
-| Obscure (non-resident) | ✅ | ❌ famous | ✅ post-training | ❌ famous |
-| Result | **+15.1% (clears bar)** | −12.5% | +7.9% (real value, under bar) | −1.0% |
-
-### Cross-package data point (Microsoft.Extensions.AI unit)
-
-| Scenario | Baseline → Grounded | Improvement | Lesson |
-| --- | --- | --- | --- |
-| A1: wire up tool calling in an `IChatClient` assistant; silent break = tools in `ChatOptions.Tools` are never invoked unless the client is built with `.UseFunctionInvocation()` (`FunctionInvokingChatClient`). Without it the call succeeds, `response.Text` is empty, the tool never runs, no exception. | 5.0 → 5.0 (quality tied) | **−1.0%** (runs=5; CI [−1.6%, −1.0%], low variance) | The baseline agent **immediately** diagnoses the missing `UseFunctionInvocation` and fixes it in one edit, every run. Despite *not* being labeled a "pitfall" in Microsoft docs, the pattern is so heavily represented in examples that it is **model-resident**. Same profile as STJ case-insensitivity: **silent but famous → no signal.** A reproducible, low-variance −1.0% is a clean "the model already knows this" result. |
-
-This is the **third** package where the most prominent silent gotcha turned out to be
-model-resident (STJ case-insensitivity, M.E.AI function invocation). The pattern is now
-robust: a gotcha being *silent* and even *undocumented-as-a-pitfall* is not enough — if it is
-**demonstrated frequently** (every tutorial wires `UseFunctionInvocation`; every STJ migration
-guide mentions case-insensitivity), strong models absorb it. The winning SCL case was obscure
-precisely because it is a **transient beta-era detail** that mostly washed out of the corpus.
-
-## Practical consequences
-
-- **Measure before you keep.** New grounding content is a hypothesis; the eval is the test.
-  Keep only sections that move a scenario above the improvement threshold.
-- **Prefer migration/transformation scenarios** when probing whether a knowledge gap is
-  real; greenfield tasks tend to be model-resident for strong models.
-- **Stay within the line budget** (`eng/agents-line-limit.txt`). Cutting model-resident
-  content is the first lever when you're over budget.
-
-## Conclusion: does System.CommandLine 3.x need grounding?
-
-**Verdict: it needs grounding for a few specific, medium-to-high-value topics — not as
-a general rule.**
-
-Across every scenario we measured against a strong frontier model (Opus 4.6):
-
-- **General API usage is model-resident.** Greenfield CLI authoring (G1, +1.1%) and
-  "new in 3.x" member discovery (S1, −2.2%) showed no signal — the model already writes
-  correct current-API code and guesses well-named members.
-- **Even removed-API migration is largely model-resident.** Migrating a beta4 CLI whose
-  API was deleted before GA (M1, +6.4% with behavior gates) is recoverable through the
-  normal dev loop: compile errors point at the removed members and reflection reveals the
-  replacements. Grounding bought efficiency, not correctness.
-- **The one durable gap is silent breaking changes** — code that *compiles but behaves
-  wrong*, where neither the compiler nor reflection can catch the defect. The
-  alias-vs-description gotcha is the proof: with the grounding guaranteed in context the
-  isolated arm reached **+20.6%**. (It only landed at +9.6% effective at first because a
-  single trap is something this model often self-recovers, and the discover-and-read
-  delivery path lagged the in-context arm. Refocusing the doc to dense, RAG-style
-  migration/gotcha content with a sharper discovery description lifted the gating plugin
-  arm to **+15.1%**, clearing the bar — though run-to-run variance stays high.)
-
-So the grounding doc's value is **not** "how to use System.CommandLine." It is the short
-list of **non-discoverable hazards**: silent behavioral breaks and gotchas that compile
-fine and look correct but aren't. Author those; let the model handle the rest.
-
-## Methodological limitations (and how to harden the method)
-
-The three "model-resident" verdicts above are real but come with two structural caveats
-that anyone reading these numbers should weigh.
-
-### 1. The discovery–measurement circularity
-
-Our pipeline has two phases: **discovery** (enumerate candidate footguns) and
-**measurement** (baseline-vs-grounded eval, same model family). When candidates are sourced
-from the model's own memory (introspection plus a research agent), discovery can only surface
-gaps the model can already recall — and is blind to exactly the gaps that would move the
-metric. The measurement then "confirms" residency for content we obtained *from* the model.
-This biases the method toward null results: **it is good at falsifying grounding need, weak at
-discovering genuine gaps.**
-
-The System.CommandLine win is the proof the loop is escapable: the alias-vs-description gotcha
-was not recalled from memory, it was a **transient beta-era detail that had washed out of the
-training corpus**. The fixes all amount to *decoupling discovery from model memory*:
-
-- **Observe behavior from a zero-grounding baseline — the strongest signal.** The most
-  reliable non-resident gap is the frontier model's *own failure* on a real task with no
-  grounding present: where it fails outright, or succeeds only by burning **resourcefulness**
-  (web/cache archaeology, decompiling the package). That delta between model behavior and
-  package reality is exactly what grounding must close, and it can only be seen from an empty
-  baseline — which is why seeding from a model-written draft is *worse* than starting empty.
-- **Source genuinely post-cutoff material**, not introspection: release notes, brand-new or
-  renamed APIs, the package's own edge-case tests. Anything dated after the model's training
-  cutoff is non-resident by construction (this is why a zero-day upgrade is the strongest
-  scenario class). Note that **Stack Overflow / issue mining is low-yield**: most of it is
-  already in the training corpus (resident) and noisy — prefer behavioral observation.
-- **Run a cheap residency pre-probe** before spending a 5-run eval: ask the bare model "what
-  are the gotchas of X?" If it names the candidate, it is resident — skip it. This turns
-  implicit circularity into an explicit, fast gate.
-- **Let the model derive *tasks*, not grounding — then gate with humans.** Knowing "what is a
-  reasonable task for package X" is decoupled from "how to complete it with X's API," so
-  task-generation is far less circular than content-generation. But a model under-samples the
-  hard tasks it cannot already do, so **human-in-the-loop validates tasks for coverage and
-  correctness** (and HIL also reviews the final scoring / data cards). Task validation is the
-  guard against overfitting grounding to the eval's own tasks.
-- **Test an agent weaker than the judge.** `--model` (agent) and `--judge-model` are
-  independent. Running Opus-as-both is the *hardest* residency bar and the *least*
-  representative of the weaker agents most teams actually deploy. "Does package X need
-  grounding?" is underspecified without "...for which agent model?" Grounding value is
-  **model-relative**; our null results are strictly "the strongest model doesn't need this."
-
-#### Empirical confirmation: the same content flips from −1.0% to +63.3% by changing only the agent
-
-We tested this directly on the Microsoft.Extensions.AI function-invocation scenario (A1) — the
-one we had concluded was "model-resident" at **−1.0%** with Opus 4.6 as both agent and judge.
-We re-ran it changing **only the agent model** to Claude Haiku 4.5, holding the judge at Opus
-4.6, the grounding content, and the fixture constant:
-
-| Agent model (judge = Opus 4.6) | Improvement | Baseline quality (overall) | Baseline cost |
-| --- | --- | --- | --- |
-| Opus 4.6 | **−1.0%** (resident) | 5.0/5 | 66k tok / 7 tools / 26s |
-| Haiku 4.5 | **+63.3%** (CI [+39.7%, +74.0%], significant, g=+100%) | **1.6/5** → grounded 5.0 | **281k tok / 20 tools / 73s** → grounded 87k / 7 / 29s |
-
-The Haiku baseline correctly sensed "tools aren't being invoked" but chose the **wrong fix** (a
-hand-written tool-call loop), produced four compile errors, thrashed on the `ChatResponse` API,
-and **never produced a working app**. With the grounding it added `.UseFunctionInvocation()`,
-built, ran, and finished in 7 tool calls — **correct *and* ~3× cheaper.** A cheap closed-book
-**residency pre-probe predicted this**: asked the gotcha cold, Haiku 4.5 answered *"I don't
-know — I won't speculate,"* whereas Opus knows it cold.
-
-This is the central lesson of the whole exercise: **"model-resident" is a statement about a
-model, not a package.** The exact content we shelved as "the model already knows this" is a
-bar-clearing, money-saving rescue for a weaker (and far more commonly deployed) agent. Grounding
-authored for the strongest model is mostly redundant; grounding authored for the agent fleet
-that actually ships is not. Any verdict in this repo should name the agent model, and the
-honest default target is a *mid/low-tier* agent, not the frontier.
-
-#### The generation corollary: author with the strong model, *for* the weak (distillation)
-
-The same circularity that biases *measurement* also dictates *who should write the content*. You
-cannot use a model to author grounding **for itself**: if Opus 4.8 can produce the footgun on
-request, it already holds it, and writing it down only proves the redundancy. So the productive
-generation direction is **asymmetric** — use the strongest model to author grounding for the
-*weaker* tiers (Sonnet, especially Haiku). This is effectively **distillation**: the frontier
-model's resident knowledge is serialized into the shipped context that a weaker, far more commonly
-deployed agent lacks (the Haiku M.E.AI rescue above, −1.0% → +63.3%, is exactly this).
-
-The constraint is the second half of the asymmetry: **the distilled content must not harm the
-strong tier.** Frontier tokens are the most expensive in the fleet, so grounding that bloats or
-misleads Opus to rescue Haiku is a net-negative trade. This is the [Pareto gate](#4-the-right-scoring-model-one-utility-tier-priced-tokens-pareto-gate)
-expressed as a generation rule: **help the tier that needs it, no harm to the tier that doesn't** —
-judged on the worst case across the fleet, not the mean. The asymmetry of token cost (Haiku cheap
-to run but in need; Opus expensive but self-sufficient) is what makes the gate non-trivial.
-
-### 2. The scoring weights are tuned for skills, not grounding
-
-The harness improvement score (documented in `eng/skill-validator/src/README.md` and
-`src/docs/InvestigatingResults.md`; weights in `DefaultWeights`, `Models.cs`) is:
-Quality 0.40 + OverallJudgment 0.30 + TaskCompletion 0.15 + (Token 0.05 + Error 0.05 +
-ToolCall 0.025 + Time 0.025). Quality dominates by design — *"a skill that improves output
-quality will pass even if it uses more tokens"* — which is correct for a **skill** validator
-(loading a skill always costs tokens; don't punish that).
-
-But grounding's value is frequently **efficiency**: not letting the agent flail through many
-tool calls to rediscover a hazard. That value lands entirely in tokens + tool-calls + time =
-**0.10 combined, clamped** — so the quality-tuned yardstick structurally hides the win
-grounding is meant to deliver. A grounding-specific weight profile that elevates the
-efficiency bucket may surface signal the default masks (weights are not flag-overridable
-today, so this means a local re-score).
-
-### 3. "Tokens" is one number but should be a cost
-
-`tokenEstimate = inputTokens + outputTokens`, summed 1:1 (`MetricsCollector.cs`), clamped so
-≥2× usage maps to only −0.05 final. This is too coarse: output tokens cost ~4–5× input on
-every frontier pricing sheet, and reasoning/thinking tokens (billed as output, currently
-folded invisibly into `outputTokens`) are the most expensive and most variable component. A
-doubling of *output* tokens should be a material signal; today it is nearly free in the score.
-The per-arm input/output counts are already collected separately — only the score collapses
-them. The clean fix is a single **cost-weighted scalar** (`input·pᵢ + output·pₒ + reasoning·pᵣ`)
-scored on its reduction, rather than a 1:1 token sum or two parallel token metrics.
-
-### 4. The right scoring model: one utility, tier-priced tokens (Pareto gate)
-
-The "same rubric" (it's all just context — measure it identically) and "different objective per
-tier" views are not actually in conflict. There is **one** objective — quality — but the **price
-of tokens (λ) depends on the target agent tier**, and output/thinking tokens carry almost all of
-that price:
-
-```
-ΔUtility = Δquality − λ_tier · Δcost(output/thinking ≫ input)
+# Authoring principles for package skill-set grounding
+
+> **New here?** This doc explains how to author a package's `SKILL.md` skill set: a base skill named
+> for the package plus focused domain skills, each using Agent Skills frontmatter and progressive
+> disclosure into supporting files. For how we grade and ship grounding, use the ratified
+> [quality-card model](./quality-card-model.md): return + efficiency, with do-no-harm and economic
+> materiality gates.
+
+Grounding is the technique of installing package-specific skill docs so an agent can stop rediscovering
+facts the package can teach directly. The shipped artifact is a **pull-installed skill set**, not an
+always-on package doc. A consuming repo opts in, the root meta-skill orchestrates installation, and the
+skill set is removable.
+
+A package skill set has three layers:
+
+- **Base skill** — named for the package; tells the agent when this package is relevant and where to find
+  domain skills.
+- **Domain skills** — focused `SKILL.md` files for task families, migrations, gotchas, and workflows
+  proven to need grounding.
+- **Supporting files** — examples, reference notes, fixtures, or checklists loaded by progressive
+  disclosure only when a skill needs them.
+
+Every `SKILL.md` uses the Agent Skills convention:
+
+```yaml
+---
+name: package-or-domain-name
+description: Use when the task involves the package-specific gap this skill teaches.
+---
 ```
 
-- **Frontier tier — λ high.** Quality is near the ceiling, so Δquality is usually small. Ship
-  grounding only when it delivers a *large* quality jump (zero-day / post-cutoff content the
-  strong model genuinely lacks) **or net-reduces output tokens**. A small quality gain bought
-  with significant output tokens is a *fail*. Stated positively, a frontier-justified grounding
-  doc's value is **reduced output/thinking tokens** — you stop the smart model from
-  *deliberating its way around a gap* by simply telling it the fact.
-- **Mini / router-selected tier — λ low.** Tokens are cheap and quality is the binding
-  constraint, so almost any genuine quality gain ships; you are happy to pay tokens for it (the
-  model might otherwise *just fail*).
+The `description` is the resident discovery hook. The body and supporting files carry the details.
 
-Because grounding is **auto-installed and un-removable**, the verdict is a **Pareto gate**, not
-a mean: ship iff it **materially helps the tier that needs it (small) AND does no meaningful
-harm to the tier that doesn't (frontier)**; rip it out iff it helps neither. The
-[asymmetric M.E.AI run](reports/microsoft-extensions-ai.md) maps onto this exactly — Opus:
-Δq≈0, output tokens up → ΔU negative (don't ship for frontier); Haiku: Δq huge *and* tokens
-−69% → ΔU large-positive (ship). The case the harness still can't adjudicate well is grounding
-that *adds* output tokens for a *modest* quality gain on the frontier — precisely where λ and
-the cost-weighted token metric stop being cosmetic.
+## 1. Record only what the model is proven to need
+
+Only include information that an eval has demonstrated the target agent lacks. If a web-blocked baseline
+already produces the right result, the fact is model-resident and should not go into the skill set: it
+adds retrieval noise, costs tokens, and may create regressions.
+
+Do **not** start from a model-written draft. That contaminates the signal: the draft restates what the
+model already knows, masks real gaps, and can inject confident falsehoods. Start from an empty baseline,
+run the eval, observe where the agent fails or burns resourcefulness, then add the smallest skill content
+that closes the gap. Re-run after every material addition.
+
+### Evidence: System.CommandLine unit
+
+These historical measurements used an earlier score, but the authoring lesson remains durable: keep only
+facts that change behavior, especially silent and obscure migration hazards.
+
+| Scenario | Baseline → grounded | Movement | Authoring lesson |
+| --- | --- | ---: | --- |
+| `AcceptOnlyFromAmong` comparer overload | 5.0 → 5.0 | −2.2% | A well-named current member was already model-resident. |
+| Greenfield CLI on 3.x | 5.0 → 5.0 | +1.1% | Current greenfield authoring was already model-resident. |
+| Migrate a real 2.0.0-beta4 CLI to 3.x with compile-error gates | 5.0 → 5.0 | +6.4% | Compile errors plus reflection let the baseline recover; value was efficiency-only. |
+| Silent break: `new Option<T>("--n", "desc")` changes meaning in 3.x | 5.0 → 5.0 | +9.6% over five runs; guaranteed-context arm +20.6% | A migration that compiles but behaves wrong created real signal, but a single trap was often self-recovered. |
+| Same silent break, doc refocused to dense migration/gotcha sections and sharper discovery text | 4.6 → 5.0 | +15.1% over five runs; guaranteed-context arm +22.6% | Better retrieval framing lifted the discover-and-read path from +9.6% to +15.1%; delivery, not fact content, was the bottleneck. |
+
+**Takeaway:** durable signal comes from code transformations the model cannot locally recover: silent
+behavioral breaks, obscure version transitions, and package-specific traps. Removed APIs that produce
+compiler errors often need less grounding because the normal dev loop exposes the fix.
+
+## 2. Optimize for retrieval, not prose flow
+
+Skill retrieval is section-based and similarity-driven. The agent usually pulls the section or supporting
+file most related to its task, not a whole book. Therefore:
+
+- Spend minimum effort on narrative transitions and completeness for its own sake.
+- Make each section self-describing and keyword-dense; name old and new identifiers verbatim.
+- Put one missing fact or workflow per section when possible.
+- Prefer examples that expose the gotcha over broad API tours.
+- Stop once the section teaches the gap needed for the quality-card task.
+
+A skill set may read like a set of independent task cards. That is a feature: each card must work when
+retrieved alone.
+
+## 3. Write the `description` as a hook, not a synopsis
+
+The frontmatter `description` is paid up front in the resident index. It should make selection obvious,
+not reproduce the body.
+
+Include exactly three things:
+
+1. **Identity** — what package or domain this skill covers.
+2. **Trigger** — the task shape that should cause the agent to load it.
+3. **Differentiator** — the single clue that the model likely lacks this package-local fact.
+
+Do not include full code patterns, exhaustive API lists, or method signatures in the description. Those
+belong in the body or supporting files. A sharper discovery hook measurably improved the
+System.CommandLine discover-and-read path from +9.6% to +15.1%; longer would not have been better.
+
+## 4. Keep claims first-party and package-local
+
+A package skill set may speak with authority only about its own surface: overload choices, version
+transitions, serialization behavior, supported constraints, package-owned diagnostics, and package-owned
+examples. It should not assert broad multi-component architecture guidance unless that guidance is owned
+and tested by this package's maintainers.
+
+This keeps the blast radius small. Package-local truth is reviewable by package owners; cross-stack prose
+quickly becomes speculative and hard to grade. If a section teaches a workflow spanning multiple packages,
+make it a domain skill only when the eval, tests, and ownership all cover the full workflow.
+
+## 5. Keep the README human and the skill set agentic
+
+A README is still for humans: narrative ramp, onboarding, marketing, concepts, and progressive examples.
+A package skill set is for agents: measured gaps, independently retrievable sections, and supporting files
+loaded on demand.
+
+Do not make the README token-optimized, and do not make the skill set a prose rewrite of the README. The
+right authoring order is:
+
+1. Run the baseline with no skill set.
+2. Add the smallest skill content that closes observed gaps.
+3. Use the resulting gap list to check whether the README also teaches humans the necessary facts.
+4. Fix README omissions in human prose, not as a substitute for the skill set.
+
+## 6. Respect the line budget and progressive disclosure
+
+The harness enforces a per-file line budget because retrieval quality falls when sections bloat. Cut
+model-resident basics first. Move lengthy examples, matrices, and deep references into supporting files
+that the skill links to only when needed.
+
+This repo is mid-transition: some grounding units still use the historical file shape, and the real
+command `grounding check-agents` still validates those files and their line budget. Keep the command name
+when working existing units; frame the prose as grounding files and skill-set authoring.
+
+## 7. Target silent, obscure, non-self-correcting gaps
+
+Cross-package probes show that a gotcha must usually satisfy all three conditions to move strong agents:
+
+| Property | SCL alias-vs-description | STJ case-insensitivity | STJ Native AOT source generation | M.E.AI function invocation |
+| --- | --- | --- | --- | --- |
+| Silent | Yes | Yes | No; it throws | Yes; empty output |
+| Obscure | Yes | No; famous | Yes; post-training | No; common examples teach it |
+| Result | +15.1% | −12.5% | +7.9% | −1.0% |
+
+### Evidence: System.Text.Json unit
+
+| Scenario | Baseline → grounded | Movement | Authoring lesson |
+| --- | --- | ---: | --- |
+| Migrate Newtonsoft.Json code; silent break is case-sensitive matching by default | 5.0 → 4.8 in guaranteed context / 4.0 in discover-and-read | −12.5%; guaranteed-context −6.9% | The baseline already knew to add `PropertyNameCaseInsensitive = true`; the gotcha is too famous. |
+| Make reflection serialization Native AOT compatible with source generation | 5.0 → 5.0 | +7.9%; guaranteed-context +9.4% | The break was real but loud: the exception message points to source generation, so final quality tied. |
+
+### Evidence: Microsoft.Extensions.AI unit
+
+| Scenario | Baseline → grounded | Movement | Authoring lesson |
+| --- | --- | ---: | --- |
+| Wire up tool calling; missing `.UseFunctionInvocation()` means tools are never invoked | 5.0 → 5.0 | −1.0%; CI [−1.6%, −1.0%] | The strong baseline diagnosed and fixed the missing wrapper in every run; common examples made it resident. |
+
+A silent break is necessary but not sufficient. It must also be obscure and not self-correcting at compile
+or run time.
+
+## 8. Grounding is model-relative
+
+The same content can be redundant for a frontier model and decisive for a cheaper model. In the
+Microsoft.Extensions.AI function-invocation scenario, changing only the agent model flipped the result:
+
+| Agent model; judge held constant | Movement | Baseline quality | Baseline cost |
+| --- | ---: | --- | --- |
+| Opus 4.6 | −1.0% | 5.0/5 | 66k tokens / 7 tools / 26s |
+| Haiku 4.5 | +63.3%; CI [+39.7%, +74.0%] | 1.6/5 → grounded 5.0 | 281k tokens / 20 tools / 73s → grounded 87k / 7 / 29s |
+
+The Haiku baseline sensed the bug but chose a hand-written tool loop, hit compile errors, and never
+produced a working app. With grounding it added `.UseFunctionInvocation()`, built, ran, and finished in
+7 tool calls. A cheap closed-book pre-probe predicted this: Haiku declined to guess the gotcha, while the
+frontier model knew it.
+
+Author with the strongest available model, but measure the fleet that will use the skill set. This is
+knowledge distillation: serialize frontier-resident package facts for weaker agents without harming the
+strong tier.
+
+## 9. Harden discovery against circularity
+
+Discovery and measurement can become circular when candidate gaps come from the same model family being
+measured. Countermeasures:
+
+- Observe failures from a zero-grounding baseline; that is the strongest gap signal.
+- Prefer genuinely post-cutoff material: release notes, new APIs, renamed members, package tests, and
+  newly introduced constraints.
+- Run a cheap residency pre-probe before a full eval; if the bare model names the gotcha, skip or retarget.
+- Let models suggest tasks, but have humans validate task coverage, prompt fairness, and assertions.
+- Test weaker deployed agents as well as frontier agents.
+
+## 10. Measure with the quality card
+
+Older score weights overemphasized judge quality and underweighted efficiency. Grounding often wins by
+preventing flailing: fewer tool calls, fewer output tokens, and less local package archaeology. The
+quality-card model fixes the measurement target:
+
+- **RETURN** — graded yield on `Fails < Satisfies < Delivers`, plus reliability `ΔP` on the shared-success
+  set.
+- **EFFICIENCY** — per-dollar IET over delivered runs; duration per day is a co-headline, not a gate.
+- **Ship gate 1: do no harm** — loss mass must clear the null-95 baseline.
+- **Ship gate 2: economic materiality** — the per-dollar credible-interval upper bound must be at most
+  `×0.80`, a cost cut of at least 20%.
+
+A skill-set edit is a claim. Ship the claim only with the card and evidence that support it.
+
+## Practical checklist
+
+- Keep only lines tied to observed failures, resourcefulness, or cost reductions.
+- Prefer migration and transformation tasks over greenfield usage when probing for gaps.
+- Use the `description` as a selection hook.
+- Split broad content into base and domain skills with supporting files.
+- Stay first-party and package-local.
+- Re-run the grounded-vs-baseline eval after material edits.

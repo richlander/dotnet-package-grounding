@@ -35,14 +35,28 @@ internal static class Economics
     public static double ArmIetNorm(Metrics m, double wOut) =>
         ArmIet(m, wOut) + (1.0 - WCacheRead) * Turn1CacheRead(m);
 
+    // Dollar-comparability multiplier: a model's token price divided by Claude Haiku 4.5's.
+    // Anthropic prices each model uniformly across every token class, so one scalar is exact
+    // rather than an approximation -- Opus 5 is 5x Haiku 4.5 on all five classes (base input
+    // 5/1, 5m cache write 6.25/1.25, 1h cache write 10/2, cache hit 0.50/0.10, output 25/5).
+    // That uniformity is also why WCacheRead/WCacheWrite above are model-independent.
     public static double HaikuRatio(string model)
     {
         var s = model.ToLowerInvariant();
-        if (s.Contains("opus")) return 15.0;
+        if (s.Contains("fable") || s.Contains("mythos")) return 10.0;
+        if (s.Contains("opus")) return IsLegacyOpus(s) ? 15.0 : 5.0;
+        // Sonnet 5 carries a $2/MTok promo through 2026-08-31, reverting to the standard $3/MTok
+        // on 2026-09-01. We deliberately price it at the post-promo 3x: a published quality card
+        // outlives the promo, and 3x matches every other Sonnet version. Ratified 2026-07-24.
         if (s.Contains("sonnet")) return 3.0;
         if (s.Contains("haiku")) return 1.0;
         return 1.0;
     }
+
+    // Opus 4 and 4.1 (deprecated/retired) were $15/MTok input; every Opus from 4.5 on is $5/MTok.
+    // Matches opus-4 and opus-4.1 but not opus-4.5 .. opus-4.8 or opus-5.
+    private static bool IsLegacyOpus(string s) =>
+        System.Text.RegularExpressions.Regex.IsMatch(s, @"opus[-_ ]?4(\.1)?($|[^.\d])");
 
     public static double ArmHiet(Metrics m, double wOut, string model) => ArmIet(m, wOut) * HaikuRatio(model);
 }

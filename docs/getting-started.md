@@ -2,11 +2,11 @@
 
 > **Want the scoring model first?** How a run is graded and shipped is the
 > **[quality-card model](./quality-card-model.md)** (two axes — return + efficiency — and two ship
-> gates). This doc is the hands-on path: build the CLI, author a unit, run the ladder, read the card.
+> gates). This doc is the hands-on path: build the CLI, author a skill set, run CT-24, read the card.
 
 This repo is **generic infrastructure** for evaluating NuGet package *grounding* — it ships no
-grounding content of its own. You point it at a package (or a repo with candidate grounding) and
-measure whether the grounding helps an AI agent use the package correctly. Concepts live in
+grounding content of its own. You point it at a package repo with candidate grounding and measure
+whether the grounding helps an AI agent use the package correctly. Concepts live in
 [`grounding-eval-methodology.md`](./grounding-eval-methodology.md); how the harness runs is in
 [`harness.md`](./harness.md).
 
@@ -47,50 +47,44 @@ grounding --help
 
 ## The grounding loop
 
-1. **Author a unit.** Add the grounding doc and a small eval:
+1. **Author a skill set.** Add the shipped grounding artifact and a small eval:
 
    ```text
-   grounding/<slug>/AGENTS.md   # the Missing Manual (source of truth; ships in the package)
-   grounding/<slug>/meta.yaml   # name (== <slug>), package, description
-   tests/<slug>/eval.yaml       # scenarios: prompt + setup fixtures + assertions
-   tests/<slug>/fixtures/...     # sample project(s) gated by `dotnet build`/`run`
+   grounding/<slug>/SKILL.md      # base skill: YAML name + use-when description, then guidance
+   grounding/<slug>/<domain>/...  # optional domain skills/supporting files for progressive disclosure
+   grounding/<slug>/meta.yaml     # name (== <slug>), package, description
+   grounding/<slug>/eval.yaml     # CT-24 scenarios: prompt + setup fixtures + assertions
+   grounding/<slug>/fixtures/...  # sample project(s), gated by `dotnet build`/`run`
    ```
 
-   Write `AGENTS.md` additively from an **empty baseline** — only what an agent is *proven* to lack (see
-   [`authoring-principles.md`](./authoring-principles.md)). Keep it under the line budget
-   (`eng/agents-line-limit.txt`).
+   Write `SKILL.md` additively from an **empty baseline** — only what an agent is *proven* to lack (see
+   [`authoring-principles.md`](./authoring-principles.md)). Keep the base skill small, put deeper
+   package knowledge behind domain skills or supporting files, and let the root meta-skill orchestrate
+   install into the consuming repo.
 
-2. **Check the budget** (validate `AGENTS.md` is within the line limit):
-
-   ```bash
-   grounding check-agents
-   ```
-
-3. **Run the ladder** (arms are named by *content*, all force-fed — see methodology §1):
+2. **Run CT-24.** The live suite is the 24-task CT-24 suite, k=5 runs per task, across haiku, sonnet,
+   and opus. The eval is grounded (`SKILL.md`) vs baseline (no grounding):
 
    ```bash
-   # Rung 0/1 — Missing Manual scheme (the ~6-question everyday floor).
-   grounding run <slug> --source agents                                   # baseline vs Missing Manual
-   grounding run <slug> --source readme --readme-file path/to/README.md   # adds Front Door
-   grounding run <slug> --source skill                                    # adds Complete Textbook (SKILL.md)
+   DATA="${GROUNDING_DATA_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/grounding}/<slug>-ct24"
+   grounding run <slug> --source skill --eval-mode holistic --runs 5 \
+     -m "claude-haiku-4.5 claude-sonnet-4.6 claude-opus-4.8" --out "$DATA"
    ```
 
    For a **clean content measurement**, runs scrub `~/.dotnet/tools` from the agent's PATH so
-   `dotnet-inspect` can't substitute for the document (tool availability is a separate lever). Verify with
-   `di == 0` on the content arms.
+   `dotnet-inspect` can't substitute for the skill set (tool availability is a separate lever). Verify
+   with `di == 0` on the grounded arm.
 
-4. **Read the result** (datasets land in the grounding cache, not the tree —
-   `$GROUNDING_DATA_DIR`, else `$XDG_CACHE_HOME/grounding`, else `~/.cache/grounding/<slug>-6q/`):
+3. **Read the result** (datasets land in the grounding cache, not the tree):
 
    ```bash
-   DATA="${GROUNDING_DATA_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/grounding}/<slug>-6q"
-   grounding analyze        "$DATA/<slug>.<model>.json"   # full table (baseline + content arms)
-   grounding analyze --card "$DATA/<slug>.haiku.json" "$DATA/<slug>.opus.json"   # the PR dump
+   grounding analyze        "$DATA/<slug>.<model>.json"   # full table (baseline + grounded)
+   grounding analyze --card "$DATA"/<slug>.*.json         # quality-card dump for the PR
    ```
 
-Iterate **eval-driven**: run, find where the grounding falls short, patch the doc *generally* (not to the
-specific prompts), repeat. Then ship per [`grounding-lifecycle.md`](./grounding-lifecycle.md) with the
-evidence dump and the [PR template](./templates/canonical-grounding-pr.md).
+Iterate **eval-driven**: run, find where the grounding falls short, patch the skill set *generally*
+(not to the specific prompts), repeat. Then ship per [`grounding-lifecycle.md`](./grounding-lifecycle.md)
+with the evidence dump and the [PR template](./templates/canonical-grounding-pr.md).
 
 > The layout above authors a unit **inside this repo** for convenience. Grounding's real home is the
 > **package's own repo**: the harness reads `grounding/<unit>/` in place from any target via
@@ -99,10 +93,9 @@ evidence dump and the [PR template](./templates/canonical-grounding-pr.md).
 
 ## Where to go next
 
-- [`running-eval.md`](./running-eval.md) — how to point the harness at a package repo's grounding and
+- [`running-eval.md`](./running-eval.md) — how to point the harness at a package repo's skill set and
   read the result (grounding lives in the target repo, not here).
-- [`grounding-eval-methodology.md`](./grounding-eval-methodology.md) — the arms, the two regimes
-  (Core 6 / MM 12 / CT 24, nested), the cost-tiered ladder, and the ship gate.
-- [`authoring-principles.md`](./authoring-principles.md) — how to write the three documents
-  (Brochure / Missing Manual / Complete Textbook).
+- [`grounding-eval-methodology.md`](./grounding-eval-methodology.md) — the baseline-vs-grounded
+  measurement framing, CT-24 suite, cost model, and ship gates.
+- [`authoring-principles.md`](./authoring-principles.md) — how to write package `SKILL.md` skill sets.
 - [`harness.md`](./harness.md) — how `skill-validator` is built and run, and the confounds.

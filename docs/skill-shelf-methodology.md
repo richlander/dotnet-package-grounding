@@ -1,16 +1,16 @@
 # Skill-shelf methodology — the holistic benchmark and composition-axis LIET
 
-> **New here?** This doc explains how to evaluate a whole shelf of skills, not just one doc, and how
+> **New here?** This doc explains how to evaluate a whole shelf of skills, not just one skill, and how
 > to tell which skills helped, duplicated, or conflicted. For **how we now grade and ship** grounding
 > changes, read the ratified **[quality-card model](./quality-card-model.md)**: return + efficiency,
 > with do no harm + a ≥20% cost win.
 
 *How we evaluate a **shelf** of skills as a whole, and how we attribute the shelf's score
-back to the individual skills that earned it. Testing and scoring are one document because
+back to the individual skills that earned it. Testing and scoring are kept together because
 they are one question asked against two reference lines.*
 
 This is the skill-shelf counterpart to [`grounding-eval-methodology.md`](./grounding-eval-methodology.md)
-(which measures a single `AGENTS.md` content arm). It reuses [LIET](./liet.md) wholesale — the
+(which measures a single grounded skill-set arm). It reuses [LIET](./liet.md) wholesale — the
 same difference-of-areas instrument — and applies it to a second axis. Read `liet.md` first;
 this doc assumes its vocabulary (oracle gap, competitor envelope, harm region, divergence rung).
 
@@ -26,43 +26,43 @@ hard to read.
 | Asks | is skill *S* worth its context cost? | does the whole shelf, with the agent choosing what to load, serve the real distribution of developer questions? |
 | Object of study | one skill, in isolation | the shelf + the agent's own retrieval/selection |
 | Arm | `skilledIsolated` (only *S* loaded) | `skilledPlugin` (whole shelf, agent self-selects) |
-| Paradigm | [`dotnet/skills`](https://github.com/dotnet/skills) **per-skill PR** — each skill tested alone, on its own tests | **CT-24 holistic benchmark** — a frozen question suite, ground-up "what will a .NET dev ask an agent," scored against the shelf |
+| Paradigm | [`dotnet/skills`](https://github.com/dotnet/skills) **per-skill PR** — each skill tested alone, on its own tests | **the 24-task CT-24 suite** — a frozen question suite, ground-up "what will a .NET dev ask an agent," scored against the shelf |
 | Reference line | **baseline** — beat it *from above* (undercut cost) | **oracle ceiling** — reach it *from below* (close the gap) |
 
 **The two-rooms analogy.** Put two people in separate rooms who never speak. Person A develops
 skills the `dotnet/skills` way: each skill is brought to PR independently, with its own tests,
-graded in isolation. Person B writes CT-24 ground-up — a representation of what a .NET developer
+graded in isolation. Person B writes the 24-task CT-24 suite ground-up — a representation of what a .NET developer
 will actually ask an agent — and scores the *shelf* holistically, letting the agent discover and
 select. These are different instruments answering different questions. **Adding B's paradigm is
 not compatible with how A tests today**, and that incompatibility is structural, not incidental
 (§8).
 
-**This does not overturn [eval-protocol.md rule 1](./eval-protocol.md)** ("grade the clean
-`skilledIsolated` arm, never `skilledPlugin`"). Rule 1 governs **Q1**: a claim *about one document*
-must not be contaminated by other shelf content. Q2 is a *different claim* — the shelf, plus the
-agent's selection, **is** the object of study, so `skilledPlugin` is the subject, not a confound.
-Same rule, different question: **grade the arm that matches the question you are asking.**
+**This follows [eval-protocol.md rule 1](./eval-protocol.md)**: pre-register the grounded
+condition that matches the claim. Rule 1 governs **Q1**: a claim *about one skill* must not be
+contaminated by other shelf content. Q2 is a *different claim* — the shelf, plus the agent's
+selection, **is** the object of study, so `skilledPlugin` is the subject, not a confound. Same rule,
+different question: **grade the arm that matches the question you are asking.**
 
 ---
 
 ## 2. The holistic benchmark (Q2)
 
-CT-24 run as a whole-shelf benchmark is HLE-shaped: a frozen task suite that scores the shelf
-plus the agent's discovery and selection, not any one skill.
+The 24-task CT-24 suite, run as a whole-shelf benchmark, is HLE-shaped: a frozen task suite
+that scores the shelf plus the agent's discovery and selection, not any one skill.
 
-- **Three arms.** `baseline` (no grounding) · `skilledIsolated` (target skill only) ·
-  `skilledPlugin` (whole shelf, agent self-selects). The holistic benchmark reads
-  **`skilledPlugin`** (`GROUNDING_CARD_ARM=skilledPlugin`).
+- **Grounded condition.** Score `baseline` (no grounding) vs `skilledPlugin` (whole shelf,
+  agent self-selects). `skilledIsolated` remains the target-skill condition for Q1 and an
+  on-demand precision probe for attribution (§6).
 - **Organic discovery.** Prompts **never name the skill** — the harness rejects any prompt
   containing the target skill's whole-word name — so the benchmark tests whether the agent
   *finds* the right skill from a functional description, not whether it can follow a signpost.
 - **Target-skill hit.** Because we backfill each task's `expected_skill`, we can score selection
-  directly: on the locked n=5 markout shelf the agent self-selected the intended skill on
+  directly: on the locked k=5 markout shelf the agent self-selected the intended skill on
   **opus 23/24, haiku 24/24**. This is a first-class metric of the *shelf*, unavailable to any
   per-skill test.
-- **n ≥ 5.** Per-scenario verdicts are invalid under high variance ([eval-protocol rule 2](./eval-protocol.md));
+- **k ≥ 5.** Per-scenario verdicts are invalid under high variance ([eval-protocol rule 2](./eval-protocol.md));
   the shelf's near-zero-effect rungs are the noisiest, so the holistic benchmark standardizes at
-  **runs = 5** (n = 3 flipped both a haiku baseline and a per-rung "regression" that n = 5 cleared).
+  **runs = 5** (k = 3 flipped both a haiku baseline and a per-rung "regression" that k = 5 cleared).
 
 **The scored value stays LIET.** [`liet.md`](./liet.md) applied here is unchanged: correctness is
 all-functional-pass (`Ft > 0 && Fp == Ft`, discipline/`reject_tools` tracked separately as the
@@ -89,7 +89,7 @@ is the same instrument as LIET — just measured against a different reference l
   Polarity: **descend below baseline.**
 - **Composition-axis LIET:** `value(skill A) = outcome(full shelf) − outcome(shelf − A)`, held at
   equal task. Polarity: **ascend to the oracle ceiling.** This is the **oracle gap** from `liet.md`
-  ("value remaining, how much a fuller document could recover") **decomposed per skill**: attribution
+  ("value remaining, how much a fuller skill set could recover") **decomposed per skill**: attribution
   asks *which skills close the oracle gap, and by how much*.
 
 Both are finite differences of **observed successes at matched conditions**, never raw averages —
@@ -160,7 +160,7 @@ transcript for which instruction misfired (or hold token count fixed and vary on
 is each skill's singleton value `v({A})` — a *keep-only-A* run, exactly the shelf we build by
 excluding every other skill. The **off-diagonal** is the second-order interaction
 
-```
+```text
 c(A, B) = v({A, B}) − v({A}) − v({B})
 ```
 
@@ -204,7 +204,7 @@ trim.
 skill spends context, shelf value is **not monotone in cardinality**. The honest accounting for
 adding skill *N+1* is
 
-```
+```text
 net(N+1) = gain on its target tasks  −  interference tax on every other task
 ```
 
@@ -289,7 +289,7 @@ tasks the holistic benchmark exists to reward.
 
 Two independent reasons, one change:
 
-- **Cost.** For CT-24, `skilledIsolated` is roughly a third of total eval cost. `dotnet/skills` pays
+- **Cost.** For the 24-task CT-24 suite, `skilledIsolated` is roughly a third of total eval cost. `dotnet/skills` pays
   nothing like it, because per-PR testing *is* the isolated arm — one skill at a time is its whole
   world. Running it on every holistic task is redundant with a signal we already get for free from
   the pull distribution (deletion candidates show up as pull × 0; discovery gaps as never-pulled).
@@ -308,7 +308,7 @@ Isolated is not deleted; it is **repurposed** (§6, step 3) as an on-demand prec
 
 One limitation is worth naming because it is the same class as the isolated-vs-holistic gap.
 `dotnet/skills` ships **multiple plugins**, for good reason (domain separation, independent
-ownership). CT-24 testing can run **within** a plugin — that's an implementation detail. But there
+ownership). The CT-24 suite can run **within** a plugin — that's an implementation detail. But there
 is **no affordance for testing across packages / across plugins**: the composition axis of §3 stops
 at the plugin boundary, so a conflict or a collaboration that spans two plugins is as invisible to a
 single-plugin holistic benchmark as an intra-plugin conflict is to a per-skill test. Cross-package
@@ -323,7 +323,7 @@ composition is the next frontier of this methodology, not something it currently
 > weakest-to-strongest ordering of coalitions makes attribution a slope you read off step sizes:
 > a steep step is a load-bearing skill, a flat step a free-rider, and a subset outscoring its
 > superset is a conflict only the co-loaded holistic arm can see.
-
+>
 > And one axis deeper: the leave-one-out marginals are the **diagonal** of a skill-interaction
 > matrix whose off-diagonal cross-terms are a **compression distance** between skills — orthogonal,
 > redundant (merge), synergistic (compose), or interfering (cut). Each marginal is a **distillation
