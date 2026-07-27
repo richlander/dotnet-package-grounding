@@ -269,23 +269,27 @@ after the next model generation lands. It is a deliberately unfriendly bar, and 
 in what it stops you from shipping.
 
 A package lives forever. A model doesn't. Some users may stay on version 1.2.3 for years with your
-skill set perfectly captured, unchanged just like it is at its git commit. A meager win now has real risk on
-transitioning to loss. A significant win is a buffer won for your users.
+skill set perfectly captured, unchanged just like it is at its git commit. A meager win now has
+real risk on transitioning to loss. A significant win is a buffer won for your users.
 
 Three rules deliver confidence. **The task is the unit of evidence, not the run.** Every task is
-run the same number of times, five per arm. What varies is how many
-of those five *deliver*, and the price axes are scored over delivered runs only. A task an arm that nails
-five times out of five contributes five priced runs; an arm that squeaks out one delivery contributes one. Pool
-those into a single average and each task's weight becomes its own success rate, which is the very
-thing under test. That is not a rounding concern: the pooled number can move *opposite to every task
-in the suite* ([Simpson's paradox](https://en.wikipedia.org/wiki/Simpson%27s_paradox)).
+run the same number of times, five per arm. What varies is how many of those five *deliver*, and
+price is only charged on deliveries. An arm that nails a task five times out of five puts five
+priced runs into the pot; an arm that squeaks out one delivery puts in one.
 
-The trap is baited precisely by success. What good grounding does is turn failures into deliveries
-on the hard, expensive tasks, so those tasks take a larger share of the grounded arm's pool than of
-the baseline's. Grounding can then read as *more* expensive on the pooled number while having made
-every single task cheaper, the improvement itself doing the damage. So price is compared per task,
-on the tasks both arms delivered, and the suite figure is the equal-weight mean of those per-task
-ratios.
+Never average that pot. Two tasks show why. Say an easy task costs 10k
+[IET](#how-we-measure-cost-iet) per delivery and a hard one costs 100k, and grounding makes both 20%
+cheaper, 8k and 80k. Grounding also does the thing it is for: the baseline got the hard task over
+the line only once in five tries, and the grounded arm gets it all five times. Now average the
+delivered runs. The baseline pot is five cheap deliveries and one expensive one, or 25k. The
+grounded pot is five cheap and five expensive, or 44k. The pooled number says grounding made things
+**76% more expensive** while every task in the suite got **20% cheaper**. The four extra hard
+deliveries are the win, and pooling has billed them as a loss.
+
+Comparing per task cannot do that. Each task gets one ratio, 8/10 and 80/100, both ×0.80, and the
+suite figure is the mean of those. (The general name for the reversal is
+[Simpson's paradox](https://en.wikipedia.org/wiki/Simpson%27s_paradox).) Cost is compared on the
+tasks both arms delivered, so the two averages are always taken over the same set of tasks.
 
 **Never price or time an empty mode:** if an arm never delivers a task, we do *not* invent a cost
 or a duration for it. That is a **capability gap** (a coverage row: a task grounding *unlocks*),
