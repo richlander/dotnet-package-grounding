@@ -46,6 +46,35 @@ API surface, and two details follow from that:
 Because sizes differ, never compare raw task counts or totals across packages. Every headline is a
 paired within-package ratio for exactly this reason.
 
+### Sourcing the tasks: adopters, not the API surface
+
+Derive tasks from **how the library is used in real applications**. Enumerating the public API and
+writing a task per member produces a suite that exercises the library the way its own documentation
+describes it, which is the distribution the model already predicts. Both arms then score well and the
+suite cannot discriminate, which reads as "grounding earns nothing" when it is really the instrument
+failing to ask a hard question.
+
+Working procedure:
+
+1. Pick real consumers of the package: first-party tools, sample apps, and dependent repositories.
+2. Extract the idioms they actually use, weighted by frequency, including attribute and option
+   combinations that no single doc example shows together.
+3. Diff that set against the current skill shelf and the current suite. Anything used in anger but
+   neither taught nor evaluated is a candidate task.
+4. Prefer tasks whose failure mode is silent. Compile-clean-but-wrong output discriminates far better
+   than anything the compiler already catches.
+
+A second oracle, when one exists, is the **artifact the skill set replaces**. When a package migrates
+from a single grounding doc to a shelf, diff the retired doc against the shelf: anything it taught and
+the shelf does not is a coverage regression that no passing eval will reveal, because the suite was
+written against the shelf.
+
+Both oracles were used on Markout and each found real gaps the other did not
+([markout#149](https://github.com/richlander/markout/issues/149)): an adopter diff against
+`dotnet-inspect` surfaced heavily used idioms with zero skill or eval coverage, and a diff against the
+retired `AGENTS.md` surfaced five further API surfaces, three of which predated the shelf and had
+never been carried over.
+
 Run discipline:
 
 - `k = 5` repeats for every `(task, arm, model)` cell.

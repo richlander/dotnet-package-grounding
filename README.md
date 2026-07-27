@@ -97,7 +97,16 @@ that range at a cost you can afford to run five times per arm on several models.
 CT-24 names the *shape* of the suite. The contents are written fresh for each library against its
 own surface, then held constant across every arm and model. That authoring is most of the work, and
 it is where an evaluation is usually won or lost, because a suite that only asks easy questions will
-show any skill earning nothing. The per-package specifics are in
+show any skill earning nothing.
+
+The technique that matters most here is to **derive the tasks from how the library is used in real
+applications**, rather than inventing them from the API surface. Read real consumers, yours or other
+people's, and turn what they actually do into tasks. Invented tasks tend to exercise the library the
+way its own documentation already describes it, which is the same shape the model already predicts,
+so both arms do well and the suite cannot tell them apart. Real applications combine features in
+ways no example shows, and that is where an agent goes wrong and a skill has something to buy. The
+same reading also tells you which parts of your API are load-bearing enough to be worth teaching.
+The per-package specifics are in
 [`docs/grounding-eval-methodology.md`](docs/grounding-eval-methodology.md).
 
 The result is read with the [quality-card model](docs/quality-card-model.md): the two axes above,
