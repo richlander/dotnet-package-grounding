@@ -344,7 +344,7 @@ feature.
 
 | | Delivery vehicle | Installed location | Who gets it |
 | --- | --- | --- | --- |
-| **1. Marketplace skill** | `plugins/<plugin>/skills/<name>/` in a marketplace repo | `~/.copilot/installed-plugins/` | one developer, in every project |
+| **1. Marketplace skill** | `plugins/<plugin>/skills/<name>/` in a marketplace repo | `~/.copilot/installed-plugins/.../<name>/` | one developer, in every project |
 | **2. Per-user skill** | authored in place | `~/.copilot/skills/<name>/` | one developer, in every project |
 | **3. In-repo skill** | authored in place | `.github/skills/<name>/` | every developer in one repo |
 | **4. Package skill** | `skills/<name>/` in the package's repo | `.github/skills/<name>/` | every developer in one repo |
