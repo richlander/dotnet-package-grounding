@@ -29,8 +29,6 @@ becoming a tax on the tasks that never needed it.
 shelf is the worked example: a `markout` base skill plus `conditional-composition`,
 `output-formats`, `built-in-shapes`, and `composite-cells-cards`
 ([skills/](https://github.com/richlander/markout/tree/main/skills)).
-A `plugin.json` installs the set together, so the agent can pull whichever skill a task needs
-without the others taking up room.
 
 The files follow [Anthropic's Agent Skills](https://www.anthropic.com/news/skills) convention: a
 `SKILL.md` with YAML frontmatter (a `name` and a "use when…" `description`) that discloses into
