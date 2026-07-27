@@ -250,7 +250,8 @@ never subjective taste. Then we measure two **independent** axes behind two gate
   [Pareto improvement](https://en.wikipedia.org/wiki/Pareto_efficiency): improve things generally,
   harm no one model in particular. You do not get to choose which model your users bring, and
   routers can switch it mid-task without telling anyone, so a change that lifts the frontier while
-  regressing the mini is not a win.
+  regressing the mini is not a win. Improving efficacy for mini may result in a drop in efficiency
+  on frontier, resulting in significant token spend increases on the more expensive model.
 - **Gate 2, earn its keep.** The per-dollar win must clear a **≥20% floor with confidence** (the
   band's upper bound ≤ ×0.80), the minimum premium that repays authoring the skill and maintaining
   it as models drift. This is the number a semiconductor CEO would put on an earnings slide: a
