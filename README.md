@@ -342,29 +342,23 @@ These definitions are up for debate and may differ by domain or community. We de
 particular way here for the purposes of measurement and guidance for the package-grounding
 feature.
 
-| | Standard directory | How it gets there | Who gets it |
+| | Delivery vehicle | Installed location | Who gets it |
 | --- | --- | --- | --- |
-| **1. Marketplace skill** | `plugins/<plugin>/skills/<name>/` in a marketplace repo | the agent host installs it from the marketplace, into a cache outside your project | one developer, in every project |
-| **2. Per-user skill** | `~/.copilot/skills/<name>/` | the developer puts it there by hand | one developer, in every project |
-| **3. In-repo skill** | `.github/skills/<name>/` | committed with the code | every developer in one repo |
-| **4. Package skill** | `.github/skills/<name>/`, row 3's directory | installed from a package the project already restored | every developer in one repo |
+| **1. Marketplace skill** | `plugins/<plugin>/skills/<name>/` in a marketplace repo | `~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/skills/<name>/` | one developer, in every project |
+| **2. Per-user skill** | authored in place | `~/.copilot/skills/<name>/` | one developer, in every project |
+| **3. In-repo skill** | authored in place | `.github/skills/<name>/` | every developer in one repo |
+| **4. Package skill** | `skills/<name>/` in the package's repo | `.github/skills/<name>/` | every developer in one repo |
 
 Each `<name>/` directory holds a `SKILL.md` plus whatever it discloses into. Rows 2 and 3 have
 host-specific spellings: a per-user skill can also sit in `~/.claude/skills/` or
 `~/.agents/skills/`, and an in-repo skill in `.claude/skills/` or `.agents/skills/`. Those are the
-paths
-[Copilot CLI documents](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-skills),
+paths [Copilot CLI documents](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-skills),
 and Claude Code reads the `.claude` pair, which is why a skill written once tends to work in both.
 
-Rows 1 and 3 are both authored in a repository, but the repository plays a different part in each.
-A marketplace repo is a **means to an end**: it exists to ship skills to other people's machines,
-and the host copies them out of it into a cache
-(`~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/skills/<name>/`) that belongs to no
-project. [dotnet/skills](https://github.com/dotnet/skills/tree/main/plugins) is laid out that way,
-a `.claude-plugin/marketplace.json` at the root over a tree of plugins. For an in-repo skill,
-**means and end overlap**: the repo carrying the skill is the repo the skill is about, and nothing
-is copied anywhere. Row 4 is a marketplace repo's relationship, a vehicle for someone else's
-project, with an in-repo skill's destination.
+Rows 2 and 3 are authored where they are used. Rows 1 and 4 are authored in one repo and used in
+another, which is the only reason either needs an installer.
+[dotnet/skills](https://github.com/dotnet/skills/tree/main/plugins) is the reference layout for
+row 1: a `.claude-plugin/marketplace.json` at the root over a tree of plugins.
 
 Row 3 is not hypothetical, and `.github/skills/` is where .NET has settled in practice:
 [dotnet/runtime](https://github.com/dotnet/runtime/tree/main/.github/skills) and
@@ -385,9 +379,9 @@ skills should be too. That is why package skills target row 3.
 Row 4 is an alternative **distribution channel for row 1**, not a new kind of thing. The user
 already fetched your package, so the skill can ride along with a dependency they chose, instead of
 being something they have to know exists and go find in a marketplace. That is the entire pitch:
-discovery is the hard part of row 1, and a package they already depend on solves it. A maintainer
-authors the shelf in their own repo, as Markout does in
-[`skills/`](https://github.com/richlander/markout/tree/main/skills).
+discovery is the hard part of row 1, and a package they already depend on solves it.
+[Markout](https://github.com/richlander/markout/tree/main/skills) is the worked example of the
+vehicle.
 
 And once installed, row 4 **collapses into row 3**, into the same directory a hand-written project
 skill would occupy. The skills land in the consumer's repo as checked-in files they can read,
