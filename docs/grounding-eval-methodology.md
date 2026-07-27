@@ -30,8 +30,21 @@ Push-style always-on package delivery is not a current ship target.
 
 ## 2. Suite and repetition
 
-The benchmark suite is **CT-24**, an opaque 24-task workflow ladder. Keep the label opaque in infra docs;
-it names the suite, not a document tier.
+The benchmark suite is **CT-24**, a 24-task workflow ladder ordered by difficulty. The label names the
+suite, not a document tier; do not read the letters as a claim about which artifact is under test.
+
+CT-24 is a shape, not a fixed set of tasks. Each package gets its own suite authored against its own
+API surface, and two details follow from that:
+
+- **Size is per-package.** 24 is the standard and the default. Deviate only with a reason and state it
+  in the report: `System.Text.Json` runs 48 tasks because its gotchas are numerous and individually
+  cheap to test, so the extra resolution was worth the run cost.
+- **Task IDs are per-package and are not required to say `CT`.** `System.CommandLine` uses `C01`…,
+  `System.Text.Json` uses `J1`…, Markout uses `CT01`…. IDs only need to be stable within a package, so
+  that a per-task result can be traced across runs and arms.
+
+Because sizes differ, never compare raw task counts or totals across packages. Every headline is a
+paired within-package ratio for exactly this reason.
 
 Run discipline:
 

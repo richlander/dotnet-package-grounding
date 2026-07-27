@@ -89,20 +89,16 @@ the grounding and once with it, `k = 5` runs per arm, across a mini *and* a fron
 the [`dotnet/skills`](https://github.com/dotnet/skills) **skill-validator** harness to run those
 pairs and compare accuracy, token usage, and tool calls using pairwise LLM judging.
 
-The tasks come from a fixed suite, written fresh for each package and held constant across every
-arm and model. Our standard shape is the one we call **CT-24**: 24 tasks ordered by difficulty, from
-what you need on day 1 to the niche corner you hit on day 100. Twenty-four is a compromise between
-covering that range and what is affordable to run five times per arm per model, and it is not a
-rule. `System.Text.Json` runs a 48-task version where we wanted a sharper read.
+The tasks come from a fixed suite we call **CT-24**, for *complete textbook*: the set of questions a
+library's documentation ought to be able to answer, ordered by difficulty from what you need on day
+1 to the niche corner you hit on day 100. Twenty-four tasks is the standard size, chosen to cover
+that range at a cost you can afford to run five times per arm on several models.
 
-The **CT** stands for *complete textbook*. It is a leftover from an earlier three-tier design in
-which a short suite tested a package README and progressively longer ones tested richer docs. Only
-this rung survived the move to skills, so read the letters as a name rather than a distinction. Task
-IDs are per-package and will not always say `CT`: `C01` for `System.CommandLine`, `J1` for
-`System.Text.Json`, `CT01` for Markout.
-
-The suite is the experiment's real content. Writing tasks that genuinely probe *your* library is
-most of the work, and a suite that only asks easy questions will show a skill earning nothing.
+CT-24 names the *shape* of the suite. The contents are written fresh for each library against its
+own surface, then held constant across every arm and model. That authoring is most of the work, and
+it is where an evaluation is usually won or lost, because a suite that only asks easy questions will
+show any skill earning nothing. The per-package specifics are in
+[`docs/grounding-eval-methodology.md`](docs/grounding-eval-methodology.md).
 
 The result is read with the [quality-card model](docs/quality-card-model.md): the two axes above,
 return and efficiency, behind two ship gates (do no harm, plus a certified 20% economic win).
