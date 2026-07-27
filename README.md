@@ -85,10 +85,24 @@ cost you have handed to them for nothing.
 ## How a claim is tested
 
 Every claim here is backed by a paired experiment. The same agent attempts each task once without
-the grounding and once with it, `k = 5` runs per arm, across a mini *and* a frontier model, on the
-**CT-24** suite (24 graded tasks, from day-1 common usage to day-100 niche). We reuse the
-[`dotnet/skills`](https://github.com/dotnet/skills) **skill-validator** harness to run those pairs
-and compare accuracy, token usage, and tool calls using pairwise LLM judging.
+the grounding and once with it, `k = 5` runs per arm, across a mini *and* a frontier model. We reuse
+the [`dotnet/skills`](https://github.com/dotnet/skills) **skill-validator** harness to run those
+pairs and compare accuracy, token usage, and tool calls using pairwise LLM judging.
+
+The tasks come from a fixed suite, written fresh for each package and held constant across every
+arm and model. Our standard shape is the one we call **CT-24**: 24 tasks ordered by difficulty, from
+what you need on day 1 to the niche corner you hit on day 100. Twenty-four is a compromise between
+covering that range and what is affordable to run five times per arm per model, and it is not a
+rule. `System.Text.Json` runs a 48-task version where we wanted a sharper read.
+
+The **CT** stands for *complete textbook*. It is a leftover from an earlier three-tier design in
+which a short suite tested a package README and progressively longer ones tested richer docs. Only
+this rung survived the move to skills, so read the letters as a name rather than a distinction. Task
+IDs are per-package and will not always say `CT`: `C01` for `System.CommandLine`, `J1` for
+`System.Text.Json`, `CT01` for Markout.
+
+The suite is the experiment's real content. Writing tasks that genuinely probe *your* library is
+most of the work, and a suite that only asks easy questions will show a skill earning nothing.
 
 The result is read with the [quality-card model](docs/quality-card-model.md): the two axes above,
 return and efficiency, behind two ship gates (do no harm, plus a certified 20% economic win).
