@@ -11,23 +11,7 @@ a strong context-engineering measurement methodology. The primary product of our
 we're sharing so that this process is much easier. It offers a practical instruction for authoring package skills: what
 to write, what to leave out, and how to validate it, with worked examples for real packages.
 
-The approach heavily leverages agents, based on a set of best practices. These are examples, and the
-ineffective half of each pair is not a straw man; much of it is what we tried first, before the
-measurements talked us out of it.
-
-- **Effective:** Ask agents to write skills based on how your library is used in real apps.
-- **Ineffective:** Ask agents to write skills based on their training or a first look at your
-  library.
-- **Effective:** Evaluate agent capability relative to a set of fixed tasks, comparing baseline to
-  skilled across multiple models, each at least 5 times, in a controlled harness.
-- **Ineffective:** Evaluate the use of a skill once by installing the skill in your agent
-  environment.
-- **Effective:** Repeat the exact same task with one variable changed, like Opus 4.8 -> Opus 5. Diff
-  against the results.
-- **Ineffective:** Repeat manual evaluation against your memory of the duration of the tasks and
-  feel of model capability.
-
-If the idea is new to you, [`docs/overview.md`](docs/overview.md) covers the concept in one pass.
+[Package grounding — the concept in one pass](docs/overview.md) covers the concept in one pass.
 The harness mechanics live in [`docs/harness.md`](docs/harness.md); this page is about the concept
 and the findings. How grounding physically reaches the agent, which turns out to matter as much as
 what it says, is [`docs/delivery-and-retrieval.md`](docs/delivery-and-retrieval.md). How we
@@ -35,7 +19,7 @@ evaluate a change and decide whether it ships, including the methodology, terms,
 and evidence dump, is the
 [grounding eval methodology](docs/grounding-eval-methodology.md).
 
-## What a package carries
+## Package skills
 
 Grounding is delivered as a **skill set**, or shelf. A package carries a **base skill** named after
 the package, holding the pattern every task needs plus its everyday footguns, and a handful of
@@ -51,6 +35,22 @@ without the others taking up room.
 The files follow [Anthropic's Agent Skills](https://www.anthropic.com/news/skills) convention: a
 `SKILL.md` with YAML frontmatter (a `name` and a "use when…" `description`) that discloses into
 supporting files as the agent needs them. Any Skills-aware agent host can load them.
+
+The approach heavily leverages agents, based on a set of best practices. These are examples, and the
+ineffective half of each pair is not a straw man; much of it is what we tried first, before the
+measurements talked us out of it.
+
+- **Effective:** Ask agents to write skills based on how your library is used in real apps.
+- **Ineffective:** Ask agents to write skills based on their training or a first look at your
+  library.
+- **Effective:** Evaluate agent capability relative to a set of fixed tasks, comparing baseline to
+  skilled across multiple models, each at least 5 times, in a controlled harness.
+- **Ineffective:** Evaluate the use of a skill once by installing the skill in your agent
+  environment.
+- **Effective:** Repeat the exact same task with one variable changed, like Opus 4.8 -> Opus 5. Diff
+  against the results.
+- **Ineffective:** Repeat manual evaluation against your memory of the duration of the tasks and
+  feel of model capability.
 
 ## What a skill buys: efficacy and efficiency
 
@@ -393,53 +393,3 @@ The step that is still missing is the installer itself, the part that notices a 
 ships a shelf and puts it in the consumer's repo. That is tracked in
 [#21](https://github.com/richlander/dotnet-package-skills/issues/21). Everything below is about
 row 4.
-
-## Start here: the recommendation
-
-**[`docs/recommendation.md`](docs/recommendation.md)** is the executive summary for the NuGet
-v-team. It answers two team decisions, **(1) should we author grounding content for packages?**
-and **(2) should the NuGet MCP change?**, backing each with one progression (raw package → NuGet
-MCP → shipped grounding doc → resident-index MCP) measured across **2 real tasks × 5 delivery
-channels × 2 model tiers**, with raw data in [`data/`](data/) and worked grounding examples for
-four real packages. The supporting deep-dives are
-[`docs/authoring-principles.md`](docs/authoring-principles.md) (*what* to write),
-[`docs/delivery-and-retrieval.md`](docs/delivery-and-retrieval.md) (*how* it reaches the agent),
-and the per-package reports in [`docs/reports/`](docs/reports/).
-
-## How a grounding doc is written
-
-A grounding doc records **only what an agent is proven to lack** (by eval signal) and is written
-for the **section-based RAG retrieval** paradigm rather than top-to-bottom reading, unlike a README.
-It must stay **concise**, since retrieval quality falls as sections bloat. See
-[`docs/authoring-principles.md`](docs/authoring-principles.md) for the principles and the
-empirical evidence behind them.
-
-The per-package reports under [`docs/reports/`](docs/reports/) are writeups suitable for an
-upstream PR. [markout#148](https://github.com/richlander/markout/pull/148) is one that shipped, so
-it is the closest thing to a filled-in copy of the
-[canonical PR template](docs/templates/canonical-grounding-pr.md).
-
-- [System.CommandLine](docs/reports/system-commandline.md) needs grounding for a narrow set of
-  topics.
-- [System.Text.Json](docs/reports/system-text-json.md) does **not** need general grounding.
-- [Microsoft.Extensions.AI](docs/reports/microsoft-extensions-ai.md) shows that grounding need is
-  **model-relative**: its headline gotcha is resident for Opus 4.6 (−1.0%) but a +63.3% rescue
-  for Haiku 4.5.
-- [Markout](docs/reports/markout.md) is a genuinely non-resident package whose grounding competes
-  with the package's own README: do-no-harm + ~3× token efficiency at the frontier, and a
-  fail→pass correctness rescue at the weak tier.
-- [README liability](docs/reports/readme-liability.md) is a README-size sweep showing a lean
-  ~3.5 KB targeted doc is **size-invariant** and beats a README of any realistic size (3–74 KB)
-  by **~2–3×** (weighted IET), while README reliance is a high-variance, high-ceiling regime, so
-  the lever is **completeness + targeting**, not a size ratio.
-
-## Running the evals
-
-The harness mechanics (building `skill-validator` from a pinned `dotnet/skills` SHA, the
-`grounding/` + `tests/` layout, and how to add a package) are documented in
-**[`docs/harness.md`](docs/harness.md)**. Quick start:
-
-```bash
-# Prereq: a .NET SDK matching dotnet/skills' global.json, git, and `gh auth login`.
-eng/run-evals.sh System.CommandLine
-```
