@@ -1,12 +1,5 @@
 # Package grounding: the concept and the method
 
-> **New here?** *Grounding* is small, targeted, package-authored instruction that helps an AI coding
-> agent use a library correctly — shipped as a **`SKILL.md`** skill set the agent opts into. We
-> **measure** whether it helps by running each task **with and without** the grounding and comparing
-> the results with the ratified **[quality-card model](./quality-card-model.md)**: two axes
-> (**return** = does it succeed, reliably; **efficiency** = per-dollar cost and per-day speed) and two
-> ship gates (**do no harm** + a certified **≥20% economic** win).
-
 Package grounding is package-authored context that teaches a model how to use a specific library
 correctly. The delivered artifact is a **`SKILL.md`** skill set — authored to the
 [Agent Skills](https://www.anthropic.com/news/skills) convention (YAML frontmatter with a `name` and
