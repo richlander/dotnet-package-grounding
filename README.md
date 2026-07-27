@@ -268,6 +268,8 @@ their context on every task. A 20% floor buys enough headroom that the skill is 
 after the next model generation lands. It is a deliberately unfriendly bar, and most of its value is
 in what it stops you from shipping.
 
+A package lives forever. A model doesn't. Some users may stay on version 1.2.3 for years with your skill set perfectly captured unchanged at a git commit. A meager win now has real risk on transitioning to loss. A significant win is a buffer won for your users.
+
 Three rules keep the card honest. **The task is the unit of evidence, not the run.** Every task
 counts once in the suite figure, however many runs it contributed, because five runs of one task are
 one result measured five times, not five results. Pooling all runs into a single average instead
