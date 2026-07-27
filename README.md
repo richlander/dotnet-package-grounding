@@ -344,16 +344,27 @@ feature.
 
 | | Standard directory | How it gets there | Who gets it |
 | --- | --- | --- | --- |
-| **1. Marketplace skill** | `~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/skills/<name>/` | the agent host installs it from a marketplace | one developer, in every project |
+| **1. Marketplace skill** | `plugins/<plugin>/skills/<name>/` in a marketplace repo | the agent host installs it from the marketplace, into a cache outside your project | one developer, in every project |
 | **2. Per-user skill** | `~/.copilot/skills/<name>/` | the developer puts it there by hand | one developer, in every project |
 | **3. In-repo skill** | `.github/skills/<name>/` | committed with the code | every developer in one repo |
 | **4. Package skill** | `.github/skills/<name>/`, row 3's directory | installed from a package the project already restored | every developer in one repo |
 
 Each `<name>/` directory holds a `SKILL.md` plus whatever it discloses into. Rows 2 and 3 have
-host-specific spellings: a per-user skill can also sit in `~/.claude/skills/` or `~/.agents/skills/`,
-and an in-repo skill in `.claude/skills/` or `.agents/skills/`. Those are the paths
+host-specific spellings: a per-user skill can also sit in `~/.claude/skills/` or
+`~/.agents/skills/`, and an in-repo skill in `.claude/skills/` or `.agents/skills/`. Those are the
+paths
 [Copilot CLI documents](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-skills),
 and Claude Code reads the `.claude` pair, which is why a skill written once tends to work in both.
+
+Rows 1 and 3 are both authored in a repository, but the repository plays a different part in each.
+A marketplace repo is a **means to an end**: it exists to ship skills to other people's machines,
+and the host copies them out of it into a cache
+(`~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/skills/<name>/`) that belongs to no
+project. [dotnet/skills](https://github.com/dotnet/skills/tree/main/plugins) is laid out that way,
+a `.claude-plugin/marketplace.json` at the root over a tree of plugins. For an in-repo skill,
+**means and end overlap**: the repo carrying the skill is the repo the skill is about, and nothing
+is copied anywhere. Row 4 is a marketplace repo's relationship, a vehicle for someone else's
+project, with an in-repo skill's destination.
 
 Row 3 is not hypothetical, and `.github/skills/` is where .NET has settled in practice:
 [dotnet/runtime](https://github.com/dotnet/runtime/tree/main/.github/skills) and
