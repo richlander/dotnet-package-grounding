@@ -87,6 +87,13 @@ and compare accuracy, token usage, and tool calls using pairwise LLM judging.
 The result is read with the [quality-card model](docs/quality-card-model.md): the two axes above,
 return and efficiency, behind two ship gates (do no harm, plus a certified 20% economic win).
 
+If you want to see the whole method run end to end on a real package, read
+[markout#148](https://github.com/richlander/markout/pull/148). It is the best worked demonstration
+we have: it ships the skill shelf, the 24-scenario eval that graded it, and the four-model quality
+card with both gates and the verdict, in the form a package maintainer would actually review. It
+also shows the parts that are easy to leave out of a writeup, including a fifth skill that was cut
+for self-selecting only once on the ladder, and the decision to stop packing a doc into the nupkg.
+
 How grounding *reaches* the agent turns out to matter as much as what it says. A skill set that
 installs into the consuming repo is one route, where the agent opts in and the consumer can see and
 remove it. Packing a doc inside the `.nupkg` so it arrives on restore is another, and it is the
@@ -186,8 +193,9 @@ is why return is scored over all runs but efficiency only over deliveries.) And 
 path is graded**, meaning deterministic verifiable requirements, so the headline numbers don't ride
 on judge opinion. The full model, the band procedure, and the claims-to-evidence taxonomy are in
 [`docs/quality-card-model.md`](docs/quality-card-model.md) (spec:
-[`docs/quality-card-spec.md`](docs/quality-card-spec.md)); a worked three-model result is
-[Markout CT-24](https://github.com/richlander/markout/blob/main/grounding/markout/results.md).
+[`docs/quality-card-spec.md`](docs/quality-card-spec.md)); a worked four-model result is
+[Markout CT-24](https://github.com/richlander/markout/blob/main/grounding/markout/results.md),
+presented as a maintainer would see it in [markout#148](https://github.com/richlander/markout/pull/148).
 
 The consistent finding across model tiers: **grounding buys more as capability falls.** At the
 frontier the model is already near the ceiling, so the win is almost entirely **efficiency** (a
@@ -350,7 +358,9 @@ It must stay **concise**, since retrieval quality falls as sections bloat. See
 empirical evidence behind them.
 
 The per-package reports under [`docs/reports/`](docs/reports/) are writeups suitable for an
-upstream PR:
+upstream PR. [markout#148](https://github.com/richlander/markout/pull/148) is one that shipped, so
+it is the closest thing to a filled-in copy of the
+[canonical PR template](docs/templates/canonical-grounding-pr.md).
 
 - [System.CommandLine](docs/reports/system-commandline.md) needs grounding for a narrow set of
   topics.

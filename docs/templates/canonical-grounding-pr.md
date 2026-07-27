@@ -2,6 +2,11 @@
 
 Grounding for `<package>`: grounded vs baseline on CT-24, using the package `SKILL.md` skill set.
 
+> **Worked instance:** [markout#148](https://github.com/richlander/markout/pull/148) is this
+> template filled in and shipped. Read it alongside the placeholders below to see how much detail
+> each field actually needs, including how to report a skill that was cut and a delivery route that
+> was dropped.
+
 ## Claim
 
 Installing the `<package>` skill set improves `<return and/or efficiency claim>` for `<model tier(s)>`
