@@ -1,8 +1,10 @@
 # dotnet-package-skills
 
-This repo is about *grounding*: the small, targeted instruction a NuGet package can give an AI
-coding agent so the agent uses that package correctly. Writing that instruction is the easy half.
-Proving it actually helps is the half we spend most of our effort on.
+This repo is about *grounding*: small, targeted instruction that a library maintainer writes so an
+AI coding agent uses their package correctly. The maintainer is the one acting here. You know your
+package's footguns, and you can choose to spend effort making the package work better under an
+agent. Writing that instruction is the easy half. Proving it earned its place is the half we spend
+most of our effort on.
 
 ## What a package carries
 
@@ -21,15 +23,43 @@ The files follow [Anthropic's Agent Skills](https://www.anthropic.com/news/skill
 `SKILL.md` with YAML frontmatter (a `name` and a "use when…" `description`) that discloses into
 supporting files as the agent needs them. Any Skills-aware agent host can load them.
 
-## Why it needs measuring
+## What a skill buys: efficacy and efficiency
 
-A model already knows most of what a package's docs say, so grounding only earns its place where
-that knowledge runs out. It is easy to write plausible instruction that changes nothing.
+A skill can buy two different things, and it is worth deciding which one you are chasing before you
+write it.
 
-So every claim here is backed by a paired experiment. The agent attempts each task once without the
-grounding and once with it, and we compare the two. We reuse the
+- **Efficacy.** The agent produces a correct result where it previously failed, or only succeeded
+  some of the time. The quality card calls this axis *return*.
+- **Efficiency.** The agent reaches the same correct result for less: fewer tokens, fewer tool
+  calls, less wall-clock time.
+
+It is easy to say "I could write a skill about the breaking changes in our last major version."
+That may well be a good idea. But which of the two is it buying? Measure it. Today it may measure
+well on both. Six or twelve months from now the next model generation may already know your breaking
+change, and the efficacy win erodes to nothing. The efficiency win usually survives, because a
+targeted skill still beats the agent rediscovering the answer by reading your README, decompiling
+your assembly, or searching the web.
+
+We see this in our own numbers. A frontier model sits near the ceiling already, so its win is almost
+entirely efficiency, while weaker models gain both. The same pattern holds across model
+generations: correctness converges as models improve, and the efficiency gap is what stays legible.
+The [findings](#what-we-found) below carry the detail.
+
+Efficiency is a perfectly good target on its own. Just be clear that it is the target, and be
+willing to check rather than assume. The reason to hold that bar is that a skill is not free. It
+occupies context and is spent against your users' token budgets, on every task where the agent pulls
+it. A skill that merely ties the baseline is a cost you have handed to them for nothing.
+
+## How a claim is tested
+
+Every claim here is backed by a paired experiment. The same agent attempts each task once without
+the grounding and once with it, `k = 5` runs per arm, across a mini *and* a frontier model, on the
+**CT-24** suite (24 graded tasks, from day-1 common usage to day-100 niche). We reuse the
 [`dotnet/skills`](https://github.com/dotnet/skills) **skill-validator** harness to run those pairs
 and compare accuracy, token usage, and tool calls using pairwise LLM judging.
+
+The result is read with the [quality-card model](docs/quality-card-model.md): the two axes above,
+return and efficiency, behind two ship gates (do no harm, plus a certified 20% economic win).
 
 How grounding *reaches* the agent turns out to matter as much as what it says. A skill set that
 installs into the consuming repo is one route, where the agent opts in and the consumer can see and
@@ -51,14 +81,6 @@ The harness mechanics live in [`docs/harness.md`](docs/harness.md); this page is
 and the findings. How we evaluate a grounding change and decide whether it ships, including the
 methodology, terms, threshold gate, and evidence dump, is the
 [grounding eval methodology](docs/grounding-eval-methodology.md).
-
-## How we measure
-
-We measure grounding as a paired **grounded (`SKILL.md`) vs baseline (no grounding)** comparison.
-The same agent attempts each task with and without the skill set, `k = 5` runs per arm, across a
-mini *and* a frontier model, on the **CT-24** suite (24 graded tasks, from day-1 common usage to
-day-100 niche). The result is read with the [quality-card model](docs/quality-card-model.md): two
-axes (return and efficiency) behind two ship gates (do-no-harm, plus a certified 20% economic win).
 
 ## How we measure cost: IET
 
