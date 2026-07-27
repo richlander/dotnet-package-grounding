@@ -394,39 +394,6 @@ ships a shelf and puts it in the consumer's repo. That is tracked in
 [#21](https://github.com/richlander/dotnet-package-skills/issues/21). Everything below is about
 row 4.
 
-## Grounding vs. skills: our policy
-
-Skills and grounding are delivered the same way: both are `SKILL.md` skill sets that a consumer
-**pulls** into their repo (opt-in, user-visible, removable). What separates them is **scope**, not
-installation:
-
-- **A general skill** is a *procedure* or multi-component workflow: "how *we* do CI here", "how to
-  publish to NuGet". It spans tools and repos, and the user loads it because the *need is visible*:
-  the agent recognizes "this is a NuGet-publishing task" and pulls the publishing skill.
-- **Package grounding** is a *first-party, package-local* skill set authored for one dependency.
-  Its highest-value content is the *silent* gaps a model doesn't know it has, the footguns it
-  can't recover by compiling. It is installed only when an agent works in a project that references
-  that package.
-
-Because grounding ships under a package's name and is trusted by consumers who depend on that
-package, it earns a **stricter discipline** than a general skill (full treatment in
-[`docs/authoring-principles.md`](docs/authoring-principles.md)):
-
-1. **Stay in your lane.** Assert only **first-party, package-local facts**: your overloads, your
-   footguns, your beta→stable renames. The moment a skill describes a workflow *across* components,
-   it has become a general skill and left its lane. This bounds the blast radius: a skill that only
-   ever names its own package cannot mislead about one it never mentions.
-2. **Do no harm, and earn your keep.** Ship grounding only when the measured quality card clears
-   **both gates**: it does **no meaningful harm** to any model tier (the do-no-harm floor) **and**
-   it delivers a **material economic win**, at least a **≥20%** cut in cost-per-delivery, to the
-   tier that needs it. A skill set that merely ties the baseline doesn't earn the maintenance it
-   costs.
-
-> The two gates are the ship rule from the **[quality-card model](docs/quality-card-model.md)**: a
-> do-no-harm floor (loss mass no worse than luck alone) and a ≥20% economic-materiality gate on
-> cost-per-delivery, over a graded-yield return axis (*Fails < Satisfies < Delivers*) and a
-> per-dollar efficiency axis. See that doc for the full model and its analogies.
-
 ## What we found
 
 We authored and measured grounding for four real packages (**System.CommandLine**,
@@ -479,7 +446,7 @@ estimate, shown for traceability); full tables, method, and caveats are in
    The constraint is the other half of the asymmetry: **don't harm the strong tier in the process.**
    Opus tokens are far more expensive, so grounding that bloats or misleads the frontier to rescue
    the weak tier is a bad trade. Help the weak, no harm to the strong: the
-   [do-no-harm gate](#grounding-vs-skills-our-policy), and the asymmetry, restated as a generation
+   [do-no-harm gate](#how-we-measure-the-lift-the-quality-card), and the asymmetry, restated as a generation
    recipe.
 
 2. **The clean mechanism, isolated.** On the controlled Markout probe we can run all five delivery
