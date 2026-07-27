@@ -6,8 +6,8 @@
 > and ≥20% economic-win gates.
 
 How this repo **builds and runs** the [`dotnet/skills`](https://github.com/dotnet/skills)
-`skill-validator` to measure whether grounding helps. The root [`README`](../README.md) covers
-*what* grounding is and the findings; this file covers *how* the evals run.
+`skill-validator` to measure whether grounding helps. [`overview.md`](./overview.md) covers *what*
+grounding is and why it is measured this way; this file covers *how* the evals run.
 
 > The harness scaffolding — generated plugin manifests, transient validator wrappers, slug rules,
 > and runner scripts — is **not** shipped grounding. The artifact under test is the package skill set
