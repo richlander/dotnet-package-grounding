@@ -342,21 +342,33 @@ These definitions are up for debate and may differ by domain or community. We de
 particular way here for the purposes of measurement and guidance for the package-grounding
 feature.
 
-| | Where it lives | How it reaches the agent | What it is for |
+| | Standard directory | How it reaches the agent | What it is for |
 | --- | --- | --- | --- |
-| **1. Marketplace skill** | a skills marketplace, published as a `plugin.json` plugin (the `dotnet/skills` model) | the agent host installs it, typically once and for every project | a distributable capability the user went looking for |
-| **2. In-repo skill** | a directory committed to the repository itself | it is simply present, versioned with the code and visible in review | instructions particular to this codebase, persisted with it |
-| **3. Package skill** | authored by a package maintainer, published with the package | installed into the consuming repo from the package the project already restored | the footguns of one dependency, written by the people who know them |
+| **1. Marketplace skill** | authored in a plugin repo as `skills/<name>/`, alongside `.claude-plugin/marketplace.json`. Lands in a host-managed cache outside any repo, `~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/skills/<name>/` | the agent host installs it from a marketplace, once and then for every project | a distributable capability the user went looking for |
+| **2. In-repo skill** | `.github/skills/<name>/`, `.claude/skills/<name>/`, or `.agents/skills/<name>/`, committed with the code. The per-user equivalents are `~/.copilot/skills/`, `~/.claude/skills/`, `~/.agents/skills/` | it is simply present, versioned with the code and visible in review | instructions particular to this codebase, persisted with it |
+| **3. Package skill** | authored in the package's repo as `skills/<name>/` (as [Markout](https://github.com/richlander/markout/tree/main/skills) does). Installs to the consumer's `.github/skills/<name>/`, which is row 2 | installed into the consuming repo from the package the project already restored | the footguns of one dependency, written by the people who know them |
+
+Each `<name>/` directory holds a `SKILL.md` plus whatever it discloses into. The row 2 paths are the
+ones [Copilot CLI documents](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-skills),
+and Claude Code reads the `.claude` pair, which is why a skill written once tends to work in both.
+
+Row 2 is not hypothetical, and `.github/skills/` is where .NET has settled in practice:
+[dotnet/runtime](https://github.com/dotnet/runtime/tree/main/.github/skills) and
+[dotnet/core](https://github.com/dotnet/core/tree/main/.github/skills) carry 15 skills each, and
+[dotnet/sdk](https://github.com/dotnet/sdk/tree/main/.github/skills) uses both that directory and
+[`.claude/skills/`](https://github.com/dotnet/sdk/tree/main/.claude/skills), with different skills
+in each.
 
 Row 3 is an alternative **distribution channel for row 1**, not a new kind of thing. The user
 already fetched your package, so the skill can ride along with a dependency they chose, instead of
 being something they have to know exists and go find in a marketplace. That is the entire pitch:
 discovery is the hard part of row 1, and a package they already depend on solves it.
 
-And once installed, row 3 **collapses into row 2**. The skills land in the consumer's repo as
-checked-in files they can read, review, diff, and delete. That is the recommended persistence
-pattern, and it is what keeps the cost of package skills near zero: no new runtime, no new trust
-boundary, nothing to support beyond files in a repository.
+And once installed, row 3 **collapses into row 2**, into the same directory a hand-written project
+skill would occupy. The skills land in the consumer's repo as checked-in files they can read,
+review, diff, and delete. That is the recommended persistence pattern, and it is what keeps the cost
+of package skills near zero: no new runtime, no new trust boundary, nothing to support beyond files
+in a repository.
 
 The step that is still missing is the installer itself, the part that notices a restored package
 ships a shelf and puts it in the consumer's repo. That is tracked in
