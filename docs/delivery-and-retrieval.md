@@ -68,6 +68,31 @@ doc answers is whether the *retrieval mechanism* can make grounding **cost-free 
 useless and available when it's needed** — i.e. behave like retrieval-augmented generation
 (RAG) rather than an always-on prompt prefix.
 
+## Two ways grounding ships
+
+Before the retrieval question there is a packaging one, and the two routes have different
+properties.
+
+**A skill set installed into the consuming repo.** The maintainer publishes `skills/` alongside the
+package and the consumer pulls it into their own repository. The agent opts in, and because the
+files are checked in, the consumer can read every line before trusting it and delete any skill that
+is not earning its keep. The cost is that installation is a deliberate act: nothing arrives on its
+own, so adoption is opt-in and lagging. This is the live delivery model, and it is what the skill
+shelves in this repo are built for.
+
+**A grounding doc packed inside the `.nupkg`.** The file ships with the package and lands on
+restore, which is the route the NuGet MCP server and `dotnet-inspect` read from. Nothing to install
+and no version skew, since the doc is pinned to the package version that produced it. The cost is
+the mirror image: the consumer does not choose it, cannot trim it, and it is inert without a server
+willing to serve it. That last point is not theoretical. Channel A′ below ships the doc with no MCP
+to deliver it and is the *most* expensive cell in the matrix, because the agent never sees the doc
+and reads the README anyway.
+
+The two are not exclusive, and the choice is not obvious enough to make on principle, which is why
+everything below measures it. Markout took the first route and stopped packing a doc
+([markout#148](https://github.com/richlander/markout/pull/148)); that is a decision about who
+controls the consumer's context, not a claim that packing never pays.
+
 ## The three environments
 
 We frame delivery as a ladder, each rung isolating one variable:

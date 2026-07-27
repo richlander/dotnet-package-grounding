@@ -164,12 +164,6 @@ strong, conventional expectations about how an API of a given shape behaves. Whe
 violates that expectation, it is telling you something about your design, at a scale and
 repeatability no human review gives you.
 
-How grounding *reaches* the agent turns out to matter as much as what it says. A skill set that
-installs into the consuming repo is one route, where the agent opts in and the consumer can see and
-remove it. Packing a doc inside the `.nupkg` so it arrives on restore is another, and it is the
-route the NuGet MCP server and `dotnet-inspect` read from. We treat the delivery channel as
-something to [measure](#what-we-found) rather than assume.
-
 ## How to read this
 
 - **As a how-to.** Practical instruction for authoring package grounding: what to write, what to
@@ -181,7 +175,8 @@ something to [measure](#what-we-found) rather than assume.
 
 If the idea is new to you, [`docs/overview.md`](docs/overview.md) covers the concept in one pass.
 The harness mechanics live in [`docs/harness.md`](docs/harness.md); this page is about the concept
-and the findings. How we evaluate a grounding change and decide whether it ships, including the
+and the findings. How grounding physically reaches the agent, which turns out to matter as much as
+what it says, is [`docs/delivery-and-retrieval.md`](docs/delivery-and-retrieval.md). How we evaluate a grounding change and decide whether it ships, including the
 methodology, terms, threshold gate, and evidence dump, is the
 [grounding eval methodology](docs/grounding-eval-methodology.md).
 
