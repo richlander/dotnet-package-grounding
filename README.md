@@ -60,9 +60,11 @@ company has many developers.
 
 Every claim is a paired experiment. The same agent attempts each task once without the skill and
 once with it, five runs per arm, across a mini *and* a frontier model. The tasks come from a fixed
-per-package suite, **CT-24**, derived from how the library is used in real applications rather than
-from its API surface, because invented tasks tend to exercise the library the way its own
-documentation already does, and both arms do well. Results are read with the
+per-package suite of 24 graded tasks we call **CT-24**, for *complete textbook*: the questions a
+library's documentation ought to be able to answer, ordered from what you need on day 1 to the
+niche corner you hit on day 100. They are derived from how the library is used in real applications
+rather than from its API surface, because invented tasks tend to exercise the library the way its
+own documentation already does, and both arms do well. Results are read with the
 [quality-card model](docs/quality-card-model.md): two axes, return and efficiency, behind two ship
 gates, do no harm plus a certified 20% economic win.
 
