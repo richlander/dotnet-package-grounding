@@ -344,21 +344,18 @@ feature.
 
 | | Delivery vehicle | Installed location | Who gets it |
 | --- | --- | --- | --- |
-| **1. Marketplace skill** | `plugins/<plugin>/skills/<name>/` in a marketplace repo | `~/.copilot/installed-plugins/<marketplace>/<plugin>/skills/<name>/` | one developer, in every project |
+| **1. Marketplace skill** | `plugins/<plugin>/skills/<name>/` in a marketplace repo | `~/.copilot/installed-plugins/` | one developer, in every project |
 | **2. Per-user skill** | authored in place | `~/.copilot/skills/<name>/` | one developer, in every project |
 | **3. In-repo skill** | authored in place | `.github/skills/<name>/` | every developer in one repo |
 | **4. Package skill** | `skills/<name>/` in the package's repo | `.github/skills/<name>/` | every developer in one repo |
 
-Each `<name>/` directory holds a `SKILL.md` plus whatever it discloses into. The installed paths
-above are Copilot CLI's, which
+Each `<name>/` directory holds a `SKILL.md` plus whatever it discloses into. The paths above are
+Copilot CLI's, which
 [documents](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-skills)
 `.github/skills/`, `.claude/skills/` and `.agents/skills/` for a repo, and `~/.copilot/skills/` or
-`~/.agents/skills/` for a user. In row 1 the `<marketplace>` segment is the registered marketplace
-name rather than the source repo, so `dotnet/skills` installs under `dotnet-agent-skills/`. Hosts
-differ most here: Claude Code caches marketplace plugins under
-`~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/`, with a version segment Copilot does not
-use. Rows 2 and 3 vary least, since Claude Code reads the `.claude` pair, which is why a skill
-written once tends to work in both.
+`~/.agents/skills/` for a user. Claude Code reads the `.claude` pair, which is why a skill written
+once tends to work in both. Row 1 is the exception: each host manages its own marketplace cache,
+under its own path.
 
 Rows 2 and 3 are authored where they are used. Rows 1 and 4 are authored in one repo and used in
 another, which is the only reason either needs an installer.
