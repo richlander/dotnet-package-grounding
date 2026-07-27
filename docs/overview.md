@@ -26,7 +26,7 @@ the non-obvious, version-specific gotcha an agent actually needs.
 
 A skill inverts that ratio: a small, targeted doc carrying **only what the model is proven to lack**,
 the non-obvious, version-specific gotchas ("footguns") that otherwise send the agent digging through
-decompiled assemblies or the web. Grounding earns its place by deleting that archaeology.
+decompiled assemblies or the web. Grounding earns its place by making that digging unnecessary.
 
 ## What "knowledge" means here
 
@@ -78,6 +78,26 @@ know it can have a real capability gap too. The cross-generation version of the 
 still, resting on two Opus generations of a single package, so we would not lean on it yet. The
 per-package reports in [`docs/reports/`](reports/) carry the detail and the caveats.
 
+The reason the frontier's win lands on one axis and not the other is **resourcefulness**, and it
+cuts both ways. An ungrounded agent usually gets there in the end. When it does not know your
+package it goes and finds out: it opens the assembly in the NuGet cache, decompiles it, sometimes
+writes a throwaway program to reflect over the metadata, and searches the web for whatever is left.
+That is genuinely impressive behavior, and it is why a strong model's pass rate barely moves when
+you hand it a skill. It already had a way through.
+
+The same trait is what makes the efficiency gap large. Every one of those detours is billed, in
+tool calls, in long outputs, and in wall-clock time the developer spends watching. We call the
+behavior **archaeology**, because what we mostly see is agents burrowing through the package cache,
+and we count it on every run. The extreme case is an agent building a tool it should not have
+needed, memorably
+[an AI that wrote its own `curl`](https://avelarder.blog/2026/02/25/i-am-a-sad-lobster-now-the-day-an-ai-built-its-own-curl/)
+rather than give up. It succeeded. The question for a maintainer is what that success cost, and
+whether a few hundred tokens of grounding would have made the dig unnecessary.
+
+This is why the two axes cannot be collapsed into one number. Grade only pass or fail and you will
+conclude that grounding does nothing for a strong model, because its resourcefulness absorbs the
+gap that grounding would otherwise close. The win is real; it just lands on cost.
+
 Efficiency is a perfectly good target on its own, and it compounds in a way efficacy does not: one
 session has many turns, one developer has many sessions, and one company has many developers. A
 durable 20% is worth having.
@@ -103,7 +123,7 @@ and compare accuracy, token usage, and tool calls using pairwise LLM judging.
 
 We record, per run: whether the task was **delivered** (all functional assertions pass *and* it was
 done as asked), the **token cost** ([IET](#how-we-measure-cost-iet)), the **wall-clock duration**,
-and the **archaeology** the agent resorted to (cache decompiles, nuget.org fetches, web searches).
+and the **archaeology** it resorted to (cache decompiles, nuget.org fetches, web searches).
 Grounding should drive correctness up and archaeology, cost, and time down.
 
 Every claim here is backed by a paired experiment. The same agent attempts each task once without
