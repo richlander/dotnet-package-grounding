@@ -8,7 +8,15 @@ the result of attempting to do just that and finding that doing a good job is ve
 a strong methodology. The primary product of our effort is a methodology and associated tools that
 we're sharing so that this process is much easier.
 
-The approach heavily leverages agents, based on a set of best practices (these are examples):
+Read it two ways. As a **how-to**, it is practical instruction for authoring package skills: what
+to write, what to leave out, and how to validate it, with worked examples for real packages. As a
+**record of our approach**, it is what we mean by *context engineering*, which we intend as a
+concrete question rather than a slogan: what to put into an agent's context, and how to keep it
+limited.
+
+The approach heavily leverages agents, based on a set of best practices. These are examples, and the
+ineffective half of each pair is not a straw man; much of it is what we tried first, before the
+measurements talked us out of it.
 
 - **Effective:** Ask agents to write skills based on how your library is used in real apps.
 - **Ineffective:** Ask agents to write skills based on their training or a first look at your
@@ -21,6 +29,14 @@ The approach heavily leverages agents, based on a set of best practices (these a
   against the results.
 - **Ineffective:** Repeat manual evaluation against your memory of the duration of the tasks and
   feel of model capability.
+
+If the idea is new to you, [`docs/overview.md`](docs/overview.md) covers the concept in one pass.
+The harness mechanics live in [`docs/harness.md`](docs/harness.md); this page is about the concept
+and the findings. How grounding physically reaches the agent, which turns out to matter as much as
+what it says, is [`docs/delivery-and-retrieval.md`](docs/delivery-and-retrieval.md). How we
+evaluate a change and decide whether it ships, including the methodology, terms, threshold gate,
+and evidence dump, is the
+[grounding eval methodology](docs/grounding-eval-methodology.md).
 
 ## What a package carries
 
@@ -163,22 +179,6 @@ A model is a useful reviewer here precisely because it has read an enormous amou
 strong, conventional expectations about how an API of a given shape behaves. When your library
 violates that expectation, it is telling you something about your design, at a scale and
 repeatability no human review gives you.
-
-## How to read this
-
-- **As a how-to.** Practical instruction for authoring package grounding: what to write, what to
-  leave out, and how to validate it, grounded in worked examples for real packages.
-- **As a record of our approach.** These patterns are our approach to **context engineering**, by
-  which we mean something concrete: what to add to an agent's context, and how to limit it. Which
-  delivery channel surfaces grounding, how agents retrieve it, when it helps versus hurts, and the
-  evidence behind each call.
-
-If the idea is new to you, [`docs/overview.md`](docs/overview.md) covers the concept in one pass.
-The harness mechanics live in [`docs/harness.md`](docs/harness.md); this page is about the concept
-and the findings. How grounding physically reaches the agent, which turns out to matter as much as
-what it says, is [`docs/delivery-and-retrieval.md`](docs/delivery-and-retrieval.md). How we evaluate a grounding change and decide whether it ships, including the
-methodology, terms, threshold gate, and evidence dump, is the
-[grounding eval methodology](docs/grounding-eval-methodology.md).
 
 ## How we measure cost: IET
 
