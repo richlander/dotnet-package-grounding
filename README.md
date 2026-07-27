@@ -4,27 +4,38 @@ This repo is about *grounding*: the small, targeted instruction a NuGet package 
 coding agent so the agent uses that package correctly. Writing that instruction is the easy half.
 Proving it actually helps is the half we spend most of our effort on.
 
-Grounding is delivered as a **skill set**. A package carries a **base skill** named after the
-package, covering its everyday footguns, plus a handful of **domain skills** for its long-tail
-workflows. A root meta-skill orchestrates how they install into a consuming repo.
+## What a package carries
+
+Grounding is delivered as a **skill set**, or shelf. A package carries a **base skill** named after
+the package, holding the pattern every task needs plus its everyday footguns, and a handful of
+**domain skills** covering long-tail workflows that the agent pulls only when a task calls for them.
+
+Markout is the package we have measured most, and its shelf is the worked example: a `markout` base
+skill plus `conditional-composition`, `output-formats`, `built-in-shapes`, and
+`composite-cells-cards`
+([skills/](https://github.com/richlander/markout/tree/ce792b6d56cef3c5bd4060a284da2b03fd3c5553/skills)).
+A `plugin.json` installs the set together, so the agent can pull whichever skill a task needs
+without the others taking up room.
 
 The files follow [Anthropic's Agent Skills](https://www.anthropic.com/news/skills) convention: a
 `SKILL.md` with YAML frontmatter (a `name` and a "use when…" `description`) that discloses into
 supporting files as the agent needs them. Any Skills-aware agent host can load them.
 
-Where the skills live matters as much as what they say. These install into the **consuming**
-repository, the project that depends on the package, so the agent opts into them and the consumer
-can see and remove them. The other route is to pack the doc inside the `.nupkg` so that it arrives
-with a restore. Markout shipped that way from 0.13.8 through 0.23.0, and packing is what lets the
-NuGet MCP server and `dotnet-inspect` serve a doc at all. Both routes are live options, so we treat
-the delivery channel as something to [measure](#what-we-found) rather than assume.
+## Why it needs measuring
 
 A model already knows most of what a package's docs say, so grounding only earns its place where
-that knowledge runs out. It is easy to write plausible instruction that changes nothing, so every
-claim here is backed by a paired experiment.
-The agent attempts each task once without the grounding and once with it, and we compare the two.
-We reuse the [`dotnet/skills`](https://github.com/dotnet/skills) **skill-validator** harness to run
-those pairs and compare accuracy, token usage, and tool calls using pairwise LLM judging.
+that knowledge runs out. It is easy to write plausible instruction that changes nothing.
+
+So every claim here is backed by a paired experiment. The agent attempts each task once without the
+grounding and once with it, and we compare the two. We reuse the
+[`dotnet/skills`](https://github.com/dotnet/skills) **skill-validator** harness to run those pairs
+and compare accuracy, token usage, and tool calls using pairwise LLM judging.
+
+How grounding *reaches* the agent turns out to matter as much as what it says. A skill set that
+installs into the consuming repo is one route, where the agent opts in and the consumer can see and
+remove it. Packing a doc inside the `.nupkg` so it arrives on restore is another, and it is the
+route the NuGet MCP server and `dotnet-inspect` read from. We treat the delivery channel as
+something to [measure](#what-we-found) rather than assume.
 
 ## How to read this
 
