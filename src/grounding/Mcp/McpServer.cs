@@ -304,28 +304,48 @@ internal static class McpServer
 
     private static string Norm(string s) => new(s.ToLowerInvariant().Where(char.IsLetterOrDigit).ToArray());
 
+    // Unit names are unique (they are directory names), but several units can declare the same
+    // `package:` because variant/control arms measure the same package. Resolving a package name
+    // must land on the canonical unit (the one whose directory name matches the package), never on
+    // whichever arm happens to sort last. Silent last-writer-wins here would serve a pinned control
+    // arm's grounding under the live package's name.
     private static Dictionary<string, string> PackageIndex()
     {
         var index = new Dictionary<string, string>();
+        var claimedBy = new Dictionary<string, string>();
         if (!Directory.Exists(GroundingDir)) return index;
         foreach (var unit in Directory.EnumerateFileSystemEntries(GroundingDir).OrderBy(x => x, StringComparer.Ordinal))
         {
             var agents = UnitSkill(unit);
             if (agents is null) continue;
-            index[Norm(Path.GetFileName(unit))] = agents;
+            var unitName = Path.GetFileName(unit);
+            index[Norm(unitName)] = agents;
             var meta = Path.Combine(unit, "meta.yaml");
-            if (File.Exists(meta))
+            if (!File.Exists(meta)) continue;
+            foreach (var line0 in PyLines(File.ReadAllText(meta)))
             {
-                foreach (var line0 in PyLines(File.ReadAllText(meta)))
+                var line = line0.Trim();
+                if (!line.StartsWith("package:")) continue;
+                var pkg = line[8..].Trim().Trim('\'', '"');
+                if (pkg.Length == 0) break;
+                var key = Norm(pkg);
+                if (claimedBy.TryGetValue(key, out var holder))
                 {
-                    var line = line0.Trim();
-                    if (line.StartsWith("package:"))
-                    {
-                        var pkg = line[8..].Trim().Trim('\'', '"');
-                        if (pkg.Length > 0) index[Norm(pkg)] = agents;
-                        break;
-                    }
+                    // Canonical unit wins regardless of enumeration order; otherwise keep the
+                    // incumbent. Either way the collision is reported, never silent.
+                    var incumbentIsCanonical = Norm(holder) == key;
+                    var challengerIsCanonical = Norm(unitName) == key;
+                    var winner = !incumbentIsCanonical && challengerIsCanonical ? unitName : holder;
+                    Console.Error.WriteLine(
+                        $"grounding: package '{pkg}' is claimed by both '{holder}' and '{unitName}'; serving '{winner}'.");
+                    if (winner == unitName) { index[key] = agents; claimedBy[key] = unitName; }
                 }
+                else
+                {
+                    index[key] = agents;
+                    claimedBy[key] = unitName;
+                }
+                break;
             }
         }
         return index;
