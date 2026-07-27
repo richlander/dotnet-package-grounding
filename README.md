@@ -31,7 +31,7 @@ the package, holding the pattern every task needs plus its everyday footguns, an
 Markout is the package we have measured most, and its shelf is the worked example: a `markout` base
 skill plus `conditional-composition`, `output-formats`, `built-in-shapes`, and
 `composite-cells-cards`
-([skills/](https://github.com/richlander/markout/tree/ce792b6d56cef3c5bd4060a284da2b03fd3c5553/skills)).
+([skills/](https://github.com/richlander/markout/tree/main/skills)).
 A `plugin.json` installs the set together, so the agent can pull whichever skill a task needs
 without the others taking up room.
 
@@ -187,7 +187,7 @@ path is graded**, meaning deterministic verifiable requirements, so the headline
 on judge opinion. The full model, the band procedure, and the claims-to-evidence taxonomy are in
 [`docs/quality-card-model.md`](docs/quality-card-model.md) (spec:
 [`docs/quality-card-spec.md`](docs/quality-card-spec.md)); a worked three-model result is
-[Markout CT-24](https://github.com/richlander/markout/blob/skills/markout-consumer/grounding/markout/results.md).
+[Markout CT-24](https://github.com/richlander/markout/blob/main/grounding/markout/results.md).
 
 The consistent finding across model tiers: **grounding buys more as capability falls.** At the
 frontier the model is already near the ceiling, so the win is almost entirely **efficiency** (a
