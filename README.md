@@ -3,16 +3,13 @@
 This repo is about *skill grounding*: targeted instructions that are included in a package so that
 an AI coding agent uses it correctly. As a package maintainer, you know the broad spread of user
 scenarios, from the basics to advanced scenarios. Writing those scenarios as skills can provide your
-users with a better experience when they ask agents to use your package. This repo was created as
-the result of attempting to do just that and finding that doing a good job is very difficult without
-a strong methodology. The primary product of our effort is a methodology and associated tools that
-we're sharing so that this process is much easier.
+users with a better experience when they ask agents to use your package.
 
-Read it two ways. As a **how-to**, it is practical instruction for authoring package skills: what
-to write, what to leave out, and how to validate it, with worked examples for real packages. As a
-**record of our approach**, it is what we mean by *context engineering*, which we intend as a
-concrete question rather than a slogan: what to put into an agent's context, and how to keep it
-limited.
+This repo was created as
+the result of attempting to add skills to a package for users, as a package maintainer, finding that writing good skills with high confidence on their utility is very difficult without
+a strong context-engineering measurement methodology. The primary product of our effort is a methodology and associated tools that
+we're sharing so that this process is much easier. It offers a practical instruction for authoring package skills: what
+to write, what to leave out, and how to validate it, with worked examples for real packages.
 
 The approach heavily leverages agents, based on a set of best practices. These are examples, and the
 ineffective half of each pair is not a straw man; much of it is what we tried first, before the
@@ -191,18 +188,27 @@ IET = fresh + 0.1·cacheRead + 1.25·cacheWrite + 5·output
 
 where `fresh = inputTokens − cacheReadTokens` is Anthropic's **Base Input Tokens** at 1× (the
 SDK's `inputTokens` is cache-read-inclusive, verified against every dataset, where cacheRead never
-exceeds it). The formula maps 1:1 onto Anthropic's four billed categories (Base / cache read /
-cache write / output). This **diverges from the `dotnet/skills` harness
+exceeds it). The formula maps 1:1 onto [Anthropic's four billed categories](https://platform.claude.com/docs/en/about-claude/pricing) (Base / cache read /
+cache write / output). [OpenAI API pricing](https://developers.openai.com/api/docs/pricing) is similar.
+
+This approach **diverges from the `dotnet/skills` harness
 metric**, which reports an unweighted `tokenEstimate = inputTokens + outputTokens` (cache reads
 counted at full price, output counted the same as input). We diverged because that estimate
 inflates the exploration-heavy raw baseline, so the channel that does the most cheap prompt-cache
-reads looks the most expensive, and it undercounts output, which is the dominant real cost. The
+reads looks the most expensive, and it undercounts output, which is the dominant real cost.
+
+The
 weights are **Anthropic's published pricing multipliers**
 ([price sheet](https://platform.claude.com/docs/en/about-claude/pricing)): cache read **0.1×**
 base input, 5-min cache write **1.25×**, and **output 5×**, uniform and exact across current Claude
 models (Opus 4.8 $5→$25, Sonnet $3→$15, Haiku 4.5 $1→$5; see also
-[dotnet/sdk#54417](https://github.com/dotnet/sdk/issues/54417)). So the
-weights also expose the **arbitrage** between classes: spending cheap cached input to avoid
+[dotnet/sdk#54417](https://github.com/dotnet/sdk/issues/54417)).
+
+A major focus of our effort token arbitrage. There is a 50x differential between cacheRead and output.
+Tokens that slide from output to cacheRead enjoy a 50x cheaper accounting. That's a key component of the
+efficiency side of our methodology.
+
+Spending cheap cached input to avoid
 expensive output is a win the unweighted metric can't see. Cross-channel comparisons then reflect
 spend rather than cache-read volume. Tables still cite the harness's raw `tokenEstimate` (`tEst`)
 in parentheses for traceability. Full derivation:
@@ -212,7 +218,7 @@ in parentheses for traceability. Full derivation:
 ## How we measure the lift: the quality card
 
 We want two things from a grounding change: proof it **helps**, and a number we can **trust**. The
-hard part is that a coding agent's behavior on a task isn't a bell curve. It is **multi-modal**. Run
+hard part is that a coding agent's behavior on a task isn't a bell curve. It can be **multi-modal**. Run
 the same task five times and the runs don't scatter around an average; they land in distinct
 *modes*: some deliver a working, idiomatic result, some produce broken or off-spec output, some
 flail and give up. Averaging a "score" across those modes is meaningless, because the mean sits in a
