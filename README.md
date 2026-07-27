@@ -275,14 +275,14 @@ real risk on transitioning to loss. A significant win is a buffer won for your u
 Three rules deliver confidence. **The task is the unit of evidence, not the run.** Every task is
 run the same number of times, five per arm. What varies is how many of those five *deliver*, and
 price is only charged on deliveries. An arm that nails a task five times out of five puts five
-priced runs into the pot; an arm that squeaks out one delivery puts in one.
+priced runs into the pool; an arm that squeaks out one delivery puts in one.
 
-Never average that pot. Two tasks show why. Say an easy task costs 10k
+Never average that pool. Two tasks show why. Say an easy task costs 10k
 [IET](#how-we-measure-cost-iet) per delivery and a hard one costs 100k, and grounding makes both 20%
 cheaper, 8k and 80k. Grounding also does the thing it is for: the baseline got the hard task over
 the line only once in five tries, and the grounded arm gets it all five times. Now average the
-delivered runs. The baseline pot is five cheap deliveries and one expensive one, or 25k. The
-grounded pot is five cheap and five expensive, or 44k. The pooled number says grounding made things
+delivered runs. The baseline pool is five cheap deliveries and one expensive one, or 25k. The
+grounded pool is five cheap and five expensive, or 44k. The pooled number says grounding made things
 **76% more expensive** while every task in the suite got **20% cheaper**. The four extra hard
 deliveries are the win, and pooling has billed them as a loss.
 
