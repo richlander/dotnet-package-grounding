@@ -1,15 +1,26 @@
 # dotnet-package-skills
 
-This repo is about *skill grounding*: targeted instructions that are inluded in a package so that an AI coding agent uses it correctly. As package maintainer, you know the broad spread of user scenarios, from the basics to advanced scenarios. Writing those scenarios as skills can provide your users with a better experience when they ask agents to use your package. This repo was created as the result of attempting to do just that and finding that doing a good job is very difficult without a strong methodology. The primary product of our effort is a methodology and associated tools that we're sharing so that this process is much easier.
+This repo is about *skill grounding*: targeted instructions that are included in a package so that
+an AI coding agent uses it correctly. As a package maintainer, you know the broad spread of user
+scenarios, from the basics to advanced scenarios. Writing those scenarios as skills can provide your
+users with a better experience when they ask agents to use your package. This repo was created as
+the result of attempting to do just that and finding that doing a good job is very difficult without
+a strong methodology. The primary product of our effort is a methodology and associated tools that
+we're sharing so that this process is much easier.
 
 The approach heavily leverages agents, based on a set of best practices (these are examples):
 
-- Effective: Ask agents to write skills based on how your library is used in real apps.
-- Ineffective: As agents to write skills based on their training or a first look at your library.
-- Effective: Evaluate agent capability relative to set of fixed tasks, comparing baseline to skilled across multiple models, each at least 5 times, in a controlled harness.
-- Ineffective: Evaluate the use of a skill once by installing the skill in your agent environment.
-- Effective: Repeat the exact same task with one variable changed, like Opus 4.8 -> Opus 5. Diff against the results.
-- Ineffective: Repeat manual evaluation against your memory of the duration of the tasks and feel of model capability.
+- **Effective:** Ask agents to write skills based on how your library is used in real apps.
+- **Ineffective:** Ask agents to write skills based on their training or a first look at your
+  library.
+- **Effective:** Evaluate agent capability relative to a set of fixed tasks, comparing baseline to
+  skilled across multiple models, each at least 5 times, in a controlled harness.
+- **Ineffective:** Evaluate the use of a skill once by installing the skill in your agent
+  environment.
+- **Effective:** Repeat the exact same task with one variable changed, like Opus 4.8 -> Opus 5. Diff
+  against the results.
+- **Ineffective:** Repeat manual evaluation against your memory of the duration of the tasks and
+  feel of model capability.
 
 ## What a package carries
 
