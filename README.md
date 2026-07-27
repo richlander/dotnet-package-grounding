@@ -132,16 +132,15 @@ Writing the skills and the tasks is the part you can plan. It is not the part th
 What takes the time is the loop that follows, where you run the suite and find the skill is less
 effective than you expected, and you have to work out why. Expect to spend most of the project here.
 
-The word to expect is not *weak*, it is *inconsistent*. What we kept finding was a skill that
+In the early stages, we found a skill that
 carried most of the questions and then dropped a few, and the aggregate number hid it. Both axes do
 this. Efficacy can be solid across a shelf and absent on the one scenario that spans two skills, and
 efficiency can go the wrong way on a question the model already knew, where the skill is pure added
 cost. Early drafts are especially uneven, which is the argument for reading per-scenario results
 rather than the headline. A skill that fails a quarter of the time is not three-quarters finished;
-it usually has one identifiable hole, and finding it is the job.
+it usually has one or two identifiable holes that resolve the failures, and finding the mismatch between question and skill is the job.
 
-The useful thing is that failures do not all have the same cause, and reading them correctly is the
-skill. A task can fail because the skill never got pulled, because it was pulled and did not say
+The useful thing is that failures do not all have the same cause, and reading them correctly is an important technique to learn. A task can fail because the skill never got pulled, because it was pulled and did not say
 enough, because it said the wrong thing, because the task itself is badly written, or because the
 library really is hard to use the way the task asks. Only the middle ones are fixed by editing
 prose.
@@ -158,9 +157,7 @@ scores went up.
 To be explicit, because the incentive here is dangerous: **we do not change the product to move
 scores.** That would be tuning the library to a benchmark, and the number would stop meaning
 anything. The point is the reverse. Running a good eval happens to surface real bugs, in the skills
-and sometimes in the library, and when a bug is legitimate you should fix it. The test of legitimacy
-is whether it is a real problem for real users who are not agents. `TreeNode` was, and it had been
-silently costing every human who tried the obvious thing first.
+and sometimes in the library, and when a bug is legitimate you should fix it. The agents need to list to the skill but you also need to listen to what the eval is surfacing.
 
 A model is a useful reviewer here precisely because it has read an enormous amount of code and has
 strong, conventional expectations about how an API of a given shape behaves. When your library
