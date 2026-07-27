@@ -62,10 +62,13 @@ were reliably confused, and a skill correcting them would have been a large effi
 window has since closed. The efficacy case for a stale-knowledge skill has a half-life set by the
 training runs, not by you.
 
-We see this in our own numbers. A frontier model sits near the ceiling already, so its win is almost
-entirely efficiency, while weaker models gain both. The same pattern holds across model
-generations: correctness converges as models improve, and the efficiency gap is what stays legible.
-The [findings](#what-we-found) below carry the detail.
+We have seen this pattern in our own numbers, on the four packages we have measured so far. Where
+the frontier model already sat near the ceiling, its win was almost entirely efficiency, while
+weaker tiers gained both. Read that as a shape to test for rather than a law: whether the frontier
+has headroom on *your* package depends on how well it already knows it, and on a package it
+genuinely does not know it can have a real capability gap too. The cross-generation version of the
+claim is thinner still, resting on two Opus generations of a single package, so we would not lean on
+it yet. The [findings](#what-we-found) below carry the detail and the caveats.
 
 Efficiency is a perfectly good target on its own, and it compounds in a way efficacy does not: one
 session has many turns, one developer has many sessions, and one company has many developers. A
@@ -197,10 +200,11 @@ on judge opinion. The full model, the band procedure, and the claims-to-evidence
 [Markout CT-24](https://github.com/richlander/markout/blob/main/grounding/markout/results.md),
 presented as a maintainer would see it in [markout#148](https://github.com/richlander/markout/pull/148).
 
-The consistent finding across model tiers: **grounding buys more as capability falls.** At the
-frontier the model is already near the ceiling, so the win is almost entirely **efficiency** (a
-delivery gets cheaper and faster). For weaker models it is **both**: grounding unlocks tasks they
-never delivered, and slashes the cost and time of the ones they did.
+The finding that recurs across model tiers, on every package we have measured: **grounding buys
+more as capability falls.** Where the frontier is already near the ceiling, the win is almost
+entirely **efficiency** (a delivery gets cheaper and faster). For weaker tiers it is **both**:
+grounding unlocks tasks they never delivered, and slashes the cost and time of the ones they did.
+Four packages is enough to make this worth testing for on yours, not enough to call it settled.
 
 ## What "grounding" is, and what it is not
 
