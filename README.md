@@ -361,9 +361,11 @@ Rows 2 and 3 are authored where they are used. Rows 1 and 4 travel, which is the
 needs an installer. [dotnet/skills](https://github.com/dotnet/skills/tree/main/plugins) is the
 reference layout for row 1: a `.claude-plugin/marketplace.json` at the root over a tree of plugins.
 Row 4's vehicle is the package itself, since that is the artifact the consumer actually receives;
-the repo it was authored in is upstream of the question. Where the skill sits inside the `.nupkg`
-is a proposal, not a convention, and is one of the things
-[#21](https://github.com/richlander/dotnet-package-skills/issues/21) has to settle.
+the repo it was authored in is upstream of the question. What is unsettled is acquisition, which is
+what [#21](https://github.com/richlander/dotnet-package-skills/issues/21) tracks: a skill whose job
+is installing skills. The interesting part is that it need not install all of them. A package can
+ship a dozen skills covering features a given repo will never touch, and an agent that has just
+read that repo is better placed to pick the relevant subset than the package author was.
 
 Row 3 is not hypothetical, and `.github/skills/` is where .NET has settled in practice:
 [dotnet/runtime](https://github.com/dotnet/runtime/tree/main/.github/skills) and
