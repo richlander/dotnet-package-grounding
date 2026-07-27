@@ -269,13 +269,13 @@ after the next model generation lands. It is a deliberately unfriendly bar, and 
 in what it stops you from shipping.
 
 A package lives forever. A model doesn't. Some users may stay on version 1.2.3 for years with your
-skill set perfectly captured unchanged at a git commit. A meager win now has real risk on
+skill set perfectly captured, unchanged just like it is at its git commit. A meager win now has real risk on
 transitioning to loss. A significant win is a buffer won for your users.
 
-Three rules keep the card honest. **The task is the unit of evidence, not the run.** Every task is
-run the same number of times, five per arm, so no task opts out of anything. What varies is how many
-of those five *deliver*, and the price axes are scored over delivered runs only. A task an arm nails
-five times out of five contributes five priced runs; one it barely manages contributes one. Pool
+Three rules deliver confidence. **The task is the unit of evidence, not the run.** Every task is
+run the same number of times, five per arm. What varies is how many
+of those five *deliver*, and the price axes are scored over delivered runs only. A task an arm that nails
+five times out of five contributes five priced runs; an arm that squeaks out one delivery contributes one. Pool
 those into a single average and each task's weight becomes its own success rate, which is the very
 thing under test. That is not a rounding concern: the pooled number can move *opposite to every task
 in the suite* ([Simpson's paradox](https://en.wikipedia.org/wiki/Simpson%27s_paradox)).
