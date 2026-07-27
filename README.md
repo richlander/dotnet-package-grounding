@@ -35,8 +35,8 @@ The files follow [Anthropic's Agent Skills](https://www.anthropic.com/news/skill
 supporting files as the agent needs them. Any Skills-aware agent host can load them.
 
 The approach heavily leverages agents, based on a set of best practices. These are examples, and the
-ineffective half of each pair is not a straw man; much of it is what we tried first, before the
-measurements talked us out of it.
+ineffective half of each pair is not invented to be knocked down; much of it is what we tried
+first, before the measurements talked us out of it.
 
 - **Effective:** Ask agents to write skills based on how your library is used in real apps.
 - **Ineffective:** Ask agents to write skills based on their training or a first look at your
