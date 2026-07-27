@@ -277,19 +277,30 @@ run the same number of times, five per arm. What varies is how many of those fiv
 price is only charged on deliveries. An arm that nails a task five times out of five puts five
 priced runs into the pool; an arm that squeaks out one delivery puts in one.
 
-Never average that pool. Two tasks show why. Say an easy task costs 10k
-[IET](#how-we-measure-cost-iet) per delivery and a hard one costs 100k, and grounding makes both 20%
-cheaper, 8k and 80k. Grounding also does the thing it is for: the baseline got the hard task over
-the line only once in five tries, and the grounded arm gets it all five times. Now average the
-delivered runs. The baseline pool is five cheap deliveries and one expensive one, or 25k. The
-grounded pool is five cheap and five expensive, or 44k. The pooled number says grounding made things
-**76% more expensive** while every task in the suite got **20% cheaper**. The four extra hard
-deliveries are the win, and pooling has billed them as a loss.
+Never average that pool. A two-task suite shows why. Grounding here does exactly what it should: it
+makes both tasks 20% cheaper per delivery, and it drags the hard task from one delivery in five up
+to five out of five.
 
-Comparing per task cannot do that. Each task gets one ratio, 8/10 and 80/100, both ×0.80, and the
-suite figure is the mean of those. (The general name for the reversal is
-[Simpson's paradox](https://en.wikipedia.org/wiki/Simpson%27s_paradox).) Cost is compared on the
-tasks both arms delivered, so the two averages are always taken over the same set of tasks.
+| Task | Baseline cost | Baseline delivered | Grounded cost | Grounded delivered |
+| --- | ---: | ---: | ---: | ---: |
+| Easy | 10k [IET](#how-we-measure-cost-iet) | 5 of 5 | 8k | 5 of 5 |
+| Hard | 100k | 1 of 5 | 80k | 5 of 5 |
+
+Now summarize it two ways.
+
+- **Pool the delivered runs.** Baseline `(5 × 10k + 1 × 100k) / 6` = **25k**. Grounded
+  `(5 × 8k + 5 × 80k) / 10` = **44k**. Verdict: grounding is **76% more expensive**.
+- **Average the per-task ratios.** Easy `8k / 10k` = **×0.80**. Hard `80k / 100k` = **×0.80**.
+  Verdict: grounding is **20% cheaper**.
+
+Same runs, same numbers, opposite verdicts. The pooled figure inverts because the grounded arm put
+four extra *hard* deliveries into the pool, so the expensive task carries half the grounded average
+and only a sixth of the baseline's. Those four deliveries are the whole point of the skill, and
+pooling billed them as a loss. (The general name for the reversal is
+[Simpson's paradox](https://en.wikipedia.org/wiki/Simpson%27s_paradox).)
+
+So cost is compared per task, on the tasks both arms delivered, which keeps both averages over the
+same set of tasks.
 
 **Never price or time an empty mode:** if an arm never delivers a task, we do *not* invent a cost
 or a duration for it. That is a **capability gap** (a coverage row: a task grounding *unlocks*),
