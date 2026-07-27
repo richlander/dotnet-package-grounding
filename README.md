@@ -306,6 +306,14 @@ pooling billed them as a loss. (The general name for the reversal is
 So cost is compared per task, on the tasks both arms delivered, which keeps both averages over the
 same set of tasks.
 
+One detail the example hides, since two ×0.80s average to ×0.80 whichever way you do it: per-task
+ratios are combined with a **geometric mean**, not an arithmetic one. Ratios are multiplicative, and
+an arithmetic mean of them depends on which way up you write them. Take a task that gets twice as
+cheap (×0.50) alongside one that gets twice as expensive (×2.00), a pair that should cancel exactly.
+The arithmetic mean returns ×1.25, calling it a 25% loss. Invert both ratios and it returns ×1.25
+again, now calling the baseline 25% worse. Both arms cannot each be 25% worse than the other. The
+geometric mean, `√(0.50 × 2.00)`, returns ×1.00 from either direction, and is what the card reports.
+
 **Never price or time an empty mode:** if an arm never delivers a task, we do *not* invent a cost
 or a duration for it. That is a **capability gap** (a coverage row: a task grounding *unlocks*),
 counted separately from the efficiency axis, never averaged into it. (This is why return is scored
