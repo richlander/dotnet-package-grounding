@@ -95,9 +95,9 @@ library's documentation ought to be able to answer, ordered by difficulty from w
 that range at a cost you can afford to run five times per arm on several models.
 
 CT-24 names the *shape* of the suite. The contents are written fresh for each library against its
-own surface, then held constant across every arm and model. That authoring is most of the work, and
-it is where an evaluation is usually won or lost, because a suite that only asks easy questions will
-show any skill earning nothing.
+own surface, then held constant across every arm and model. A suite that only asks easy questions
+will show any skill earning nothing, so it has to be able to tell the two arms apart before any
+result from it means anything.
 
 The technique that matters most here is to **derive the tasks from how the library is used in real
 applications**, rather than inventing them from the API surface. Read real consumers, yours or other
@@ -118,6 +118,39 @@ we have: it ships the skill shelf, the 24-scenario eval that graded it, and the 
 card with both gates and the verdict, in the form a package maintainer would actually review. It
 also shows the parts that are easy to leave out of a writeup, including a fifth skill that was cut
 for self-selecting only once on the ladder, and the decision to stop packing a doc into the nupkg.
+
+## Where the time actually goes
+
+Writing the skills and the tasks is the part you can plan. It is not the part that takes the time.
+What takes the time is the loop that follows, where you run the suite and find the skill is less
+effective than you expected, and you have to work out why. Expect to spend most of the project here.
+
+The useful thing is that failures do not all have the same cause, and reading them correctly is the
+skill. A task can fail because the skill never got pulled, because it was pulled and did not say
+enough, because it said the wrong thing, because the task itself is badly written, or because the
+library really is hard to use the way the task asks. Only the middle ones are fixed by editing
+prose.
+
+That last category is worth calling out, because we did not expect it. Some tasks failed while the
+agent was doing something eminently reasonable. It had a strong intuition about how the library
+should work, wrote that, and the library did not work that way. Looking closely, the agent was
+right and we were wrong: it was pointing at a design problem. `Markout`'s `TreeNode` put a
+rarely-used `badge` argument before the children, so the obvious call did not compile even though
+every other shape in the library put the collection where you would expect
+([markout#118](https://github.com/richlander/markout/issues/118)). We fixed the API, published, and
+scores went up.
+
+To be explicit, because the incentive here is dangerous: **we do not change the product to move
+scores.** That would be tuning the library to a benchmark, and the number would stop meaning
+anything. The point is the reverse. Running a good eval happens to surface real bugs, in the skills
+and sometimes in the library, and when a bug is legitimate you should fix it. The test of legitimacy
+is whether it is a real problem for real users who are not agents. `TreeNode` was, and it had been
+silently costing every human who tried the obvious thing first.
+
+A model is a useful reviewer here precisely because it has read an enormous amount of code and has
+strong, conventional expectations about how an API of a given shape behaves. When your library
+violates that expectation, it is telling you something about your design, at a scale and
+repeatability no human review gives you.
 
 How grounding *reaches* the agent turns out to matter as much as what it says. A skill set that
 installs into the consuming repo is one route, where the agent opts in and the consumer can see and
