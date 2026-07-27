@@ -68,10 +68,11 @@ own documentation already does, and both arms do well. Results are read with the
 [quality-card model](docs/quality-card-model.md): two axes, return and efficiency, behind two ship
 gates, do no harm plus a certified 20% economic win.
 
-The finding that recurs on every package we have measured: **grounding buys more as capability
-falls.** Where the frontier model is already near the ceiling, the win is almost entirely
-efficiency. For the weaker tiers it is both at once, unlocking tasks they never delivered and
-cutting the cost of the ones they did.
+We have tested the methodology on several packages, and have found uniformly that **grounding buys
+more as capability falls**. Where the frontier model already sits near the ceiling, the win is
+almost entirely efficiency: it was delivering the task anyway, so the skill only made the delivery
+cheaper. The weaker tiers gain on both axes at once, delivering tasks they had been failing
+outright and doing the rest for far fewer tokens.
 
 ## Four ways a skill arrives
 
