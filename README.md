@@ -17,9 +17,13 @@ This page is the short version and the map.
 
 ## Package skills
 
-Grounding is delivered as a **skill set**, or shelf. A package carries a **base skill** named after
-the package, holding the pattern every task needs plus its everyday footguns, and a handful of
+Grounding is delivered as a **skill set**, or shelf. The shape we settled on is a **base skill**
+named after the package, holding what every task needs plus its everyday footguns, and a handful of
 **domain skills** covering long-tail workflows that the agent pulls only when a task calls for them.
+Nothing about the format requires that arrangement. We arrived at it by trying alternatives and
+measuring, and it has held up on every package since: the base skill earns its place on almost any
+task, and leaving the rest out of context until a task calls for it is what keeps the shelf from
+becoming a tax on the tasks that never needed it.
 
 Markout is the package we have measured most, and its shelf is the worked example: a `markout` base
 skill plus `conditional-composition`, `output-formats`, `built-in-shapes`, and

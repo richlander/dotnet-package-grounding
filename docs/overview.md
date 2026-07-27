@@ -4,8 +4,9 @@ Package grounding is package-authored context that teaches a model how to use a 
 correctly. The delivered artifact is a **`SKILL.md`** skill set — authored to the
 [Agent Skills](https://www.anthropic.com/news/skills) convention (YAML frontmatter with a `name` and
 a "use when…" `description`, progressive disclosure into supporting files) — that an agent **pulls on
-demand** and a consuming repo can remove. A package carries a small **base skill** (named for the
-package) plus a handful of **domain skills** for its long-tail workflows.
+demand** and a consuming repo can remove. The arrangement we settled on, and the one this
+document assumes throughout, is a small **base skill** (named for the package) plus a handful of
+**domain skills** for its long-tail workflows.
 
 ## Why grounding is needed
 
