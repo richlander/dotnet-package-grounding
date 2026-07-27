@@ -119,6 +119,13 @@ card with both gates and the verdict, in the form a package maintainer would act
 also shows the parts that are easy to leave out of a writeup, including a fifth skill that was cut
 for self-selecting only once on the ladder, and the decision to stop packing a doc into the nupkg.
 
+One caveat when reading it: that PR ran for ten days and 39 commits, which is not what a shelf of
+five skills should cost. The reason is that the skills and the methodology in this repo were
+developed together, each one forcing changes in the other, so the history contains both the work and
+the invention of the process used to do the work. Repeating it on a package now that the method is
+written down should be considerably cheaper, and this repo exists so that you do not have to pay
+that cost again.
+
 ## Where the time actually goes
 
 Writing the skills and the tasks is the part you can plan. It is not the part that takes the time.
