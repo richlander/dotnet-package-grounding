@@ -84,7 +84,7 @@ failing outright (efficacy), *and* did the tasks they already managed for far fe
 on *your* package depends on how well it already knows it, and on a package it genuinely does not
 know it can have a real capability gap too. The cross-generation version of the claim is thinner
 still, resting on two Opus generations of a single package, so we would not lean on it yet. The
-[findings](#what-we-found) below carry the detail and the caveats.
+per-package reports in [`docs/reports/`](docs/reports/) carry the detail and the caveats.
 
 Efficiency is a perfectly good target on its own, and it compounds in a way efficacy does not: one
 session has many turns, one developer has many sessions, and one company has many developers. A
@@ -393,88 +393,6 @@ The step that is still missing is the installer itself, the part that notices a 
 ships a shelf and puts it in the consumer's repo. That is tracked in
 [#21](https://github.com/richlander/dotnet-package-skills/issues/21). Everything below is about
 row 4.
-
-## What we found
-
-We authored and measured grounding for four real packages (**System.CommandLine**,
-**System.Text.Json**, **Microsoft.Extensions.AI**, and **Markout**) across two tasks. The
-recognizable packages double as the readable examples. **Markout is a deliberate control**: an
-obscure, source-generated serializer the models genuinely *don't* know, which is exactly why it
-gives a clean grounding signal (a model-resident package like System.Text.Json would mask it). The
-headline results are in weighted [IET](#how-we-measure-cost-iet) (`tEst` = unweighted harness
-estimate, shown for traceability); full tables, method, and caveats are in
-[`docs/recommendation.md`](docs/recommendation.md).
-
-1. **On a real migration, grounding cuts cost the most.** The flagship task is a **System.CommandLine
-   `beta4` → 3.x migration** (the agent must build, localize the breakage, and migrate) with two
-   distractor packages. runs=3:
-
-   | Channel | what the agent gets | Opus IET | Haiku IET |
-   |---------|---------------------|---------:|----------:|
-   | **A** raw package, no MCP | finds + reads the **README** | 188k | 939k |
-   | **B** NuGet MCP, no grounding doc | server returns the **README** | 138k | 665k |
-   | **D** MCP + resident index | curated grounding, self-gated | **92k** | **286k** |
-
-   That's **−51% (Opus)** and **−70% (Haiku)**. The raw baseline *thrashes*, with Haiku burning 99
-   tool calls, and the resident-index channel is also the **only** one that surfaces silent,
-   compile-clean gotchas the agent wouldn't know to ask for.
-
-   *Is this a one-off, or repeatable?* Repeatable, because of **where the value sits**. We measured
-   five scenario shapes for System.CommandLine ([report](docs/reports/system-commandline.md)) and the
-   pattern was consistent: general API shape, greenfield authoring, idiomatic usage, and the
-   command-line-parser domain itself are **already in the model**, where grounding moves the needle
-   −2% to +1% (that is, not at all). The signal concentrates almost entirely in the **non-resident delta**:
-   version-specific breakages and *silent* gotchas (the canonical one being the `Option<T>` constructor
-   whose second argument flipped from *description* to *alias* between beta and GA, code that compiles
-   and looks right but behaves wrong). That is the general shape of grounding's value: the model carries
-   the bulk; grounding carries the **footguns the model can't recover by compiling**.
-
-   This shapes *who* writes grounding and *how*. Because the payload is the non-obvious delta, you
-   can't auto-generate it from the public API surface. It is a combination of **expert view** (a
-   maintainer's judgment of what actually trips people up) and **hard-won experience** (the silent
-   gotchas surfaced by real bug reports and migrations). The role of our harness is to **keep that
-   instinct honest**, measuring each candidate fact so only the lines that change agent behavior
-   ship, and the merely-nice-to-know ones don't.
-
-   There is a **circularity** to watch for when *generating* grounding. You can't use Opus 4.8 to
-   author grounding *for* Opus 4.8. If Opus can produce the fact on request, it already knows it,
-   so the act of writing it down only proves it's redundant. The productive direction is
-   **asymmetric**: use the strong model to author grounding for the *weaker* ones (Sonnet, and
-   especially Haiku). That is essentially **distillation**, where the frontier model's resident
-   knowledge becomes the weak model's shipped context, and it almost certainly helps the tier that
-   needs it.
-   The constraint is the other half of the asymmetry: **don't harm the strong tier in the process.**
-   Opus tokens are far more expensive, so grounding that bloats or misleads the frontier to rescue
-   the weak tier is a bad trade. Help the weak, no harm to the strong: the
-   [do-no-harm gate](#how-we-measure-the-lift-the-quality-card), and the asymmetry, restated as a generation
-   recipe.
-
-2. **The clean mechanism, isolated.** On the controlled Markout probe we can run all five delivery
-   channels (same task, same content, varying only delivery). runs=3:
-
-   | Channel | what the agent gets | Opus IET | Haiku IET |
-   |---------|---------------------|---------:|----------:|
-   | **A** raw package, no MCP | finds + reads the **README** | 78k | 49k |
-   | **A′** raw package, grounding doc present | *still reads the README*, so the grounding doc is **invisible** | 124k | 62k |
-   | **B** NuGet MCP, no grounding doc | server returns the **README** | 38k | 40k |
-   | **C** NuGet MCP, grounding doc present | server returns the **grounding doc** | **28k** | 39k |
-   | **D** MCP + resident index | curated grounding, self-gated | 31k | **31k** |
-
-3. **Content alone is worthless without a delivery channel.** Channel A′, grounding doc shipped but
-   no MCP, is the *most* expensive cell on both tiers: the agent never sees it and reads the README
-   anyway. Writing grounding only pays off when the MCP delivers it.
-
-4. **The README is a measurable liability, and targeted value is size-invariant.** Sweeping the
-   shipped README from 3 KB → 74 KB (24×) while holding the grounding doc at 3.5 KB: the README path
-   tracks its own bloat (72k–117k IET, high-variance), while the grounding-doc path stays **flat at
-   ~36–42k IET / 9–11 tools**, a **48–69% saving** that *widens* as the README grows. Full sweep:
-   [`docs/reports/readme-liability.md`](docs/reports/readme-liability.md). How large real READMEs
-   actually get, and how often a package ships none at all, is surveyed in
-   [`docs/overview.md`](docs/overview.md#why-grounding-is-needed).
-
-5. **For weak models it's correctness, not just cost.** The README-without-MCP path *fails* the weak
-   tier; the delivered grounding doc flips it to a pass. Grounding rescues the tier that needs it
-   while costing the frontier tier nothing: the do-no-harm gate above, met in the data.
 
 ## Start here: the recommendation
 
