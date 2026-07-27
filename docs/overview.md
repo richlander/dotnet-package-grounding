@@ -7,9 +7,6 @@ a "use when…" `description`, progressive disclosure into supporting files) —
 demand** and a consuming repo can remove. A package carries a small **base skill** (named for the
 package) plus a handful of **domain skills** for its long-tail workflows.
 
-The core question is not *"can we write grounding?"* but *"does this grounding actually help, and is it
-worth its keep?"* This document is the long answer. The [repo README](../README.md) is the short one.
-
 ## Why grounding is needed
 
 When an agent touches a package, the best it usually gets is the package README, and often not even
