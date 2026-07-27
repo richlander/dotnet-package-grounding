@@ -268,19 +268,24 @@ their context on every task. A 20% floor buys enough headroom that the skill is 
 after the next model generation lands. It is a deliberately unfriendly bar, and most of its value is
 in what it stops you from shipping.
 
-A package lives forever. A model doesn't. Some users may stay on version 1.2.3 for years with your skill set perfectly captured unchanged at a git commit. A meager win now has real risk on transitioning to loss. A significant win is a buffer won for your users.
+A package lives forever. A model doesn't. Some users may stay on version 1.2.3 for years with your
+skill set perfectly captured unchanged at a git commit. A meager win now has real risk on
+transitioning to loss. A significant win is a buffer won for your users.
 
-Three rules keep the card honest. **The task is the unit of evidence, not the run.** Every task
-counts once in the suite figure, however many runs it contributed, because five runs of one task are
-one result measured five times, not five results. Pooling all runs into a single average instead
-hands the most weight to whichever tasks happened to produce the most runs, and that is not a
-rounding concern: the pooled number can move *opposite to every task in the suite*
-([Simpson's paradox](https://en.wikipedia.org/wiki/Simpson%27s_paradox)). The trap is baited
-precisely by success. Cost is scored over delivered runs, and what good grounding does is add
-deliveries on the hard, expensive tasks, which means those tasks take a larger share of the grounded
-arm's pool than of the baseline's. Grounding can then read as *more* expensive on the pooled number
-while having made every single task cheaper, with the improvement itself doing the damage. So each
-task is scored on its own and the suite figure is the equal-weight mean of those, on both axes.
+Three rules keep the card honest. **The task is the unit of evidence, not the run.** Every task is
+run the same number of times, five per arm, so no task opts out of anything. What varies is how many
+of those five *deliver*, and the price axes are scored over delivered runs only. A task an arm nails
+five times out of five contributes five priced runs; one it barely manages contributes one. Pool
+those into a single average and each task's weight becomes its own success rate, which is the very
+thing under test. That is not a rounding concern: the pooled number can move *opposite to every task
+in the suite* ([Simpson's paradox](https://en.wikipedia.org/wiki/Simpson%27s_paradox)).
+
+The trap is baited precisely by success. What good grounding does is turn failures into deliveries
+on the hard, expensive tasks, so those tasks take a larger share of the grounded arm's pool than of
+the baseline's. Grounding can then read as *more* expensive on the pooled number while having made
+every single task cheaper, the improvement itself doing the damage. So price is compared per task,
+on the tasks both arms delivered, and the suite figure is the equal-weight mean of those per-task
+ratios.
 
 **Never price or time an empty mode:** if an arm never delivers a task, we do *not* invent a cost
 or a duration for it. That is a **capability gap** (a coverage row: a task grounding *unlocks*),
