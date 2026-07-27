@@ -132,6 +132,14 @@ Writing the skills and the tasks is the part you can plan. It is not the part th
 What takes the time is the loop that follows, where you run the suite and find the skill is less
 effective than you expected, and you have to work out why. Expect to spend most of the project here.
 
+The word to expect is not *weak*, it is *inconsistent*. What we kept finding was a skill that
+carried most of the questions and then dropped a few, and the aggregate number hid it. Both axes do
+this. Efficacy can be solid across a shelf and absent on the one scenario that spans two skills, and
+efficiency can go the wrong way on a question the model already knew, where the skill is pure added
+cost. Early drafts are especially uneven, which is the argument for reading per-scenario results
+rather than the headline. A skill that fails a quarter of the time is not three-quarters finished;
+it usually has one identifiable hole, and finding it is the job.
+
 The useful thing is that failures do not all have the same cause, and reading them correctly is the
 skill. A task can fail because the skill never got pulled, because it was pulled and did not say
 enough, because it said the wrong thing, because the task itself is badly written, or because the
