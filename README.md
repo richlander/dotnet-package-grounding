@@ -253,26 +253,20 @@ never subjective taste. Then we measure two **independent** axes behind two gate
   regressing the mini is not a win. Improving efficacy for mini may result in a drop in efficiency
   on frontier, resulting in significant token spend increases on the more expensive model.
 - **Gate 2, earn its keep.** The per-dollar win must clear a **≥20% floor with confidence** (the
-  band's upper bound ≤ ×0.80), the minimum premium that repays authoring the skill and maintaining
-  it as models drift. This is the number a semiconductor CEO would put on an earnings slide: a
-  committed margin, not a curve. A real-but-tiny 8% win passes *do no harm* yet fails here, and is
-  correctly judged "not worth maintaining."
+  band's upper bound ≤ ×0.80), the minimum premium that repays a real recurring cost: authoring the
+  skill, writing a suite that genuinely probes the package, running every task five times per arm
+  on several models, and doing it again each time the package changes. This is the number a
+  semiconductor CEO would put on an earnings slide: a committed margin, not a curve. A real-but-tiny
+  8% win passes *do no harm* yet fails here, and is correctly judged "not worth maintaining."
 
-**Why 20%, and not simply "an improvement."** Two reasons, and they pull in the same direction.
-
-The first is that the work has to pay for itself. Getting to a defensible claim means authoring the
-skill, writing a task suite that genuinely probes the package, and running every task five times per
-arm on several models, then doing it again each time the package changes. That is a real, recurring
-cost for the maintainer. A win that is technically present but small does not repay it, and the
-honest answer in that case is to not ship a skill at all.
-
-The second is that the margin is measured against *today's* models, and it decays. Baselines get
-better on their own, which narrows the gap without anyone touching the skill. This is the same
-erosion described [above](#what-a-skill-buys-efficacy-and-efficiency), now applied to cost rather
-than correctness. An 8% win can be gone entirely inside six months, which makes it a poor thing to
-ask users to carry in their context on every task. A 20% floor buys enough headroom that the skill
-is still worth having after the next model generation lands. It is a deliberately unfriendly bar,
-and most of its value is in what it stops you from shipping.
+**Why the floor is 20% and not merely positive.** Because the margin is measured against *today's*
+models, and it decays. Baselines get better on their own, which narrows the gap without anyone
+touching the skill. This is the same erosion described
+[above](#what-a-skill-buys-efficacy-and-efficiency), now applied to cost rather than correctness. An
+8% win can be gone entirely inside six months, which makes it a poor thing to ask users to carry in
+their context on every task. A 20% floor buys enough headroom that the skill is still worth having
+after the next model generation lands. It is a deliberately unfriendly bar, and most of its value is
+in what it stops you from shipping.
 
 Three rules keep the card honest. **The task is the unit of evidence, not the run.** Every task
 counts once in the suite figure, however many runs it contributed, because five runs of one task are
