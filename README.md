@@ -1,10 +1,9 @@
 # dotnet-package-skills
 
-This repo is about *grounding*: small, targeted instruction that a library maintainer writes so an
-AI coding agent uses their package correctly. The maintainer is the one acting here. You know your
-package's footguns, and you can choose to spend effort making the package work better under an
-agent. Writing that instruction is the easy half. Proving it earned its place is the half we spend
-most of our effort on.
+This repo is about *grounding*: small, targeted instruction that ships with a library so an AI
+coding agent uses it correctly. As the maintainer, you know your package's footguns, and you can
+choose to spend effort making it work better under an agent. Writing that instruction is the easy
+half. Proving it earned its place is the half we spend most of our effort on.
 
 ## What a package carries
 
