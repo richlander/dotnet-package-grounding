@@ -344,16 +344,21 @@ feature.
 
 | | Delivery vehicle | Installed location | Who gets it |
 | --- | --- | --- | --- |
-| **1. Marketplace skill** | `plugins/<plugin>/skills/<name>/` in a marketplace repo | `~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/skills/<name>/` | one developer, in every project |
+| **1. Marketplace skill** | `plugins/<plugin>/skills/<name>/` in a marketplace repo | `~/.copilot/installed-plugins/<marketplace>/<plugin>/skills/<name>/` | one developer, in every project |
 | **2. Per-user skill** | authored in place | `~/.copilot/skills/<name>/` | one developer, in every project |
 | **3. In-repo skill** | authored in place | `.github/skills/<name>/` | every developer in one repo |
 | **4. Package skill** | `skills/<name>/` in the package's repo | `.github/skills/<name>/` | every developer in one repo |
 
-Each `<name>/` directory holds a `SKILL.md` plus whatever it discloses into. Rows 2 and 3 have
-host-specific spellings: a per-user skill can also sit in `~/.claude/skills/` or
-`~/.agents/skills/`, and an in-repo skill in `.claude/skills/` or `.agents/skills/`. Those are the
-paths [Copilot CLI documents](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-skills),
-and Claude Code reads the `.claude` pair, which is why a skill written once tends to work in both.
+Each `<name>/` directory holds a `SKILL.md` plus whatever it discloses into. The installed paths
+above are Copilot CLI's, which
+[documents](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-skills)
+`.github/skills/`, `.claude/skills/` and `.agents/skills/` for a repo, and `~/.copilot/skills/` or
+`~/.agents/skills/` for a user. In row 1 the `<marketplace>` segment is the registered marketplace
+name rather than the source repo, so `dotnet/skills` installs under `dotnet-agent-skills/`. Hosts
+differ most here: Claude Code caches marketplace plugins under
+`~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/`, with a version segment Copilot does not
+use. Rows 2 and 3 vary least, since Claude Code reads the `.claude` pair, which is why a skill
+written once tends to work in both.
 
 Rows 2 and 3 are authored where they are used. Rows 1 and 4 are authored in one repo and used in
 another, which is the only reason either needs an installer.
