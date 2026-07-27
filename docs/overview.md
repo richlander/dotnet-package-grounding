@@ -19,13 +19,21 @@ worth its keep?"* This document explains how we answer that.
 
 ## Why grounding is needed
 
-When an agent touches a package, the best it usually gets is the package README — and often not even
-that. READMEs are written to **onboard a human browsing nuget.org**: install steps, prerequisites,
-"key concepts," contributing boilerplate, broad usage examples — *most of which the model already
-knows*. Installation is the clearest waste: by the time an agent is working in a project that
-*references* the package, the dependency is already there.
+When an agent touches a package, the best it usually gets is the package README, and often not even
+that. Across the **top 1,000** Microsoft/Azure/System packages, **62% ship no in-package README at
+all**, and roughly 50% of the top 1,000 community packages don't either. Where one does exist it is
+small, a median of **~2–3 kB**, with a long tail out to **44–94 kB**
+([top-1,000 survey](reports/readme-size-survey-top1000.md); earlier
+[top-40 study](reports/readme-size-survey.md)).
 
-A skill inverts that ratio: a small, targeted doc carrying **only what the model is proven to lack** —
+Size is only half the problem. READMEs are written to **onboard a human browsing nuget.org**:
+install steps, prerequisites, "key concepts," contributing boilerplate (2–4 kB on its own in the
+Azure-SDK template), and broad usage examples, *most of which the model already knows*. Installation
+is the clearest waste. By the time an agent is working in a project that *references* the package,
+installation is solved by definition, because the dependency is already there. Little of a README is
+the non-obvious, version-specific gotcha an agent actually needs.
+
+A skill inverts that ratio: a small, targeted doc carrying **only what the model is proven to lack**,
 the non-obvious, version-specific gotchas ("footguns") that otherwise send the agent digging through
 decompiled assemblies or the web. Grounding earns its place by deleting that archaeology.
 
