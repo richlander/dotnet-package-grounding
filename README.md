@@ -347,7 +347,7 @@ feature.
 | **1. Marketplace skill** | `plugins/<plugin>/skills/<name>/` in a marketplace repo | `~/.copilot/installed-plugins/.../<name>/` | one developer, in every project |
 | **2. Per-user skill** | authored in place | `~/.copilot/skills/<name>/` | one developer, in every project |
 | **3. In-repo skill** | authored in place | `.github/skills/<name>/` | every developer in one repo |
-| **4. Package skill** | `skills/<name>/` in the package's repo | `.github/skills/<name>/` | every developer in one repo |
+| **4. Package skill** | `skills/<name>/` in the `.nupkg` | `.github/skills/<name>/` | every developer in one repo |
 
 Each `<name>/` directory holds a `SKILL.md` plus whatever it discloses into. The paths above are
 Copilot CLI's, which
@@ -357,10 +357,13 @@ Copilot CLI's, which
 once tends to work in both. Row 1 is the exception: each host manages its own marketplace cache,
 under its own path.
 
-Rows 2 and 3 are authored where they are used. Rows 1 and 4 are authored in one repo and used in
-another, which is the only reason either needs an installer.
-[dotnet/skills](https://github.com/dotnet/skills/tree/main/plugins) is the reference layout for
-row 1: a `.claude-plugin/marketplace.json` at the root over a tree of plugins.
+Rows 2 and 3 are authored where they are used. Rows 1 and 4 travel, which is the only reason either
+needs an installer. [dotnet/skills](https://github.com/dotnet/skills/tree/main/plugins) is the
+reference layout for row 1: a `.claude-plugin/marketplace.json` at the root over a tree of plugins.
+Row 4's vehicle is the package itself, since that is the artifact the consumer actually receives;
+the repo it was authored in is upstream of the question. Where the skill sits inside the `.nupkg`
+is a proposal, not a convention, and is one of the things
+[#21](https://github.com/richlander/dotnet-package-skills/issues/21) has to settle.
 
 Row 3 is not hypothetical, and `.github/skills/` is where .NET has settled in practice:
 [dotnet/runtime](https://github.com/dotnet/runtime/tree/main/.github/skills) and
