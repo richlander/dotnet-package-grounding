@@ -232,7 +232,7 @@ never subjective taste. Then we measure two **independent** axes behind two gate
 
 - **Return**, how often it delivers (over **all `k` runs of each task**, so a failed run stays in as
   a scored 0). An arm's **yield** on a task is `K/k` (its delivered runs out of `k`); the suite figure
-  is the equal-weight mean of those per-task yields (equal *task* weight, not equal run weight).
+  is the equal-weight mean of those per-task yields, one vote per task (see below).
   Grounding's return lift is the change in yield, baseline → grounded. Because five runs is a noisy
   estimate of a rate, we report it as a **band** (a 95% credible interval) rather than a point, so
   *mode-jumping between runs shows up as reliability*, exactly where it belongs.
@@ -273,12 +273,26 @@ ask users to carry in their context on every task. A 20% floor buys enough headr
 is still worth having after the next model generation lands. It is a deliberately unfriendly bar,
 and most of its value is in what it stops you from shipping.
 
-Two rules keep the card honest. **Never price or time an empty mode:** if an arm never delivers a
-task, we do *not* invent a cost or a duration for it. That is a **capability gap** (a coverage row: a
-task grounding *unlocks*), counted separately from the efficiency axis, never averaged into it. (This
-is why return is scored over all runs but efficiency only over deliveries.) And **only the certified
-path is graded**, meaning deterministic verifiable requirements, so the headline numbers don't ride
-on judge opinion. The full model, the band procedure, and the claims-to-evidence taxonomy are in
+Three rules keep the card honest. **The task is the unit of evidence, not the run.** Every task
+counts once in the suite figure, however many runs it contributed, because five runs of one task are
+one result measured five times, not five results. Pooling all runs into a single average instead
+hands the most weight to whichever tasks happened to produce the most runs, and that is not a
+rounding concern: the pooled number can move *opposite to every task in the suite*
+([Simpson's paradox](https://en.wikipedia.org/wiki/Simpson%27s_paradox)). The trap is baited
+precisely by success. Cost is scored over delivered runs, and what good grounding does is add
+deliveries on the hard, expensive tasks, which means those tasks take a larger share of the grounded
+arm's pool than of the baseline's. Grounding can then read as *more* expensive on the pooled number
+while having made every single task cheaper, with the improvement itself doing the damage. So each
+task is scored on its own and the suite figure is the equal-weight mean of those, on both axes.
+
+**Never price or time an empty mode:** if an arm never delivers a task, we do *not* invent a cost
+or a duration for it. That is a **capability gap** (a coverage row: a task grounding *unlocks*),
+counted separately from the efficiency axis, never averaged into it. (This is why return is scored
+over all runs but efficiency only over deliveries.)
+
+**Only the certified path is graded**, meaning deterministic verifiable requirements, so the
+headline numbers don't ride on judge opinion. The full model, the band procedure, and the
+claims-to-evidence taxonomy are in
 [`docs/quality-card-model.md`](docs/quality-card-model.md) (spec:
 [`docs/quality-card-spec.md`](docs/quality-card-spec.md)); a worked four-model result is
 [Markout CT-24](https://github.com/richlander/markout/blob/main/grounding/markout/results.md),
