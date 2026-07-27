@@ -25,9 +25,9 @@ measuring, and it has held up on every package since: the base skill earns its p
 task, and leaving the rest out of context until a task calls for it is what keeps the shelf from
 becoming a tax on the tasks that never needed it.
 
-Markout is the package we have measured most, and its shelf is the worked example: a `markout` base
-skill plus `conditional-composition`, `output-formats`, `built-in-shapes`, and
-`composite-cells-cards`
+[Markout](https://github.com/richlander/markout) is the package we have measured most, and its
+shelf is the worked example: a `markout` base skill plus `conditional-composition`,
+`output-formats`, `built-in-shapes`, and `composite-cells-cards`
 ([skills/](https://github.com/richlander/markout/tree/main/skills)).
 A `plugin.json` installs the set together, so the agent can pull whichever skill a task needs
 without the others taking up room.
@@ -121,8 +121,8 @@ Row 4 is an alternative **distribution channel for row 1**, not a new kind of th
 already fetched your package, so the skill can ride along with a dependency they chose, instead of
 being something they have to know exists and go find in a marketplace. That is the entire pitch:
 discovery is the hard part of row 1, and a package they already depend on solves it.
-[Markout](https://github.com/richlander/markout/tree/main/skills) is the worked example of the
-vehicle.
+Markout's [`skills/`](https://github.com/richlander/markout/tree/main/skills) is the worked example
+of the vehicle.
 
 And once installed, row 4 **collapses into row 3**, into the same directory a hand-written project
 skill would occupy. The skills land in the consumer's repo as checked-in files they can read,

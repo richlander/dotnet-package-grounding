@@ -170,7 +170,8 @@ prose.
 That last category is worth calling out, because we did not expect it. Some tasks failed while the
 agent was doing something eminently reasonable. It had a strong intuition about how the library
 should work, wrote that, and the library did not work that way. Looking closely, the agent was
-right and we were wrong: it was pointing at a design problem. `Markout`'s `TreeNode` put a
+right and we were wrong: it was pointing at a design problem.
+[Markout](https://github.com/richlander/markout)'s `TreeNode` put a
 rarely-used `badge` argument before the children, so the obvious call did not compile even though
 every other shape in the library put the collection where you would expect
 ([markout#118](https://github.com/richlander/markout/issues/118)). We fixed the API, published, and
