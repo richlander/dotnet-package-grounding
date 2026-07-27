@@ -45,15 +45,25 @@ change, and the efficacy win erodes to nothing. The efficiency win usually survi
 targeted skill still beats the agent rediscovering the answer by reading your README, decompiling
 your assembly, or searching the web.
 
+We have watched exactly this happen. `System.CommandLine` sat in beta for years, right through the
+period the current models trained on, and then shipped 2.0 with breaking changes. For a while models
+were reliably confused, and a skill correcting them would have been a large efficacy win. That
+window has since closed. The efficacy case for a stale-knowledge skill has a half-life set by the
+training runs, not by you.
+
 We see this in our own numbers. A frontier model sits near the ceiling already, so its win is almost
 entirely efficiency, while weaker models gain both. The same pattern holds across model
 generations: correctness converges as models improve, and the efficiency gap is what stays legible.
 The [findings](#what-we-found) below carry the detail.
 
-Efficiency is a perfectly good target on its own. Just be clear that it is the target, and be
-willing to check rather than assume. The reason to hold that bar is that a skill is not free. It
-occupies context and is spent against your users' token budgets, on every task where the agent pulls
-it. A skill that merely ties the baseline is a cost you have handed to them for nothing.
+Efficiency is a perfectly good target on its own, and it compounds in a way efficacy does not: one
+session has many turns, one developer has many sessions, and one company has many developers. A
+durable 20% is worth having.
+
+Just be clear that efficiency is the target, and be willing to check rather than assume. The reason
+to hold that bar is that a skill is not free. It occupies context and is spent against your users'
+token budgets, on every task where the agent pulls it. A skill that merely ties the baseline is a
+cost you have handed to them for nothing.
 
 ## How a claim is tested
 
@@ -147,7 +157,11 @@ never subjective taste. Then we measure two **independent** axes behind two gate
   co-headlines.
 - **Gate 1, do no harm.** Grounding must not cause a **material regression** on any task (one the
   baseline delivered but the grounded arm doesn't). We calibrate the gate against a null model, so
-  normal run-to-run noise can't trip it. Only a real, sustained loss will.
+  normal run-to-run noise can't trip it. Only a real, sustained loss will. The principle is
+  [Pareto improvement](https://en.wikipedia.org/wiki/Pareto_efficiency): improve things generally,
+  harm no one model in particular. You do not get to choose which model your users bring, and
+  routers can switch it mid-task without telling anyone, so a change that lifts the frontier while
+  regressing the mini is not a win.
 - **Gate 2, earn its keep.** The per-dollar win must clear a **≥20% floor with confidence** (the
   band's upper bound ≤ ×0.80), the minimum premium that repays authoring the skill and maintaining
   it as models drift. This is the number a semiconductor CEO would put on an earnings slide: a
