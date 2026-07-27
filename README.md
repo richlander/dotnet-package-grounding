@@ -12,9 +12,12 @@ The files follow [Anthropic's Agent Skills](https://www.anthropic.com/news/skill
 `SKILL.md` with YAML frontmatter (a `name` and a "use when…" `description`) that discloses into
 supporting files as the agent needs them. Any Skills-aware agent host can load them.
 
-Where the skills live matters as much as what they say. They are installed into the **consuming**
-repository, the project that depends on the package. The agent opts into them, and the consumer can
-remove them. They are not packed into the `.nupkg` and forced on everyone.
+Where the skills live matters as much as what they say. These install into the **consuming**
+repository, the project that depends on the package, so the agent opts into them and the consumer
+can see and remove them. The other route is to pack the doc inside the `.nupkg` so that it arrives
+with a restore. Markout shipped that way from 0.13.8 through 0.23.0, and packing is what lets the
+NuGet MCP server and `dotnet-inspect` serve a doc at all. Both routes are live options, so we treat
+the delivery channel as something to [measure](#what-we-found) rather than assume.
 
 A model already knows most of what a package's docs say, so grounding only earns its place where
 that knowledge runs out. It is easy to write plausible instruction that changes nothing, so every
