@@ -288,10 +288,14 @@ to five out of five.
 
 Now summarize it two ways.
 
-- **Pool the delivered runs.** Baseline `(5 × 10k + 1 × 100k) / 6` = **25k**. Grounded
-  `(5 × 8k + 5 × 80k) / 10` = **44k**. Verdict: grounding is **76% more expensive**.
-- **Average the per-task ratios.** Easy `8k / 10k` = **×0.80**. Hard `80k / 100k` = **×0.80**.
-  Verdict: grounding is **20% cheaper**.
+- **Pool the delivered runs.**
+  - Baseline: `(5 × 10k + 1 × 100k) / 6` = **25k**
+  - Grounded: `(5 × 8k + 5 × 80k) / 10` = **44k**
+  - Verdict: grounding is **76% more expensive**
+- **Average the per-task ratios.**
+  - Easy: `8k / 10k` = **×0.80**
+  - Hard: `80k / 100k` = **×0.80**
+  - Verdict: grounding is **20% cheaper**
 
 Same runs, same numbers, opposite verdicts. The pooled figure inverts because the grounded arm put
 four extra *hard* deliveries into the pool, so the expensive task carries half the grounded average
