@@ -34,8 +34,8 @@ A package repo carries a self-contained grounding bundle (inputs only — datase
   run.sh / run.ps1    # optional wrappers to regenerate the datasets
 ```
 
-The package may include a small base skill plus domain skills. A root meta-skill handles install into
-the consuming repo, so delivery stays pull-based, opt-in, and removable.
+The package may include a small base skill plus domain skills, installed into the consuming repo, so
+delivery stays pull-based, opt-in, and removable.
 
 ## Point the harness at it
 

@@ -8,8 +8,7 @@
 
 Grounding is the technique of installing package-specific skill docs so an agent can stop rediscovering
 facts the package can teach directly. The shipped artifact is a **pull-installed skill set**, not an
-always-on package doc. A consuming repo opts in, the root meta-skill orchestrates installation, and the
-skill set is removable.
+always-on package doc. A consuming repo opts in, and the skill set is removable.
 
 A package skill set has three layers:
 

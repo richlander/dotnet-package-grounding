@@ -59,8 +59,8 @@ grounding --help
 
    Write `SKILL.md` additively from an **empty baseline** — only what an agent is *proven* to lack (see
    [`authoring-principles.md`](./authoring-principles.md)). Keep the base skill small, put deeper
-   package knowledge behind domain skills or supporting files, and let the root meta-skill orchestrate
-   install into the consuming repo.
+   package knowledge behind domain skills or supporting files, and install the set into the consuming
+   repo.
 
 2. **Run CT-24.** The live suite is the 24-task CT-24 suite, k=5 runs per task, across haiku, sonnet,
    and opus. The eval is grounded (`SKILL.md`) vs baseline (no grounding):

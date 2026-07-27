@@ -6,8 +6,8 @@
 
 This document defines the evaluation approach for package grounding. It covers the evaluation contrast,
 the CT-24 suite, run discipline, confounds, and the evidence a PR must carry. The shipped artifact under
-this model is a pull-installed skill set: a base skill named for the package plus domain skills, with a
-root meta-skill orchestrating install into the consuming repo.
+this model is a pull-installed skill set: a base skill named for the package plus domain skills,
+installed into the consuming repo.
 
 Core rule: **a grounding change is a claim, and the claim ships with evidence.** A skill-set edit without
 a reproducible grounded-vs-baseline eval is not reviewable.

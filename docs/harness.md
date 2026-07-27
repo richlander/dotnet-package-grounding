@@ -198,8 +198,8 @@ pointing at the latest `dotnet/skills` main commit.
 The package-authored grounding under test is a pull-based skill set rooted at
 `grounding/<slug>/SKILL.md`. That base skill uses the Anthropic Agent Skills convention: YAML
 frontmatter with `name` and a use-when `description`, followed by concise guidance and progressive
-disclosure into domain skills or supporting files. The package can carry multiple domain skills, and a
-root meta-skill orchestrates install into the consuming repo.
+disclosure into domain skills or supporting files. The package can carry multiple domain skills, and
+the set is installed into the consuming repo.
 
 `skill-validator` still needs a runnable skill surface during eval. The harness may synthesize transient
 plugin scaffolding or copy the skill set into the validator layout, then clean up after the run. Do not

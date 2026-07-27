@@ -7,8 +7,8 @@
 
 This is the **baseline the NuGet package-grounding v-team uses** to create, change, and retire
 package grounding. A package now carries a pull-installed `SKILL.md` skill set: a small base skill
-named for the package, a handful of domain skills, and a root meta-skill that orchestrates install
-into the consuming repo. Each `SKILL.md` uses the Anthropic Agent Skills convention: YAML
+named for the package plus a handful of domain skills, installed into the consuming repo. Each
+`SKILL.md` uses the Anthropic Agent Skills convention: YAML
 frontmatter with `name` plus a "use when…" `description`, then progressive disclosure into
 supporting files.
 

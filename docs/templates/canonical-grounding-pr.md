@@ -12,7 +12,7 @@ without measurable harm, under the quality-card model.
 - Base skill: `<skill-name>/SKILL.md`
 - Domain skills: `<domain-skill-list>`
 - Supporting files: `<supporting-files>`
-- Install path or root meta-skill: `<install-or-meta-skill>`
+- Install path: `<install-path>`
 
 ## Eval setup
 
