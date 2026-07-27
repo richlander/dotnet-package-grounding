@@ -331,7 +331,6 @@ The finding that recurs across model tiers, on every package we have measured: *
 more as capability falls.** Where the frontier is already near the ceiling, the win is almost
 entirely **efficiency** (a delivery gets cheaper and faster). For weaker tiers it is **both**:
 grounding unlocks tasks they never delivered, and slashes the cost and time of the ones they did.
-Four packages is enough to make this worth testing for on yours, not enough to call it settled.
 
 ## What "grounding" is, and what it is not
 
