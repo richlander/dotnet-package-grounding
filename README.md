@@ -332,25 +332,36 @@ more as capability falls.** Where the frontier is already near the ceiling, the 
 entirely **efficiency** (a delivery gets cheaper and faster). For weaker tiers it is **both**:
 grounding unlocks tasks they never delivered, and slashes the cost and time of the ones they did.
 
-## What "grounding" is, and what it is not
+## Three ways a skill arrives
 
-Several different things get called a `SKILL.md` skill set. They live in different places, serve
-different audiences, and should not be confused. This repo is about exactly one of them, the first
-row.
+A `SKILL.md` can arrive in three ways. Two of them are established and fully supported today. The
+third is what this repo is about, and the useful thing about it is that it is **not a third
+mechanism**.
 
 These definitions are up for debate and may differ by domain or community. We define them a
 particular way here for the purposes of measurement and guidance for the package-grounding
 feature.
 
-| Artifact | Where it lives | Who consumes it | Purpose | In this repo? |
-|----------|----------------|-----------------|---------|---------------|
-| **Package grounding**, a `SKILL.md` skill set | authored for a **NuGet package** and installed into a **consumer's** repo (pulled, opt-in, removable) | an AI agent working in a *consumer's* project that depends on the package | the model may already know the package's common, everyday usage, so we *measure* what's resident rather than assume it. We **target the footguns**, the non-obvious gotchas it is *proven to lack* (anti-flailing), so it avoids latent bugs against *that dependency* | **Yes, the artifact under test** (`grounding/<slug>/SKILL.md`) |
-| **Marketplace `SKILL.md`** | published as a `plugin.json` plugin in a **skills marketplace** (the `dotnet/skills` distribution model) | an agent *host* that installs marketplace plugins globally | a distributable, installable capability/instruction set | **No, explicitly out of scope.** This repo has no `plugin.json` marketplace machinery |
+| | Where it lives | How it reaches the agent | What it is for |
+| --- | --- | --- | --- |
+| **1. Marketplace skill** | a skills marketplace, published as a `plugin.json` plugin (the `dotnet/skills` model) | the agent host installs it, typically once and for every project | a distributable capability the user went looking for |
+| **2. In-repo skill** | a directory committed to the repository itself | it is simply present, versioned with the code and visible in review | instructions particular to this codebase, persisted with it |
+| **3. Package skill** | authored by a package maintainer, published with the package | installed into the consuming repo from the package the project already restored | the footguns of one dependency, written by the people who know them |
 
-The distinction that matters: **package grounding is authored for a specific dependency and pulled
-into the consumer's repo on demand**, when an agent works in a project that references that package.
-A marketplace skill, by contrast, is installed globally into the host. Everything below is about
-package grounding.
+Row 3 is an alternative **distribution channel for row 1**, not a new kind of thing. The user
+already fetched your package, so the skill can ride along with a dependency they chose, instead of
+being something they have to know exists and go find in a marketplace. That is the entire pitch:
+discovery is the hard part of row 1, and a package they already depend on solves it.
+
+And once installed, row 3 **collapses into row 2**. The skills land in the consumer's repo as
+checked-in files they can read, review, diff, and delete. That is the recommended persistence
+pattern, and it is what keeps the cost of package skills near zero: no new runtime, no new trust
+boundary, nothing to support beyond files in a repository.
+
+The step that is still missing is the installer itself, the part that notices a restored package
+ships a shelf and puts it in the consumer's repo. That is tracked in
+[#21](https://github.com/richlander/dotnet-package-skills/issues/21). Everything below is about
+row 3.
 
 ## Grounding vs. skills: our policy
 
