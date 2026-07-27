@@ -104,7 +104,7 @@ applications**, rather than inventing them from the API surface. Read real consu
 people's, and turn what they actually do into tasks. Invented tasks tend to exercise the library the
 way its own documentation already describes it, which is the same shape the model already predicts,
 so both arms do well and the suite cannot tell them apart. Real applications combine features in
-ways no example shows, and that is where an agent goes wrong and a skill has something to buy. The
+ways no example shows, and that is where an agent goes wrong and a skill has an answer on offer. The
 same reading also tells you which parts of your API are load-bearing enough to be worth teaching.
 The per-package specifics are in
 [`docs/grounding-eval-methodology.md`](docs/grounding-eval-methodology.md).
