@@ -367,13 +367,6 @@ is installing skills. The interesting part is that it need not install all of th
 ship a dozen skills covering features a given repo will never touch, and an agent that has just
 read that repo is better placed to pick the relevant subset than the package author was.
 
-Row 3 is not hypothetical, and `.github/skills/` is where .NET has settled in practice:
-[dotnet/runtime](https://github.com/dotnet/runtime/tree/main/.github/skills) and
-[dotnet/core](https://github.com/dotnet/core/tree/main/.github/skills) carry 15 skills each, and
-[dotnet/sdk](https://github.com/dotnet/sdk/tree/main/.github/skills) uses both that directory and
-[`.claude/skills/`](https://github.com/dotnet/sdk/tree/main/.claude/skills), with different skills
-in each.
-
 **The last column is the one that matters.** Rows 1 and 2 install per machine, which is the right
 scope for a developer's own preferences and the wrong scope for a dependency. A skill only one
 teammate has installed makes that person's results irreproducible for everyone else, and it is
