@@ -1,16 +1,44 @@
 # Getting started
 
 This repo is **generic infrastructure** for measuring whether a package's skills help an AI agent use
-that NuGet package correctly. Its own skill shelves under `grounding/` exist to be measured, not to
-ship from here: for a package we control, the shelf lives in the package repo and this repo points at
-it; for a package we do not control, the shelf is staged here until it has a home. Either way, the
-question is the same — does that shelf earn its keep?
+that NuGet package correctly. You write a skill shelf for your package, write a suite of tasks a
+developer would really bring to it, and run an agent over them twice — once with the shelf, once
+without. What comes back tells you whether the shelf earned its keep.
 
 This page is the **map of the whole workflow**. It walks the stages in order, says who should drive
-each one, and hands you off to the document that owns the details. It deliberately carries no
-commands and no file layouts, so nothing here can drift out of step with the docs that do.
+each one, and hands you off to the document that owns the details.
 
 If you want the concept before the process, read [`overview.md`](./overview.md) first.
+
+## Start by reading a finished one
+
+[`examples/markout/`](../examples/markout/) is a complete, shipped result, and it is the quickest way
+to see what you are being asked to produce. It is laid out exactly as it sits in the Markout repo:
+
+```text
+examples/markout/
+  skills/                     # what ships to users, inside the package
+    markout/SKILL.md          #   base skill, named after the package
+    built-in-shapes/SKILL.md  #   domain skills, pulled only when a task calls for them
+    ...
+    plugin.json               #   installs the set together
+  grounding/markout/          # what measures it, and never ships
+    meta.yaml                 #   which package this is for
+    eval.yaml                 #   the graded tasks, with their assertions
+    fixtures/                 #   the code each task starts from
+    results.md, charts/       #   what the runs showed
+```
+
+Two directories, two audiences. **`skills/` is the product** — it ships inside the NuGet package and
+is the only part a consumer ever sees. **`grounding/` is the instrument** — tasks, fixtures, and
+results, which stay in the repo.
+
+Keeping them apart is what keeps the measurement honest. You are free to rewrite the shelf as often
+as you like; editing the suite so the shelf looks better is how you fool yourself.
+
+Everything under `examples/` has this shape, because each one is a stand-in for a real package repo —
+the two directories copy across verbatim when a shelf goes home. (`experiments/` holds our own
+delivery-channel trials. Those are arms of an experiment, not models to copy.)
 
 ## How the work divides between you and the agent
 

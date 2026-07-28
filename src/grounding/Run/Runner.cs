@@ -45,24 +45,29 @@ internal static class Runner
         var infraRoot = RepoRoot.Find();
         if (infraRoot is null)
         {
-            Console.Error.WriteLine("grounding: cannot locate infra root (need grounding/ and eng/ with .tools/).");
+            Console.Error.WriteLine("grounding: cannot locate infra root (need examples/ and eng/ with .tools/).");
             return 1;
         }
         var gRoot = o.Root ?? Environment.GetEnvironmentVariable("GROUNDING_ROOT");
         var root = string.IsNullOrWhiteSpace(gRoot) ? infraRoot : Path.GetFullPath(gRoot);
 
-        var unitDir = Path.Combine(root, "grounding", o.Unit);
-        if (!Directory.Exists(unitDir))
+        // A unit always has the package-repo shape: skills/ beside grounding/<unit>/. In a target
+        // package repo that shape IS the repo root. In this repo every unit is a proxy for one,
+        // under examples/ (a package's canonical shelf) or experiments/ (delivery-channel and
+        // variant arms). Resolving the unit root first lets both cases share the code below.
+        var unitRoot = UnitPaths.FindRoot(root, o.Unit);
+        if (unitRoot is null)
         {
-            Console.Error.WriteLine($"grounding: unit not found: {Path.Combine(root, "grounding", o.Unit)}");
+            Console.Error.WriteLine(
+                $"grounding: unit not found: '{o.Unit}'. Looked for grounding/{o.Unit} under "
+                + $"examples/{o.Unit}, experiments/{o.Unit}, and {root}.");
             return 1;
         }
+        root = unitRoot;
+
+        var unitDir = Path.Combine(root, "grounding", o.Unit);
         var metaPath = Path.Combine(unitDir, "meta.yaml");
-        // The shelf lives at <root>/skills/ in a target package repo (the shape a package
-        // ships), or under grounding/<unit>/skills/ for a unit authored inside this repo,
-        // which keeps the unit self-contained. Prefer the nested one when it exists.
-        var nestedSkills = Path.Combine(unitDir, "skills");
-        var skillsDir = Directory.Exists(nestedSkills) ? nestedSkills : Path.Combine(root, "skills");
+        var skillsDir = Path.Combine(root, "skills");
         var skillsRel = Path.GetRelativePath(root, skillsDir);
 
         // The graded artifact is always the authored shelf under skills/<unit>/. A unit carries

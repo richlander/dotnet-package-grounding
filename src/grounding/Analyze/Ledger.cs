@@ -95,7 +95,7 @@ internal sealed partial class Ledger
         if (!string.IsNullOrWhiteSpace(skillPath))
             dirs.Add(Path.IsPathRooted(skillPath) || root is null ? skillPath! : Path.Combine(root, skillPath!));
         if (root is not null && !string.IsNullOrWhiteSpace(skillName))
-            dirs.Add(Path.Combine(root, "grounding", skillName!));
+            dirs.Add(UnitPaths.Dir(root, skillName!));
         foreach (var dir in dirs)
         {
             var p = Path.Combine(dir, "SKILL.md");

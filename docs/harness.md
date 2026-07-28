@@ -251,18 +251,15 @@ grounding/<slug>/
 
 ### In this repo
 
-We host grounding for packages we do not own, so there is no single shelf to put at the root. Each
-unit vendors its own copy inside the eval bundle:
+Every unit is a **stand-in for a package repo**, carrying the exact shape above so the two
+directories copy across verbatim when a shelf goes home:
 
 ```text
-grounding/<slug>/
-  skills/
-    <slug>/SKILL.md      # base package skill
-    <domain>/SKILL.md    # domain skills and progressive-disclosure support files
-    plugin.json          # installs the set together
-  meta.yaml
-  eval.yaml
-  fixtures/...
+examples/<slug>/         # a package's canonical shelf: markout, system-commandline, ...
+  skills/                #   identical to the package-repo shape above
+  grounding/<slug>/      #   meta.yaml, eval.yaml, fixtures/
+experiments/<unit>/      # delivery-channel and variant arms; ship from nowhere
+  grounding/<unit>/      #   some carry a shelf, some only a bare SKILL.md
 .dotnet-install/
   .dotnet-install.json   # advertises the `grounding` tool so `dotnet-install` can build it
 eng/
@@ -271,8 +268,13 @@ eng/
   run-evals.sh           # builds skill-validator from the pinned SHA, then runs evaluate
 ```
 
-`grounding run` accepts either shape: it prefers `grounding/<slug>/skills/` and falls back to a root
-`skills/`.
+Because a unit root *is* a package-repo shape, `grounding run` resolves one path for both cases: it
+looks for `grounding/<unit>` under `examples/<unit>`, then `experiments/<unit>`, then the grounding
+root itself (a real package repo reached via `--root`), and treats whichever it finds as the root.
+
+`examples/` holds at most **one unit per package id** — the canonical shelf. Every other unit is an
+experiment, which is what keeps variants like `markout-013` (a shelf written against Markout 0.13)
+from competing with `examples/markout/` to represent the same package.
 
 Fixtures always live under the eval bundle, never beside the shelf, so the baseline arm receives
 task setup and never the grounded skill set.
@@ -357,8 +359,8 @@ lever**, layered in deliberately as its own arm, not part of the baseline-vs-gro
 
 ## Adding a package
 
-In this repo, under `grounding/<slug>/`; in a package repo, with the shelf at the root instead (see
-[Layout](#layout)).
+In this repo, under `examples/<slug>/`; in a package repo, with the shelf at the repo root instead
+(see [Layout](#layout)). Either way the unit has the same shape.
 
 1. `skills/<slug>/SKILL.md` — the base package skill.
 2. `skills/<domain>/SKILL.md` and support files — optional domain skills, plus

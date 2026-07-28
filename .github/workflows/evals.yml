@@ -61,7 +61,15 @@ jobs:
 
       - name: Run package-grounding evals
         if: env.COPILOT_GITHUB_TOKEN != ''
-        run: .tools/skill-validator/skill-validator evaluate --tests-dir ./tests ./grounding
+        run: |
+          # Each example is a stand-in for a package repo: skills/ beside grounding/<unit>/.
+          # Run from the example root so the validator resolves both by relative path.
+          bin="$PWD/.tools/skill-validator/skill-validator"
+          for ex in examples/*/; do
+            unit=$(basename "$ex")
+            [ -f "$ex/grounding/$unit/eval.yaml" ] || continue
+            ( cd "$ex" && "$bin" evaluate --tests-dir grounding "skills/$unit" )
+          done
         env:
           GH_TOKEN: ${{ env.COPILOT_GITHUB_TOKEN }}
 

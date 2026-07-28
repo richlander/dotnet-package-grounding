@@ -61,7 +61,7 @@ grounding run markout --source skill --dry-run      # print the plan only
 grounding run markout --source skill --emit-skill /tmp/SKILL.md
 ```
 
-`run` reversibly swaps `grounding/<unit>/SKILL.md` to the chosen source, invokes
+`run` reversibly swaps the unit's `grounding/<unit>/SKILL.md` to the chosen source, invokes
 `skill-validator`, copies `results.json` into `data/<unit>-6q/<tag>.json`
 (`<unit>` / `<unit>-readme` / `<unit>-none`), restores `SKILL.md`, then prints the
 table.
