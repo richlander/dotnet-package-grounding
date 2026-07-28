@@ -77,8 +77,9 @@ outright and doing the rest for far fewer tokens.
 ## Four ways a skill arrives
 
 A `SKILL.md` can arrive in four ways. The first three are established and fully supported today.
-The fourth is what this repo is about, and the useful thing about it is that it is **not a fourth
-mechanism**.
+The fourth is what this repo is about. It is best read as a **new delivery vehicle feeding an
+existing consumption pathway**: the package is what carries the skill, but what the agent ends up
+loading is an ordinary in-repo skill, in the ordinary place.
 
 These definitions are up for debate and may differ by domain or community. We define them a
 particular way here for the purposes of measurement and guidance for the package-grounding
@@ -118,9 +119,9 @@ the repo that depends on the package, so two contributors sitting on the same co
 different guidance against the same code. A dependency is a property of the repository, and its
 skills should be too. That is why package skills target row 3.
 
-Row 4 is an alternative **distribution channel for row 1**, not a new kind of thing. The user
-already fetched your package, so the skill can ride along with a dependency they chose, instead of
-being something they have to know exists and go find in a marketplace. That is the entire pitch:
+Row 4 is an alternative **distribution channel for row 1**. The user already fetched your package,
+so the skill can ride along with a dependency they chose, instead of being something they have to
+know exists and go find in a marketplace. That is the entire pitch:
 discovery is the hard part of row 1, and a package they already depend on solves it.
 Markout's [`skills/`](https://github.com/richlander/markout/tree/main/skills) is the worked example
 of the vehicle.
