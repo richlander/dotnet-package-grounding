@@ -263,10 +263,11 @@ grounding/<slug>/
   meta.yaml
   eval.yaml
   fixtures/...
+.dotnet-install/
+  .dotnet-install.json   # advertises the `grounding` tool so `dotnet-install` can build it
 eng/
   skill-validator.sha    # pinned dotnet/skills commit we build the validator from
   grounding              # launcher for the C# grounding CLI (run, gen-plugins, analyze, ...)
-  install-grounding.sh   # publish the Native AOT binary onto PATH
   run-evals.sh           # builds skill-validator from the pinned SHA, then runs evaluate
 ```
 
@@ -292,6 +293,9 @@ task setup and never the grounded skill set.
 - A **.NET SDK** matching `dotnet/skills`' `global.json` (the harness builds `skill-validator` from
   a pinned commit).
 - `git`, and **`gh auth login`** (`skill-validator`'s Copilot SDK uses your `gh` credentials).
+- A **C toolchain** (`clang` + `ar`) if you install the Native AOT build — Native AOT needs a linker
+  anyway, and the static SQLite step compiles the amalgamation. On macOS this is the Xcode Command
+  Line Tools.
 - *(optional)* `dotnet-inspect` for library inspection, but **not** for clean content runs (see
   [Keeping content arms tool-clean](#keeping-content-arms-tool-clean)).
 
@@ -311,17 +315,23 @@ dotnet pack src/grounding -c Release
 dotnet tool install -g --add-source src/grounding/nupkg dotnet-package-grounding
 grounding --help                           # runs via the dotnet host
 
-# C. Install as a Native AOT binary (self-contained ~5 MB, no dotnet host needed):
-eng/install-grounding.sh                   # bash;  eng/install-grounding.ps1 for PowerShell
-#   (wraps `dotnet publish -c Release -r <rid>` + copy to ~/.dotnet/tools)
+# C. Install the Native AOT binary on PATH (self-contained single file, no dotnet host needed):
+dotnet tool install -g dotnet-install       # one-time, if you don't have it
+dotnet-install .                            # reads .dotnet-install/.dotnet-install.json
 grounding --help
 ```
 
 > **FDD vs AOT:** option **B** packs a conventional framework-dependent global tool (run via `dotnet`);
 > option **C** produces a single native executable with no managed-host dependency. Both install a
-> `grounding` command on PATH — use one. AOT is gated to the `-r <rid>` publish, so plain `build`/`pack`
+> `grounding` command on PATH — use one. AOT is gated to publish, so plain `build`/`pack`
 > stay fast and framework-dependent. Once published to a feed,
 > `dotnet tool install -g dotnet-package-grounding` will work directly.
+>
+> **Why `dotnet-install` and not a copy script:** it installs to `~/.dotnet/bin`, which is on PATH
+> but *not* the SDK's tool store (`~/.dotnet/tools`). Foreign files dropped into the tool store get
+> pruned by later `dotnet tool` operations — the binary silently disappears mid-run. `dotnet-install`
+> also refuses anything that isn't a single file, which is why `src/grounding/e_sqlite3-static.targets`
+> compiles SQLite into the binary instead of shipping a `libe_sqlite3.dylib` sidecar.
 
 ## Run locally
 

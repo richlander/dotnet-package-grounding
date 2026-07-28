@@ -8,9 +8,14 @@
     <AssemblyName>grounding</AssemblyName>
     <RootNamespace>Grounding</RootNamespace>
     <InvariantGlobalization>true</InvariantGlobalization>
-    <!-- AOT only when a RID is given (the `dotnet publish -r <rid>` path); plain
-         build/run/pack stay framework-dependent and fast, with no AOT warnings. -->
-    <PublishAot Condition="'$(RuntimeIdentifier)' != ''">true</PublishAot>
+    <!-- AOT on any publish: `dotnet publish -r <rid>` sets RuntimeIdentifier, and a
+         RID-less `dotnet publish` (what dotnet-install runs) sets _IsPublishing, which
+         lets PublishAot infer the RID. Plain build/run/pack stay framework-dependent
+         and fast, with no AOT warnings. -->
+    <PublishAot Condition="'$(RuntimeIdentifier)' != '' or '$(_IsPublishing)' == 'true'">true</PublishAot>
+    <!-- System.CommandLine ships localized resources; they would make the AOT publish
+         multi-file, which dotnet-install refuses. -->
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <InvariantTimezone>true</InvariantTimezone>
     <StripSymbols>true</StripSymbols>
   </PropertyGroup>
@@ -28,18 +33,12 @@
   <ItemGroup>
     <PackageReference Include="System.CommandLine" Version="2.0.0" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.0" />
+    <!-- Override transitive SQLitePCLRaw 2.1.x (GHSA-2m69-gcr7-jv3q) with the patched 3.0.3 line. -->
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.3" />
     <PackageReference Include="Markout" Version="[0.22.0]" />
   </ItemGroup>
 
-  <!-- Targeted NuGet-audit suppression (keeps auditing every other package). NU1903:
-       SQLitePCLRaw.lib.e_sqlite3 (GHSA-2m69-gcr7-jv3q) is pulled transitively by
-       Microsoft.Data.Sqlite. The advisory covers the whole 2.1.x line and both M.D.Sqlite 9.x
-       and 10.x still resolve it; the only patched native (lib.e_sqlite3 3.50.3) is unreferenced
-       and ABI-incompatible, so there is no clean supported fix today. `enrich` opens only local,
-       self-produced sessions.db files read-only (no attacker-controlled input), so the practical
-       risk is negligible. Accepted for now; revisit when Microsoft.Data.Sqlite bumps SQLitePCLRaw. -->
-  <ItemGroup>
-    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-2m69-gcr7-jv3q" />
-  </ItemGroup>
+  <!-- Statically link SQLite so Native AOT publishes a genuine single file. -->
+  <Import Project="e_sqlite3-static.targets" />
 
 </Project>
