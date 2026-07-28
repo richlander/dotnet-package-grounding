@@ -16,9 +16,9 @@ The workflow is mostly mechanical, and agents run the mechanical parts well: bui
 running the suite, collecting artifacts, drafting the PR. Three things are not mechanical, and they
 are where your attention pays for itself.
 
-**You own the tasks.** Start here. The suite is your definition of what using the package well looks
-like, so it has to come from real workflows rather than from what a model expects to be asked.
-Models can propose scenarios; coverage, prompt fairness, and assertions need you.
+**You own the tasks.** The suite is your definition of what using the package well looks like, so it
+has to come from real workflows rather than from what a model expects to be asked. Models can
+propose scenarios; coverage, prompt fairness, and assertions need you.
 
 **You own what differentiates.** Grounding is worth writing where your package does something the
 alternatives do not, or does it in a way nobody guesses. Finding those patterns is package work. So
