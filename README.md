@@ -100,20 +100,25 @@ above are Copilot CLI's, which
 `~/.agents/skills/` for a user. Claude Code reads the `.claude` pair, which is why a skill written
 once tends to work in both.
 
-Row 1 is a formal skill distribution channel, roughly similar to publishing a container image to
-Docker Hub for others to use. Users subscribe to a marketplace (like [dotnet/skills](https://github.com/dotnet/skills))
-and a plugin (like [dotnet-advanced](https://github.com/dotnet/skills/tree/main/plugins/dotnet-advanced)).
-
 Rows 2 and 3 are authored where they are used. Rows 1 and 4 travel, which is the only reason either
-needs an installer. Row 1 exposes `marketplace.json` over a set of plugins that can be downloaded, installed,
-and updated. Row 4's vehicle is the package itself; the row 4 `marketplace.json` is the user `app.csproj` file.
+needs an installer.
+
+Row 1 is a formal skill distribution channel, roughly similar to publishing a container image to
+Docker Hub for others to use. Users subscribe to a marketplace (like
+[dotnet/skills](https://github.com/dotnet/skills)) and a plugin (like
+[dotnet-advanced](https://github.com/dotnet/skills/tree/main/plugins/dotnet-advanced)). The
+`marketplace.json` it exposes is the catalog those plugins are downloaded, installed, and updated
+from.
+
+Row 4's vehicle is the package itself, and its `marketplace.json` is the consumer's `app.csproj`.
+The dependencies they already chose are the catalog.
 
 Row 4 is an alternative **distribution channel for row 1**. The user already fetched your package,
 so the skill can ride along with a dependency they chose, instead of being something they have to
-know exists and go find in a marketplace. That is the entire pitch:
-discovery is the hard part of row 1, and a package they already depend on solves it.
-Markout's [`skills/`](https://github.com/richlander/markout/tree/main/skills) is the worked example
-of the vehicle.
+know exists and go find in a marketplace. That is the entire pitch: discovery is the hard part of
+row 1, and a package they already depend on solves it. Markout's
+[`skills/`](https://github.com/richlander/markout/tree/main/skills) is the worked example of the
+vehicle.
 
 And once installed, row 4 **collapses into row 3**, into the same directory a hand-written repo
 skill would occupy. The skills land in the consumer's repo as checked-in files they can read,
@@ -123,10 +128,11 @@ in a repository.
 
 The step that is still missing is the installer itself, the part that notices a restored package
 ships a shelf and puts it in the consumer's repo. That is tracked in
-[#21](https://github.com/richlander/dotnet-package-skills/issues/21). We intend to offer a skill whose job
-is installing package skills. The interesting part is that a "package skill agent" need not install all package skills.
-A package can ship a dozen skills covering features a given repo will never touch, and an agent that has just
-read that repo is better placed to pick the relevant subset than the package author was.
+[#21](https://github.com/richlander/dotnet-package-skills/issues/21). We intend to offer a skill
+whose job is installing package skills. The interesting part is that a "package skill agent" need
+not install all package skills. A package can ship a dozen skills covering features a given repo
+will never touch, and an agent that has just read that repo is better placed to pick the relevant
+subset than the package author was.
 
 **The last column defines scoping and consistency**, which is what matters in a team environment.
 Rows 1 and 2 install per machine, which is the right scope for a developer's own preferences and the
