@@ -11,7 +11,7 @@ grounding is and why it is measured this way; this file covers *how* the evals r
 
 > The harness scaffolding — generated plugin manifests, transient validator wrappers, slug rules,
 > and runner scripts — is **not** shipped grounding. The artifact under test is the package skill set
-> rooted at `grounding/<slug>/SKILL.md`: a small base skill, optional domain skills and supporting
+> rooted at `skills/<slug>/SKILL.md`: a small base skill, optional domain skills and supporting
 > files, and pull-based install into the consuming repo.
 
 ## Metrics vs. signals: what a claim may rest on
@@ -188,15 +188,27 @@ We follow the same pattern `dotnet/skills` uses for its own evals: **build** the
 binary from source (`dotnet publish eng/skill-validator/src/SkillValidator.csproj`) and run it.
 skill-validator is **not published to any NuGet feed** (not nuget.org, not GitHub Packages) —
 `dotnet/skills` only builds it in-repo and publishes a rolling `--prerelease` nightly to a GitHub
-Release. So we pin a `dotnet/skills` commit in [`eng/skill-validator.sha`](../eng/skill-validator.sha)
-and build the validator from it. "Taking updates" = bump that SHA — automated by
-[`.github/workflows/update-harness.yml`](../.github/workflows/update-harness.yml), which opens a PR
-pointing at the latest `dotnet/skills` main commit.
+Release. So we pin a commit in [`eng/skill-validator.sha`](../eng/skill-validator.sha) and build the
+validator from it.
+
+The pin tracks the **`holistic-harness` branch of
+[`richlander/skills`](https://github.com/richlander/skills/tree/holistic-harness)**, not
+`dotnet/skills` main. That branch carries three commits this study's protocol depends on and that
+were never upstreamed: the `expected_skill` scenario prior, holistic eval mode with the isolated-arm
+skip, and per-run outcomes persisted before averaging. Upstream **accepts `--eval-mode` and ignores
+it**, so a pin at `dotnet/skills` main silently downgrades every run to legacy pairwise with a live
+isolated arm, producing numbers that are not comparable to any published card and no warning that
+anything changed. Both [`eng/run-evals.sh`](../eng/run-evals.sh) and the bump workflow now refuse a
+pin whose `EvaluateCommand.cs` carries no `--eval-mode`.
+
+"Taking updates" = rebase `holistic-harness` onto `dotnet/skills` main, then bump the SHA. The bump
+is automated by [`.github/workflows/update-harness.yml`](../.github/workflows/update-harness.yml),
+which opens a PR pointing at the latest `holistic-harness` commit.
 
 ## Shipped skill set vs transient validator wrapper
 
-The package-authored grounding under test is a pull-based skill set rooted at
-`grounding/<slug>/SKILL.md`. That base skill uses the Anthropic Agent Skills convention: YAML
+The package-authored grounding under test is a pull-based skill set rooted at the shelf's base skill,
+`skills/<slug>/SKILL.md`. That base skill uses the Anthropic Agent Skills convention: YAML
 frontmatter with `name` and a use-when `description`, followed by concise guidance and progressive
 disclosure into domain skills or supporting files. The package can carry multiple domain skills, and
 the set is installed into the consuming repo.
@@ -207,17 +219,48 @@ confuse that runner scaffolding with the package's shipped grounding artifact.
 
 ## Layout
 
-Each grounding unit lives in a folder named with a **lowercase-hyphen slug** (the skill-validator skill
-name rule), e.g. `system-commandline` for the `System.CommandLine` package. The real package id is
-recorded in `meta.yaml` (`package:`).
+Two directories, two jobs. `skills/` is **what ships**: the shelf a consumer installs, and the
+artifact the eval grades. `grounding/` is **how it is measured**: scenarios, fixtures, and results.
+Nothing under `skills/` is needed to *run* the harness — it is the thing under test.
+
+Each unit is named with a **lowercase-hyphen slug** (the skill-validator skill name rule), e.g.
+`system-commandline` for `System.CommandLine`. The unit folder, `meta.yaml`'s `name`, and the base
+skill's own directory all carry that slug. The real package id is recorded in `meta.yaml`
+(`package:`).
+
+### In a package repo
+
+This is the shape a package author adopts. The shelf sits at the repo root, beside the source it
+documents, and ships from there. The eval bundle sits apart:
+
+```text
+skills/
+  <slug>/SKILL.md      # base package skill; source of truth for the grounded arm
+  <domain>/SKILL.md    # domain skills and progressive-disclosure support files
+  plugin.json          # installs the set together
+grounding/<slug>/
+  meta.yaml            # name (== <slug>), package, description
+  eval.yaml            # CT-24 scenarios: prompt + setup.copy_test_files + assertions
+  fixtures/...         # sample project(s) copied into the agent workdir; gated by `dotnet test`
+```
+
+[markout](https://github.com/richlander/markout) is the worked example. Evaluate it from here with
+`grounding run markout --root ~/git/markout`.
+
+### In this repo
+
+We host grounding for packages we do not own, so there is no single shelf to put at the root. Each
+unit vendors its own copy inside the eval bundle:
 
 ```text
 grounding/<slug>/
-  SKILL.md       # base package skill; source of truth for the grounded arm
-  <domain>/...   # optional domain skills and progressive-disclosure support files
-  meta.yaml      # name (== <slug>), package, description
-  eval.yaml      # CT-24 scenarios: prompt + setup.copy_test_files + assertions
-  fixtures/...   # sample project(s) copied into the agent workdir; gated by `dotnet test`
+  skills/
+    <slug>/SKILL.md      # base package skill
+    <domain>/SKILL.md    # domain skills and progressive-disclosure support files
+    plugin.json          # installs the set together
+  meta.yaml
+  eval.yaml
+  fixtures/...
 eng/
   skill-validator.sha    # pinned dotnet/skills commit we build the validator from
   grounding              # launcher for the C# grounding CLI (run, gen-plugins, analyze, ...)
@@ -225,8 +268,22 @@ eng/
   run-evals.sh           # builds skill-validator from the pinned SHA, then runs evaluate
 ```
 
-The grounding folder name must match the skill `name` (e.g. `system-commandline`). Fixtures live under
-the eval bundle so the baseline arm receives only task setup, never the grounded skill set.
+`grounding run` accepts either shape: it prefers `grounding/<slug>/skills/` and falls back to a root
+`skills/`.
+
+Fixtures always live under the eval bundle, never beside the shelf, so the baseline arm receives
+task setup and never the grounded skill set.
+
+### Not every folder is a full unit
+
+- **Full units** carry a shelf, `eval.yaml`, and fixtures: `system-commandline`, `system-text-json`,
+  `markout-013`.
+- **Shelf only** — `markout`, `microsoft-extensions-ai`, `nugetfetch`, `prefer-dotnet-inspect` have
+  a shelf and `meta.yaml` but no eval bundle. Markout's eval lives in its own repo and runs with
+  `--root`; the others are authored shelves still waiting on one.
+- **Channel-matrix arms** — `*-mcp`, `*-readme`, `markout-broadskill`, `multi-package-*` are flat
+  `SKILL.md` + `meta.yaml` bundles from the historical delivery-channel study, not skill shelves.
+  See [`docs/recommendation.md`](recommendation.md).
 
 ## Prerequisites
 
@@ -287,11 +344,15 @@ lever**, layered in deliberately as its own arm, not part of the baseline-vs-gro
 
 ## Adding a package
 
-1. `grounding/<slug>/SKILL.md` — the base package skill.
-2. Optional domain skills/support files under `grounding/<slug>/`.
-3. `grounding/<slug>/meta.yaml` — `name` (== `<slug>`), `package`, `description`.
-4. `grounding/<slug>/eval.yaml` — CT-24 scenarios.
-5. `grounding/<slug>/fixtures/...` — task fixtures with a `dotnet test` or `dotnet run` correctness gate.
+In this repo, under `grounding/<slug>/`; in a package repo, with the shelf at the root instead (see
+[Layout](#layout)).
+
+1. `skills/<slug>/SKILL.md` — the base package skill.
+2. `skills/<domain>/SKILL.md` and support files — optional domain skills, plus
+   `skills/plugin.json` to install the set together.
+3. `meta.yaml` — `name` (== `<slug>`), `package`, `description`.
+4. `eval.yaml` — CT-24 scenarios.
+5. `fixtures/...` — task fixtures with a `dotnet test` or `dotnet run` correctness gate.
 6. Run `grounding run <slug> --source skill --eval-mode holistic --runs 5`.
 
 ## Channel-matrix runs
