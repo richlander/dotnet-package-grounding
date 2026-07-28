@@ -49,14 +49,6 @@ what your package is now: features shipped after the training cut are simply mis
 change behavior out from under code the model still writes from memory. Unlike popularity, neither
 direction spares the frontier tier, because no model can know what shipped after it was trained.
 
-The two curves answer different questions. Popularity decides whether the model ever knew your
-package; staleness decides whether what it knew is still true. A niche package is a gap to fill, and
-a package that just shipped a breaking change is a correction to make. The correction is the more
-urgent of the two: a gap leaves the agent without an answer, while a stale instinct leaves it with a
-confident wrong one and no way to tell it is wrong. Together they say who needs grounding least,
-which is the stable, widely used package, and who needs it most, which is the young or fast-moving
-one.
-
 Knowledge here means *resident* model knowledge — not what the model could recover with web search or
 tools. Recovering a fact by digging is exactly the cost grounding removes.
 
