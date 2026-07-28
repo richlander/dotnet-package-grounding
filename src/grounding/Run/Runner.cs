@@ -5,7 +5,7 @@ namespace Grounding.Run;
 internal sealed class RunOptions
 {
     public required string Unit;
-    public required string Source;        // agents | readme | none
+    public required string Source;        // skill | readme | none
     public string Delivery = "pull";      // pull = model-invoked skill (SKILL.md); push = always-on agent (.agent.md)
     public required List<string> Models;
     public int Runs = 1;
@@ -41,7 +41,7 @@ internal static class Runner
     {
         // The INFRA root holds the harness (skill-validator under .tools/). The GROUNDING
         // root holds grounding/<unit> — it may be a target package repo (--root / GROUNDING_ROOT),
-        // so we eval that repo's AGENTS.md in place with no packing or publishing.
+        // so we eval that repo's authored skill in place with no packing or publishing.
         var infraRoot = RepoRoot.Find();
         if (infraRoot is null)
         {
@@ -57,20 +57,12 @@ internal static class Runner
             Console.Error.WriteLine($"grounding: unit not found: {Path.Combine(root, "grounding", o.Unit)}");
             return 1;
         }
-        var agentsPath = Path.Combine(unitDir, "AGENTS.md");
         var metaPath = Path.Combine(unitDir, "meta.yaml");
-        var hasAgents = File.Exists(agentsPath);
-        // AGENTS.md is required only for --source agents (its body IS the grounding). SKILL.md-only
-        // units ship no AGENTS.md; they carry name/description in meta.yaml. Every other arm
-        // (skill/readme/none) only needs those two scalars for the SKILL wrapper.
-        if (!hasAgents && o.Source == "agents")
+        // The graded artifact is always the authored shelf under skills/<unit>/. A unit carries
+        // only name/description in meta.yaml, which the readme/none wrappers need.
+        if (!File.Exists(metaPath))
         {
-            Console.Error.WriteLine($"grounding: {agentsPath} missing (required for --source agents).");
-            return 1;
-        }
-        if (!hasAgents && !File.Exists(metaPath))
-        {
-            Console.Error.WriteLine($"grounding: neither {agentsPath} nor {metaPath} present for unit '{o.Unit}'.");
+            Console.Error.WriteLine($"grounding: {metaPath} not present for unit '{o.Unit}'.");
             return 1;
         }
 
@@ -80,26 +72,22 @@ internal static class Runner
         if (o.TestsDir is null)
             o.TestsDir = File.Exists(Path.Combine(unitDir, "eval.yaml")) ? "grounding" : "tests";
 
-        var doc = hasAgents ? SkillDoc.ParseAgents(agentsPath, metaPath) : SkillDoc.FromMeta(metaPath, o.Unit);
+        var doc = SkillDoc.FromMeta(metaPath, o.Unit);
         string skillText;
         string? srcDocPath = null;   // the grounding doc feeding this arm (null for baseline) — its
                                      // content hash is the arm's provenance/pin key.
         switch (o.Source)
         {
-            case "agents":
-                skillText = doc.Render(doc.Body);
-                srcDocPath = agentsPath;
-                break;
             case "skill":
-                // The authored Complete Textbook is a REAL Claude skill, not grounding: it lives
-                // in a conventional skills/<unit>/SKILL.md (with a plugin.json), per Anthropic
-                // guidance — NOT under grounding/. Feed it verbatim (it is already a full SKILL.md).
+                // The authored grounding is a REAL Claude skill: it lives in a conventional
+                // skills/<unit>/SKILL.md (with a plugin.json), per Anthropic guidance — NOT under
+                // grounding/. Feed it verbatim (it is already a full SKILL.md).
                 var authoredSkill = Path.Combine(root, "skills", o.Unit, "SKILL.md");
                 if (!File.Exists(authoredSkill))
                 {
                     Console.Error.WriteLine(
-                        $"grounding: --source skill needs skills/{o.Unit}/SKILL.md (an authored Textbook skill). "
-                        + "SKILL.md is optional and maintainer-authored; add one under skills/ to eval the Textbook arm.");
+                        $"grounding: --source skill needs skills/{o.Unit}/SKILL.md (an authored skill). "
+                        + "Add one under skills/ to eval the grounded arm.");
                     return 1;
                 }
                 skillText = File.ReadAllText(authoredSkill);
@@ -140,7 +128,7 @@ internal static class Runner
         // --tests-dir (grounding/<unit>/eval.yaml), independent of the skill's location, and
         // resolves setup fixture sources relative to that eval dir — so the eval + fixtures stay
         // under grounding/<unit> while the skills live under skills/. Other sources
-        // (agents/readme/none, or push) drop the synthesized doc into grounding/<unit>.
+        // (readme/none, or push) drop the synthesized doc into grounding/<unit>.
         var multiSkill = o.Source == "skill" && o.Delivery != "push";
         var skillPath = multiSkill
             ? Path.Combine(root, "skills", o.Unit, "SKILL.md")

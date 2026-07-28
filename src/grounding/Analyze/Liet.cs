@@ -6,13 +6,13 @@ namespace Grounding.Analyze;
 
 // The Levelized-IET (LIET) curve — see docs/liet.md.
 //
-// Per-rung IET, one series per arm (baseline / AGENTS.md / oracle), difficulty on the x-axis
+// Per-rung IET, one series per arm (baseline / SKILL.md / oracle), difficulty on the x-axis
 // (authored rung order). The rules the renderer enforces:
 //   * A rung shows a value for an arm ONLY where that arm answered correctly (all functional
 //     assertions pass). A failed arm is NOT plotted and NOT extrapolated.
 //   * For every rung, the competitor envelope = min(IET of the OTHER arms that passed). That is the
-//     ceiling AGENTS.md must stay UNDER — the maximum price of generalization (a ceiling, not a
-//     floor). Under it: AGENTS.md pays its way. Over it (or absent): ship the cheaper competitor.
+//     ceiling SKILL.md must stay UNDER — the maximum price of generalization (a ceiling, not a
+//     floor). Under it: SKILL.md pays its way. Over it (or absent): ship the cheaper competitor.
 internal sealed class Liet
 {
     private readonly TextWriter _o;
@@ -41,7 +41,7 @@ internal sealed class Liet
         public string Name = "";
         public int Index;
         public Point Base = new(), Ag = new(), Oracle = new(), Readme = new();
-        public double? Ceiling;  // competitor envelope for AGENTS.md (min IET of other passing arms)
+        public double? Ceiling;  // competitor envelope for SKILL.md (min IET of other passing arms)
         public string Region = "";
         public List<string> Skills = new();  // skills the grounded arm pulled for this rung (plugin self-select)
         public string? Expected;             // methodology prior: the ONE target skill for this rung (eval.yaml)
@@ -97,7 +97,7 @@ internal sealed class Liet
             catch (Exception e) { _o.WriteLine($"!! {f}: {e.Message}"); }
         }
         // A dataset whose file name contains "readme" is the packed-README arm; fold it into the
-        // matching primary (AGENTS/skill) curve as a third series rather than plotting it separately.
+        // matching primary (skill) curve as a third series rather than plotting it separately.
         static bool IsReadme(string p) => System.IO.Path.GetFileName(p).ToLowerInvariant().Contains("readme");
         var readmeFiles = parsed.Where(p => IsReadme(p.path)).ToList();
         var primary = parsed.Where(p => !IsReadme(p.path)).ToList();
@@ -146,8 +146,8 @@ internal sealed class Liet
                 for (int k = 0; k < rungs.Count; k++) rungs[k].Index = k;
                 var unit = v.SkillName ?? "?";
                 // Label the grounded arm from the dataset file name (same heuristic as the card's
-                // DocLabel): a "skill" dataset ships SKILL.md, otherwise AGENTS.md.
-                var docLabel = System.IO.Path.GetFileName(f).ToLowerInvariant().Contains("skill") ? "SKILL.md" : "AGENTS.md";
+                // DocLabel): a "skill" dataset ships SKILL.md, otherwise a legacy doc.
+                var docLabel = System.IO.Path.GetFileName(f).ToLowerInvariant().Contains("skill") ? "SKILL.md" : "grounding doc (legacy)";
                 EmitTable(rungs, unit, d.Model ?? "?", d.JudgeModel, docLabel, skillIds);
                 if (svgPath is { Length: > 0 })
                 {
@@ -203,9 +203,9 @@ internal sealed class Liet
             if (readmeMap is not null && readmeMap.TryGetValue(r.Name, out var rm)) r.Readme = rm;
             r.Skills = Loader.DetectedSkillsOf(sc, groundArm).Distinct().ToList();
             r.Expected = string.IsNullOrWhiteSpace(sc.ExpectedSkill) ? null : sc.ExpectedSkill.Trim();
-            // Competitor envelope for AGENTS.md = min IET of baseline + oracle that passed. README is
-            // PLOTTED as a reference series but kept OUT of the ceiling: where README≈AGENTS (common),
-            // per-rung README-vs-AGENTS differences are n=1 noise and would flip win/harm spuriously.
+            // Competitor envelope for SKILL.md = min IET of baseline + oracle that passed. README is
+            // PLOTTED as a reference series but kept OUT of the ceiling: where README≈SKILL (common),
+            // per-rung README-vs-SKILL differences are n=1 noise and would flip win/harm spuriously.
             var comp = new List<double>();
             if (r.Base.Passed) comp.Add(r.Base.Iet);
             if (r.Oracle.Passed) comp.Add(r.Oracle.Iet);
@@ -221,12 +221,12 @@ internal sealed class Liet
     {
         if (!r.Ag.Passed)
         {
-            if (r.Base.Passed) return "regression";            // baseline ok, AGENTS wrong — harm veto
-            if (r.Ceiling is not null) return "ceiling";       // AGENTS absent; oracle sets the max price
+            if (r.Base.Passed) return "regression";            // baseline ok, SKILL.md wrong — harm veto
+            if (r.Ceiling is not null) return "ceiling";       // SKILL.md absent; oracle sets the max price
             return "unreached";                                // nobody answered
         }
-        if (!r.Base.Passed) return "unlock";                   // AGENTS climbs where baseline can't
-        // both baseline and AGENTS passed — efficiency region
+        if (!r.Base.Passed) return "unlock";                   // SKILL.md climbs where baseline can't
+        // both baseline and SKILL.md passed — efficiency region
         return r.Ceiling is { } c && r.Ag.Iet <= c ? "win" : "harm";
     }
 
@@ -557,7 +557,7 @@ internal sealed class Liet
             }
         }
         // arms legend (top-left, inside plot): one line swatch per plotted arm so the baseline,
-        // README and oracle curves are named, not just the AGENTS.md dots explained below.
+        // README and oracle curves are named, not just the SKILL.md dots explained below.
         {
             double lx = L + 12, ly = T + 8; int row = 0;
             bool hasOracle = rungs.Any(r => r.Oracle.Passed), hasReadme = rungs.Any(r => r.Readme.Present);
@@ -585,7 +585,7 @@ internal sealed class Liet
         sb.Append("  <g font-size=\"11\" fill=\"#64748b\" text-anchor=\"middle\">\n");
         for (int i = 0; i < n; i++) sb.Append($"    <text x=\"{N(X(i))}\" y=\"{B + 18}\">{Esc(ShortRung(rungs[i].Name))}</text>\n");
         sb.Append("  </g>\n");
-        // ceilings on rungs where AGENTS failed (max price of generalization): a dashed ceiling
+        // ceilings on rungs where SKILL.md failed (max price of generalization): a dashed ceiling
         // line with a green "pays its way" zone under it and a red "ship SKILL.md" zone over it.
         foreach (var r in rungs.Where(r => !r.Ag.Passed && r.Ceiling is not null))
         {

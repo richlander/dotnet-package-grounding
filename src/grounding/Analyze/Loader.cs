@@ -360,7 +360,7 @@ internal static class Loader
         };
     }
 
-    // ~tokens of the grounding loaded into each grounded arm (SKILL.md, else AGENTS.md).
+    // ~tokens of the grounding loaded into each grounded arm (SKILL.md).
     // Resolve the ACTUAL doc via the dataset's skillPath (the grounding/<unit> dir the run
     // used); fall back to skillName only when skillPath is absent. Using skillName alone is
     // wrong when several units share a frontmatter `name` (e.g. markout experiment variants).
@@ -374,7 +374,7 @@ internal static class Loader
         if (!string.IsNullOrWhiteSpace(skillName))
             dirs.Add(System.IO.Path.Combine(root, "grounding", skillName));
         foreach (var dir in dirs)
-            foreach (var art in new[] { "SKILL.md", "AGENTS.md" })
+            foreach (var art in new[] { "SKILL.md" })
             {
                 var p = System.IO.Path.Combine(dir, art);
                 if (File.Exists(p))

@@ -34,9 +34,8 @@ dotnet tool install --global --add-source src/grounding/nupkg dotnet-package-gro
 | Command | Notes |
 | --- | --- |
 | `analyze <results.json...>` | default = raw per-scenario table |
-| `analyze --card / --doc-card / --model-diff / --source-diff / --skill-diff / --tools-card / --web-card` | also `-v <view>`; `--no-title` supported |
-| `run <unit> --source agents\|readme\|none` | README/AGENTS/nothing toggle; `--dry-run`, `--emit-skill` |
-| `check-agents` | validate every `grounding/<unit>/AGENTS.md` is within the line budget |
+| `analyze --card / --doc-card / --model-diff / --source-diff / --tools-card / --web-card` | also `-v <view>`; `--no-title` supported |
+| `run <unit> --source skill\|readme\|none` | skill/README/nothing toggle; `--dry-run`, `--emit-skill` |
 | `gen-plugins` | expand `grounding/**/plugin.json.in` |
 | `rescore <model=path>… [--w N]` | IET rubric, Pareto gate |
 | `rescore --all` | batch over `.skill-validator-results/` |
@@ -46,16 +45,16 @@ dotnet tool install --global --add-source src/grounding/nupkg dotnet-package-gro
 
 This CLI is the single implementation of the repo's eval tooling.
 
-## Source toggle (README / AGENTS / nothing)
+## Source toggle (skill / README / nothing)
 
 `run --source` is the first-class toggle for *what fills the grounded arm*:
 
 ```bash
-grounding run nugetfetch --source agents --model "claude-haiku-4.5 claude-opus-4.8" --runs 3
-grounding run nugetfetch --source readme --readme-file path/to/README.md
-grounding run nugetfetch --source none
-grounding run nugetfetch --source agents --dry-run      # print the plan only
-grounding run nugetfetch --source agents --emit-skill /tmp/SKILL.md
+grounding run markout --source skill --model "claude-haiku-4.5 claude-opus-5" --runs 3
+grounding run markout --source readme --readme-file path/to/README.md
+grounding run markout --source none
+grounding run markout --source skill --dry-run      # print the plan only
+grounding run markout --source skill --emit-skill /tmp/SKILL.md
 ```
 
 `run` reversibly swaps `grounding/<unit>/SKILL.md` to the chosen source, invokes

@@ -118,7 +118,7 @@ scenarios:
   # M3 — built-in shape types. A build report with a warning Callout and a list of
   # Metric step timings. Requires the Markout shape types (Callout, Metric) AND the
   # [MarkoutIgnoreInTable] gotcha (non-tabular list properties must be marked or they
-  # are mistreated as table columns). Covered by the compact AGENTS.md shape list.
+  # are mistreated as table columns). Covered by the compact grounding doc's shape list.
   # ---------------------------------------------------------------------------
   - name: "M3: build report with a callout and metric shapes"
     prompt: |
@@ -171,7 +171,7 @@ scenarios:
   # ---------------------------------------------------------------------------
   # M4 — formatters. Emit the same package list as TSV for piping into another tool.
   # Requires TableFormatter + MarkoutWriterOptions { TableMode = MarkoutTableMode.Tsv }.
-  # The compact AGENTS.md documents the TableFormatter/TableMode path.
+  # The compact grounding doc documents the TableFormatter/TableMode path.
   # ---------------------------------------------------------------------------
   - name: "M4: emit a package list as TSV"
     prompt: |
@@ -264,8 +264,8 @@ scenarios:
   # M6 — advanced attributes (the broad-skill wedge). A GitHub issues report whose
   # title is a hyperlink, whose state is mapped to a ✓/✗ badge, grouped by milestone.
   # These attributes ([MarkoutLink], [MarkoutValueMap], MarkoutSection.GroupBy) are
-  # documented only in the BROAD skill, NOT the compact AGENTS.md. Designed so the
-  # compact-grounding arms (NuGet MCP / dotnet-inspect -> AGENTS.md) cannot fully pass
+  # documented only in the BROAD skill, NOT the compact grounding doc. Designed so the
+  # compact-grounding arms (NuGet MCP / dotnet-inspect -> compact doc) cannot fully pass
   # while the broad-skill arm can — the question that keeps the broad skill non-redundant.
   # ---------------------------------------------------------------------------
   - name: "M6: grouped issue report with links and value-mapped badges"

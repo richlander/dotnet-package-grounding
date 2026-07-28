@@ -4,9 +4,10 @@ Generic infrastructure for evaluating NuGet package **grounding**. Start at the 
 
 ## Primary
 
-- **[overview.md](./overview.md)** — **read this first**: the whole system in one pass — grounding
-  as a pull-installed `SKILL.md` skill set, measured **grounded vs baseline** on the CT-24 workflow
-  ladder across three model tiers, and graded with the quality card.
+- **[overview.md](./overview.md)** — **read this first**: the concept and the method end to end —
+  grounding as a pull-installed `SKILL.md` skill set, what a skill buys, measured **grounded vs
+  baseline** on the CT-24 workflow ladder across three model tiers, and graded with the quality
+  card.
 - **[quality-card-model.md](./quality-card-model.md)** — **the measurement model** (start here for
   *how we judge*): the two axes (**RETURN** = graded yield + reliability, **EFFICIENCY** = per-dollar
   cost *and* per-day duration), the `Fails < Satisfies < Delivers` ladder, and the **two ship gates**

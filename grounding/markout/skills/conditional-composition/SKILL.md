@@ -43,12 +43,17 @@ public class Inspection
 
 ```csharp
 // Drop the "Pattern" column when it's uniform/empty across the rows (keeps tables compact).
-[MarkoutIgnoreColumnWhen(nameof(HidePattern))]
-public string? Pattern { get; set; }
-
-// On the section: IgnoreProperty hides named columns unconditionally.
-[MarkoutSection(Name = "Matches", IgnoreProperty = "InternalId,Debug")]
+// The attribute goes on the SECTION list and names a static bool predicate + the column to hide.
+[MarkoutSection(Name = "Matches")]
+[MarkoutIgnoreColumnWhen(nameof(PatternIsUniform), "Pattern")]
 public List<MatchRow>? Matches { get; set; }
+
+public static bool PatternIsUniform(List<MatchRow>? rows)
+    => rows?.Select(r => r.Pattern).Distinct().Count() <= 1;
+
+// IgnoreProperty hides named columns unconditionally.
+[MarkoutSection(Name = "Debug", IgnoreProperty = "InternalId,Debug")]
+public List<MatchRow>? DebugRows { get; set; }
 ```
 
 `[MarkoutIgnoreColumnWhen(...)]` is the declarative replacement for "compute distinct values, then
@@ -62,7 +67,7 @@ MarkoutSerializer.Serialize(report, Console.Out, new MarkdownFormatter(), ctx, o
 ```
 
 `IncludeSections` renders only the named sections — the caller-side lever for "just show me X"
-without a second model. (See **multi-view-verbosity** for driving this from a verbosity level.)
+without a second model, and the declarative way to drive quiet/detail/verbosity views from one model.
 
 ## One model, many shapes: same-name section variants
 

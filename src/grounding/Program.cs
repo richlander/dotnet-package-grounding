@@ -13,10 +13,10 @@ var filesArg = new Argument<string[]>("files")
 };
 var viewOpt = new Option<string>("--view", "-v")
 {
-    Description = "table | card | ladder | smell | doc-card | liet | h2h | model-diff | source-diff | skill-diff | tools-card | web-card",
+    Description = "table | card | ladder | smell | doc-card | liet | h2h | model-diff | source-diff | tools-card | web-card",
     DefaultValueFactory = _ => "table",
 };
-viewOpt.AcceptOnlyFromAmong("table", "card", "ladder", "smell", "doc-card", "liet", "h2h", "model-diff", "source-diff", "skill-diff", "tools-card", "web-card");
+viewOpt.AcceptOnlyFromAmong("table", "card", "ladder", "smell", "doc-card", "liet", "h2h", "model-diff", "source-diff", "tools-card", "web-card");
 var svgOpt = new Option<string?>("--svg")
 {
     Description = "For --view liet: also write the LIET curve as an SVG to this path.",
@@ -40,7 +40,7 @@ var ietModelOpt = new Option<string>("--iet-model")
 };
 ietModelOpt.AcceptOnlyFromAmong("auto", "anthropic", "claude", "openai", "gpt", "no-cache", "nocache", "gpt-pro", "gpt-5.5-pro");
 // View flags (aliases for --view): --card / --model-diff / etc.
-var legacy = new[] { "card", "smell", "model-diff", "source-diff", "skill-diff", "tools-card", "web-card" }
+var legacy = new[] { "card", "smell", "model-diff", "source-diff", "tools-card", "web-card" }
     .ToDictionary(v => v, v => new Option<bool>($"--{v}") { Description = $"Alias for --view {v}." });
 
 var analyze = new Command("analyze", "Render metric cards / tables from results.json.")
@@ -68,7 +68,6 @@ analyze.SetAction(parse =>
         case "liet": new Liet(Console.Out) { NoTitle = parse.GetValue(noTitleOpt), OracleFromPlugin = parse.GetValue(oraclePluginOpt) }.Render(files, parse.GetValue(svgOpt)); break;
         case "model-diff": cards.ModelDiff(files); break;
         case "source-diff": cards.SourceDiff(files); break;
-        case "skill-diff": cards.SkillDiff(files); break;
         case "tools-card": cards.ToolsCard(files); break;
         case "web-card": cards.WebCard(files); break;
         default: cards.Table(files); break;
@@ -78,7 +77,7 @@ analyze.SetAction(parse =>
 root.Subcommands.Add(analyze);
 
 // ---- ledger -------------------------------------------------------------
-// The content ledger — attribute each AGENTS.md block to the ladder rung(s) where baseline shows
+// The content ledger — attribute each SKILL.md block to the ladder rung(s) where baseline shows
 // a deficit (fail / archaeology / IET premium). Emits justification, orphans, and coverage gaps.
 // A filter over existing per-scenario data (no re-run), like LIET.
 var ledgerFilesArg = new Argument<string[]>("files")
@@ -86,7 +85,7 @@ var ledgerFilesArg = new Argument<string[]>("files")
     Description = "One or more results.json paths (globs allowed).",
     Arity = ArgumentArity.OneOrMore,
 };
-var ledgerDocOpt = new Option<string?>("--doc") { Description = "AGENTS.md to attribute (default: resolved from the dataset's grounding dir)." };
+var ledgerDocOpt = new Option<string?>("--doc") { Description = "SKILL.md to attribute (default: resolved from the dataset's grounding dir)." };
 var ledgerPremiumOpt = new Option<double>("--iet-premium")
 {
     Description = "Baseline IET premium over grounded (fraction) that counts as a deficit even when baseline passed clean. Default 0.20.",
@@ -98,7 +97,7 @@ var ledgerMinOverlapOpt = new Option<int>("--min-overlap")
     DefaultValueFactory = _ => 1,
 };
 var ledgerIetOpt = new Option<string>("--iet-model") { Description = $"IET model: {IetModels.Names}.", DefaultValueFactory = _ => "auto" };
-var ledger = new Command("ledger", "Attribute AGENTS.md content blocks to the ladder rungs where baseline has a deficit.")
+var ledger = new Command("ledger", "Attribute SKILL.md content blocks to the ladder rungs where baseline has a deficit.")
 {
     ledgerFilesArg, ledgerDocOpt, ledgerPremiumOpt, ledgerMinOverlapOpt, ledgerIetOpt,
 };
@@ -142,10 +141,10 @@ root.Subcommands.Add(rescoreAsrt);
 var unitArg = new Argument<string>("unit") { Description = "Grounding unit (grounding/<unit>)." };
 var sourceOpt = new Option<string>("--source", "-s")
 {
-    Description = "Grounding source to test: agents | skill | readme | none.",
-    DefaultValueFactory = _ => "agents",
+    Description = "Grounding source to test: skill | readme | none.",
+    DefaultValueFactory = _ => "skill",
 };
-sourceOpt.AcceptOnlyFromAmong("agents", "skill", "readme", "none");
+sourceOpt.AcceptOnlyFromAmong("skill", "readme", "none");
 var deliveryOpt = new Option<string>("--delivery")
 {
     Description = "Delivery mode: pull = model-invoked skill (SKILL.md, must be activated); push = always-on agent (.agent.md, in context at t=0).",
@@ -166,7 +165,7 @@ var outOpt = new Option<string?>("--out") { Description = "Output dataset dir (d
 var readmeFileOpt = new Option<string?>("--readme-file") { Description = "README path for --source readme." };
 var dryRunOpt = new Option<bool>("--dry-run") { Description = "Print the plan without invoking skill-validator." };
 var emitSkillOpt = new Option<string?>("--emit-skill") { Description = "Write the generated SKILL.md to a path and exit." };
-var rootOpt = new Option<string?>("--root") { Description = "Grounding root holding grounding/<unit> — a target package repo (default: the infra repo). Also GROUNDING_ROOT. Eval reads AGENTS.md in place; no packing." };
+var rootOpt = new Option<string?>("--root") { Description = "Grounding root holding grounding/<unit> — a target package repo (default: the infra repo). Also GROUNDING_ROOT. Eval reads the authored skill in place; no packing." };
 var baselineOutOpt = new Option<string?>("--baseline-out") { Description = "Shared-baseline flow: run and persist the ungrounded baseline to this path (a {model} token is substituted per model). Reuse it with --baseline-from so push/pull compare against one pinned baseline." };
 var baselineFromOpt = new Option<string?>("--baseline-from") { Description = "Shared-baseline flow: reuse a baseline persisted by --baseline-out (skips the baseline arm). Must match model/judge/prompts. {model} substituted per model." };
 var freshOpt = new Option<bool>("--fresh") { Description = "Regenerate even when a dataset with matching provenance (same corpus + doc content) already exists. Default reuses it (cheap re-runs)." };
@@ -317,14 +316,6 @@ provenance.SetAction(parse =>
     return Grounding.Run.Provenance.Report(files);
 });
 root.Subcommands.Add(provenance);
-
-// ---- check-agents -------------------------------------------------------
-// SKILL.md is NOT generated — it is an optional, maintainer-authored Textbook the eval
-// consumes only when present (grounding run --source skill). This command just enforces
-// the AGENTS.md body line budget.
-var checkAgents = new Command("check-agents", "Validate every grounding/<unit>/AGENTS.md is within the line budget.");
-checkAgents.SetAction(_ => Grounding.Codegen.Codegen.CheckAgents());
-root.Subcommands.Add(checkAgents);
 
 // ---- enrich -------------------------------------------------------------
 // Inject per-run-averaged, event-derived tool-call stats (from sessions.db) into a dataset so

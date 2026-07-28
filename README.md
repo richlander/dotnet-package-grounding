@@ -1,329 +1,158 @@
 # dotnet-package-skills
 
-A repo dedicated to **NuGet package skills** — `SKILL.md` skill sets that teach an AI agent how to
-use a specific package correctly — and to **measuring** whether that content actually helps. A
-package carries a small **base skill** (named for the package) plus a handful of **domain skills**
-for its long-tail workflows; a root meta-skill orchestrates how they install into a consuming repo.
+This repo is about *skill grounding*: targeted instructions that are included in a package so that
+an AI coding agent uses it correctly. As a package maintainer, you know the broad spread of user
+scenarios, from the basics to the advanced. Writing those scenarios as skills can give your users a
+better experience when they ask agents to use your package.
 
-The skills follow **Anthropic's [Agent Skills](https://www.anthropic.com/news/skills) convention** —
-a `SKILL.md` with YAML frontmatter (`name` + a "use when…" `description`) and progressive
-disclosure into supporting files — so any Skills-aware agent host can load them. They are meant to
-be **installed into a *consuming* repository** (the project that depends on the package), where the
-agent opts into them and can remove them — not packed into the `.nupkg` and forced on everyone.
+The repo exists because we tried to do that, as package maintainers, and found that writing good
+skills with any confidence in their utility is very difficult without a measurement methodology.
+The primary product of the effort is that methodology and the tools around it, shared so the
+process is easier for the next maintainer: what to write, what to leave out, and how to validate
+it, with worked examples for real packages.
 
-> **The shipped artifact is `SKILL.md`.** A package's grounding is authored as **`SKILL.md` skill
-> sets** that an agent pulls on demand and a consuming repo can remove — *not* packed into the
-> `.nupkg` and forced on everyone. "Grounding" is our word for the *technique and its measurement*:
-> adding proven-missing context to an agent and evaluating the lift.
+**[Package grounding: the concept and the method](docs/overview.md)** is the long-form read: why
+grounding helps, what a skill buys, how a claim is tested, and how we decide whether one ships.
+This page is the short version and the map.
 
-**Why this is needed.** When an agent touches a package today, the best it gets is the package's
-README — and **often not even that**: across the **top 1,000** Microsoft/Azure/System packages,
-**62% ship no in-package README at all** (and ~50% of the top 1,000 community packages don't either);
-where one exists it is small — a median of **~2–3 kB** — with a long tail to **44–94 kB**
-([top-1,000 README survey](docs/reports/readme-size-survey-top1000.md); earlier
-[top-40 study](docs/reports/readme-size-survey.md)).
-That prose is
-written to **onboard a human browsing nuget.org**: install steps, prerequisites, "key concepts,"
-contributing boilerplate (2–4 kB on its own in the Azure-SDK template), and broad usage examples —
-*most of which the model already knows*. Installation is the clearest case of waste: by the time an
-agent is working in a project that *references* the package, installation is **solved by
-definition** — the dependency is already there. Little of a README is the non-obvious, version-
-specific gotcha an agent actually needs. A skill inverts that ratio: a small, targeted doc
-carrying only what the model is proven to lack.
+## Package skills
 
-Use it two ways:
+Grounding is delivered as a **skill set**, or shelf. The shape we settled on is a **base skill**
+named after the package, holding what every task needs plus its everyday footguns, and a handful of
+**domain skills** covering long-tail workflows that the agent pulls only when a task calls for them.
+Nothing about the format requires that arrangement. We arrived at it by trying alternatives and
+measuring, and it has held up on every package since: the base skill earns its place on almost any
+task, and leaving the rest out of context until a task calls for it is what keeps the shelf from
+becoming a tax on the tasks that never needed it.
 
-- **As a how-to.** Practical instruction for authoring package grounding — what to write, what to
-  leave out, and how to validate it — grounded in worked examples for real packages.
-- **As a record of our approach.** These patterns form our approach to **context engineering** —
-  which we mean concretely as *what to add to an agent's context, and how to limit it*: which
-  delivery channel surfaces grounding, how agents retrieve it, when it helps versus hurts, and the
-  evidence behind each call.
+[Markout](https://github.com/richlander/markout) is the package we have measured most, and its
+shelf is the worked example: a `markout` base skill plus `conditional-composition`,
+`output-formats`, `built-in-shapes`, and `composite-cells-cards`
+([skills/](https://github.com/richlander/markout/tree/main/skills)).
 
-It reuses the [`dotnet/skills`](https://github.com/dotnet/skills) **skill-validator** harness to
-run a **baseline vs enriched** evaluation: the agent attempts each task once *without* the
-grounding and once *with* it, and the harness compares accuracy, token usage, and tool calls
-using pairwise LLM judging. The harness mechanics live in [`docs/harness.md`](docs/harness.md);
-this page is about the *concept* and the *findings*. How we evaluate a grounding change and decide
-whether it ships — the methodology, terms, threshold gate, and evidence dump — is the
-[grounding eval methodology](docs/grounding-eval-methodology.md).
+The files follow [Anthropic's Agent Skills](https://www.anthropic.com/news/skills) convention: a
+`SKILL.md` with YAML frontmatter (a `name` and a "use when…" `description`) that points to
+supporting files the agent reads only when a task calls for them. Any Skills-aware agent host can
+load them.
 
-## What a package carries
+The approach heavily leverages agents, based on a set of best practices. These are examples, and
+both halves are based on experience: the ineffective half is mostly what we tried first, before the
+measurements talked us out of it.
 
-A package's grounding is a **`SKILL.md` skill set**: a small **base skill** named for the package
-(its everyday footguns) plus a handful of **domain skills** for long-tail workflows. Skills are
-**pulled** — the agent opts into them and a consuming repo can remove them — so they carry only what
-the model is proven to lack. See **[docs/overview.md](docs/overview.md)** for the full concept.
+- **Effective:** Ask agents to write skills based on how your library is used in real apps.
+- **Ineffective:** Ask agents to write skills based on their training or a first look at your
+  library.
+- **Effective:** Evaluate agent capability relative to a set of fixed tasks, comparing baseline to
+  skilled across multiple models, each at least 5 times, in a controlled harness.
+- **Ineffective:** Evaluate the use of a skill once by installing the skill in your agent
+  environment.
+- **Effective:** Repeat the exact same task with one variable changed, like Opus 4.8 -> Opus 5. Diff
+  against the results.
+- **Ineffective:** Repeat manual evaluation against your memory of the duration of the tasks and
+  feel of model capability.
 
-We measure grounding as a paired **grounded (`SKILL.md`) vs baseline (no grounding)** comparison: the
-same agent attempts each task with and without the skill, `k = 5` runs per arm, across a mini *and* a
-frontier model, on the **CT-24** suite (24 graded tasks, from day-1 common usage to day-100 niche).
-The result is read with the [quality-card model](docs/quality-card-model.md) — two axes (return +
-efficiency) behind two ship gates (do-no-harm + a certified ≥20% economic win).
+## What the methodology does
 
-## How we measure cost: IET
+A skill can buy two different things, and they age differently. **Efficacy** is the agent producing
+a correct result where it previously failed. **Efficiency** is reaching the same correct result for
+fewer tokens, fewer tool calls, and less wall-clock time. Efficacy erodes as models learn your
+package; efficiency usually survives, and it compounds, because one session has many turns and one
+company has many developers.
 
-Our measuring stick is **IET — Input-Equivalent Tokens**, a single cost-equivalent number that
-normalizes each token class to fresh-input units:
+Every claim is a paired experiment. The same agent attempts each task once without the skill and
+once with it, five runs per arm, across a mini *and* a frontier model. The tasks come from a fixed
+per-package suite of 24 graded tasks we call **CT-24**, for *complete textbook*: the questions a
+library's documentation ought to be able to answer, ordered from what you need on day 1 to the
+niche corner you hit on day 100. They are derived from how the library is used in real applications
+rather than from its API surface, because invented tasks tend to exercise the library the way its
+own documentation already does, and both arms do well. Results are read with the
+[quality-card model](docs/quality-card-model.md): two axes, return and efficiency, behind two ship
+gates, do no harm plus a certified 20% economic win.
 
-```
-IET = fresh + 0.1·cacheRead + 1.25·cacheWrite + 5·output
-```
+We have tested the methodology on several packages, and have found uniformly that **grounding buys
+more as capability falls**. Where the frontier model already sits near the ceiling, the win is
+almost entirely efficiency: it was delivering the task anyway, so the skill only made the delivery
+cheaper. The weaker tiers gain on both axes at once, delivering tasks they had been failing
+outright and doing the rest for far fewer tokens.
 
-where `fresh = inputTokens − cacheReadTokens` is Anthropic's **Base Input Tokens** at 1× (the
-SDK's `inputTokens` is cache-read-inclusive, verified against every dataset — cacheRead never
-exceeds it). The formula maps 1:1 onto Anthropic's four billed categories (Base / cache read /
-cache write / output). This **diverges from the `dotnet/skills` harness
-metric**, which reports an unweighted `tokenEstimate = inputTokens + outputTokens` (cache reads
-counted at full price, output counted the same as input). We diverged because that estimate
-inflates the exploration-heavy raw baseline — the channel that does the most cheap prompt-cache
-reads looks the most expensive — and undercounts output, which is the dominant real cost. The
-weights are **Anthropic's published pricing multipliers**
-([price sheet](https://platform.claude.com/docs/en/about-claude/pricing)): cache read **0.1×**
-base input, 5-min cache write **1.25×**, and **output 5×** — uniform and exact across current Claude
-models (Opus 4.8 $5→$25, Sonnet $3→$15, Haiku 4.5 $1→$5; see also
-[dotnet/sdk#54417](https://github.com/dotnet/sdk/issues/54417)). So the
-weights also expose the **arbitrage** between classes — spending cheap cached input to avoid
-expensive output is a win the unweighted metric can't see. Cross-channel comparisons then reflect
-spend rather than cache-read volume. Tables still cite the harness's raw `tokenEstimate` (`tEst`)
-in parentheses for traceability. Full derivation:
-[`docs/recommendation.md`](docs/recommendation.md) (Metric) and
-[`docs/delivery-and-retrieval.md`](docs/delivery-and-retrieval.md).
+## Four ways a skill arrives
 
-## How we measure the lift: the quality card
-
-We want two things from a grounding change: proof it **helps**, and a number we can **trust**. The
-hard part is that a coding agent's behavior on a task isn't a bell curve — it's **multi-modal**. Run
-the same task five times and the runs don't scatter around an average; they land in distinct
-*modes*: some deliver a working, idiomatic result, some produce broken or off-spec output, some
-flail and give up. Averaging a "score" across those modes is meaningless — the mean sits in a valley
-no run ever occupies. (The analogy: a school measuring classrooms whose grade distributions are
-multi-modal can't summarize them with a single median; it has to name the modes first.)
-
-So we **define the modes by contract** instead of discovering them from noise. Every run is graded
-on a fixed ladder — **Fails < Satisfies < Delivers** — where the tiers are *verifiable
-requirements* (did it use the taught API, hit the technical constraints, and functionally work),
-never subjective taste. Then we measure two **independent** axes behind two gates:
-
-- **Return — how often it delivers** (over **all `k` runs of each task** — a failed run stays in as
-  a scored 0). An arm's **yield** on a task is `K/k` (its delivered runs out of `k`); the suite figure
-  is the equal-weight mean of those per-task yields (equal *task* weight, not equal run weight).
-  Grounding's return lift is the change in yield, baseline → grounded. Because five runs is a noisy
-  estimate of a rate, we report it as a **band** (a 95% credible interval), not a point — so
-  *mode-jumping between runs shows up as reliability*, exactly where it belongs.
-- **Efficiency — the price *and* speed of a delivery** (over **delivered runs only** — a task's
-  denominator is its `K` deliveries, so a mode an arm never reached is never priced or timed). Among
-  runs that deliver, we levelize two rulers and band each as a paired, per-task geometric-mean ratio,
-  grounded vs. baseline: **per-dollar** cost in [IET](#how-we-measure-cost-iet) — the fused price that
-  carries the retry tax, and our economic headline — and **per-day** duration (wall-clock on one fixed
-  host, so the machine constant cancels in the ratio). This is where a good skill pays for itself: it
-  stops the agent from decompiling the package and web-searching the API. Cost gates; speed
-  co-headlines.
-- **Gate 1 — do no harm.** Grounding must not cause a **material regression** on any task (one the
-  baseline delivered but the grounded arm doesn't). We calibrate the gate against a null model, so
-  normal run-to-run noise can't trip it — only a real, sustained loss.
-- **Gate 2 — earn its keep.** The per-dollar win must clear a **≥20% floor with confidence** (the
-  band's upper bound ≤ ×0.80), the minimum premium that repays authoring the skill and maintaining
-  it as models drift. This is the number a semiconductor CEO would put on an earnings slide — a
-  committed margin, not a curve. A real-but-tiny 8% win passes *do no harm* yet fails here —
-  correctly "not worth maintaining."
-
-Two rules keep the card honest. **Never price or time an empty mode:** if an arm never delivers a
-task, we do *not* invent a cost or a duration for it — that's a **capability gap** (a coverage row: a
-task grounding *unlocks*), counted separately from the efficiency axis, never averaged into it. (This
-is why return is scored over all runs but efficiency only over deliveries.) And **only the certified
-path is graded** — deterministic, verifiable requirements — so the headline numbers don't ride on
-judge opinion. The full model, the band procedure, and the claims-to-evidence taxonomy are in
-[`docs/quality-card-model.md`](docs/quality-card-model.md) (spec:
-[`docs/quality-card-spec.md`](docs/quality-card-spec.md)); a worked three-model result is
-[Markout CT-24](https://github.com/richlander/markout/blob/skills/markout-consumer/grounding/markout/results.md).
-
-The consistent finding across model tiers: **grounding buys more as capability falls.** At the
-frontier the model is already near the ceiling, so the win is almost entirely **efficiency** (a
-delivery gets cheaper and faster); for weaker models it's **both** — grounding unlocks tasks they
-never delivered *and* slashes the cost and time of the ones they did.
-
-## What "grounding" is — and what it is not
-
-Several different things get called a `SKILL.md` skill set. They live in different places, serve
-different audiences, and should not be confused. This repo is about exactly one of them — the first
-row.
+A `SKILL.md` can arrive in four ways. The first three are established and fully supported today.
+The fourth is what this repo is about. It is best read as a **new delivery vehicle feeding an
+existing consumption pathway**: the package is what carries the skill, but what the agent ends up
+loading is an ordinary in-repo skill, in the ordinary place.
 
 These definitions are up for debate and may differ by domain or community. We define them a
 particular way here for the purposes of measurement and guidance for the package-grounding
 feature.
 
-| Artifact | Where it lives | Who consumes it | Purpose | In this repo? |
-|----------|----------------|-----------------|---------|---------------|
-| **Package grounding** — a `SKILL.md` skill set | authored for a **NuGet package** and installed into a **consumer's** repo (pulled, opt-in, removable) | an AI agent working in a *consumer's* project that depends on the package | the model may already know the package's common, everyday usage — we *measure* what's resident rather than assume it; we **target the footguns** — the non-obvious gotchas it is *proven to lack* (anti-flailing) — so it avoids latent bugs against *that dependency* | **Yes — the artifact under test** (`grounding/<slug>/SKILL.md`) |
-| **Marketplace `SKILL.md`** | published as a `plugin.json` plugin in a **skills marketplace** (the `dotnet/skills` distribution model) | an agent *host* that installs marketplace plugins globally | a distributable, installable capability/instruction set | **No — explicitly out of scope.** This repo has no `plugin.json` marketplace machinery |
+| | Delivery vehicle | Installed location | Who gets it |
+| --- | --- | --- | --- |
+| **1. Marketplace skill** | `plugins/<plugin>/skills/<name>/` in a marketplace repo | `~/.copilot/installed-plugins/.../<name>/` | one developer, in every project |
+| **2. Per-user skill** | authored in place | `~/.copilot/skills/<name>/` | one developer, in every project |
+| **3. In-repo skill** | authored in place | `.github/skills/<name>/` | every developer in one repo |
+| **4. Package skill** | `skills/<name>/` in the `.nupkg` | `.github/skills/<name>/` | every developer in one repo |
 
-The distinction that matters: **package grounding is authored for a specific dependency and pulled
-into the consumer's repo on demand**, when an agent works in a project that references that package.
-A marketplace skill, by contrast, is installed globally into the host. Everything below is about
-package grounding.
+Each `<name>/` directory holds a `SKILL.md` and any supporting files it references. The paths
+above are Copilot CLI's, which
+[documents](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-skills)
+`.github/skills/`, `.claude/skills/` and `.agents/skills/` for a repo, and `~/.copilot/skills/` or
+`~/.agents/skills/` for a user. Claude Code reads the `.claude` pair, which is why a skill written
+once tends to work in both.
 
-## Grounding vs. skills: our policy
+Rows 2 and 3 are authored where they are used. Rows 1 and 4 travel, which is the only reason either
+needs an installer.
 
-Skills and grounding are delivered the same way — both are `SKILL.md` skill sets that a consumer
-**pulls** into their repo (opt-in, user-visible, removable). What separates them is **scope**, not
-installation:
+Row 1 is a formal skill distribution channel, roughly similar to publishing a container image to
+Docker Hub for others to use. Users subscribe to a marketplace (like
+[dotnet/skills](https://github.com/dotnet/skills)) and a plugin (like
+[dotnet-advanced](https://github.com/dotnet/skills/tree/main/plugins/dotnet-advanced)). The
+`marketplace.json` it exposes is the catalog those plugins are downloaded, installed, and updated
+from.
 
-- **A general skill** is a *procedure* / multi-component workflow — "how *we* do CI here", "how to
-  publish to NuGet". It spans tools and repos, and the user loads it because the *need is visible*:
-  the agent recognizes "this is a NuGet-publishing task" and pulls the publishing skill.
-- **Package grounding** is a *first-party, package-local* skill set authored for one dependency.
-  Its highest-value content is the *silent* gaps a model doesn't know it has — the footguns it
-  can't recover by compiling — installed only when an agent works in a project that references that
-  package.
+Row 4's vehicle is the package itself, and its `marketplace.json` is the consumer's `app.csproj`.
+The dependencies they already chose are the catalog.
 
-Because grounding ships under a package's name and is trusted by consumers who depend on that
-package, it earns a **stricter discipline** than a general skill (full treatment in
-[`docs/authoring-principles.md`](docs/authoring-principles.md)):
+Row 4 is an alternative **distribution channel for row 1**. The user already fetched your package,
+so the skill can ride along with a dependency they chose, instead of being something they have to
+know exists and go find in a marketplace. That is the entire pitch: discovery is the hard part of
+row 1, and a package they already depend on solves it. Markout's
+[`skills/`](https://github.com/richlander/markout/tree/main/skills) is the worked example of the
+vehicle.
 
-1. **Stay in your lane.** Assert only **first-party, package-local facts** — your overloads, your
-   footguns, your beta→stable renames. The moment a skill describes a workflow *across* components,
-   it has become a general skill and left its lane. This bounds the blast radius: a skill that only
-   ever names its own package cannot mislead about one it never mentions.
-2. **Do no harm, and earn your keep.** Ship grounding only when the measured quality card clears
-   **both gates**: it does **no meaningful harm** to any model tier (the do-no-harm floor) **and**
-   it delivers a **material economic win** — at least a **≥20%** cut in cost-per-delivery — to the
-   tier that needs it. A skill set that merely ties the baseline doesn't earn the maintenance it
-   costs.
+And once installed, row 4 **collapses into row 3**, into the same directory a hand-written repo
+skill would occupy. The skills land in the consumer's repo as checked-in files they can read,
+review, diff, and delete. That is the recommended persistence pattern, and it is what keeps the cost
+of package skills near zero: no new runtime, no new trust boundary, nothing to support beyond files
+in a repository.
 
-> The two gates are the ship rule from the **[quality-card model](docs/quality-card-model.md)**: a
-> do-no-harm floor (loss mass no worse than luck alone) and a ≥20% economic-materiality gate on
-> cost-per-delivery, over a graded-yield return axis (*Fails < Satisfies < Delivers*) and a
-> per-dollar efficiency axis. See that doc for the full model and its analogies.
+The step that is still missing is the installer itself, the part that notices a restored package
+ships a shelf and puts it in the consumer's repo. That is tracked in
+[#21](https://github.com/richlander/dotnet-package-skills/issues/21). We intend to offer a skill
+whose job is installing package skills. The interesting part is that a "package skill agent" need
+not install all package skills. A package can ship a dozen skills covering features a given repo
+will never touch, and an agent that has just read that repo is better placed to pick the relevant
+subset than the package author was.
 
-## What we found
+**The last column defines scoping and consistency**, which is what matters in a team environment.
+Rows 1 and 2 install per machine, which is the right scope for a developer's own preferences and the
+wrong scope for a dependency. A skill only one teammate has installed makes that person's results
+irreproducible for everyone else, and it is invisible in review, so nobody can tell whether an odd
+suggestion came from the model or from something in a home directory. Worse, the version is chosen
+by whoever installed it rather than by the repo that depends on the package, so two contributors
+sitting on the same commit can be running different guidance against the same code. A dependency is
+a property of the repository, and its skills should be too. That is why package skills target row 3.
 
-We authored and measured grounding for four real packages — **System.CommandLine**,
-**System.Text.Json**, **Microsoft.Extensions.AI**, and **Markout** — across two tasks. The
-recognizable packages double as the readable examples; **Markout is a deliberate control** — an
-obscure, source-generated serializer the models genuinely *don't* know, which is exactly why it
-gives a clean grounding signal (a model-resident package like System.Text.Json would mask it). The
-headline results are in weighted [IET](#how-we-measure-cost-iet) (`tEst` = unweighted harness
-estimate, shown for traceability); full tables, method, and caveats are in
-[`docs/recommendation.md`](docs/recommendation.md).
+## Where to go next
 
-1. **On a real migration, grounding cuts cost the most.** The flagship task is a **System.CommandLine
-   `beta4` → 3.x migration** (the agent must build, localize the breakage, and migrate) with two
-   distractor packages. runs=3:
-
-   | Channel | what the agent gets | Opus IET | Haiku IET |
-   |---------|---------------------|---------:|----------:|
-   | **A** raw package, no MCP | finds + reads the **README** | 188k | 939k |
-   | **B** NuGet MCP, no grounding doc | server returns the **README** | 138k | 665k |
-   | **D** MCP + resident index | curated grounding, self-gated | **92k** | **286k** |
-
-   That's **−51% (Opus)** and **−70% (Haiku)**. The raw baseline *thrashes* — Haiku burns 99 tool
-   calls — and the resident-index channel is also the **only** one that surfaces silent, compile-clean
-   gotchas the agent wouldn't know to ask for.
-
-   *Is this a one-off, or repeatable?* Repeatable — because of **where the value sits**. We measured
-   five scenario shapes for System.CommandLine ([report](docs/reports/system-commandline.md)) and the
-   pattern was consistent: general API shape, greenfield authoring, idiomatic usage, and the
-   command-line-parser domain itself are **already in the model** — grounding moves the needle −2% to
-   +1% there (i.e. not at all). The signal concentrates almost entirely in the **non-resident delta**:
-   version-specific breakages and *silent* gotchas (the canonical one being the `Option<T>` constructor
-   whose second argument flipped from *description* to *alias* between beta and GA — code that compiles
-   and looks right but behaves wrong). That is the general shape of grounding's value: the model carries
-   the bulk; grounding carries the **footguns the model can't recover by compiling**.
-
-   This shapes *who* writes grounding and *how*. Because the payload is the non-obvious delta, you
-   can't auto-generate it from the public API surface — it's a combination of **expert view** (a
-   maintainer's judgment of what actually trips people up) and **hard-won experience** (the silent
-   gotchas surfaced by real bug reports and migrations). The role of our harness is to **keep that
-   instinct honest** — measuring each candidate fact so only the lines that change agent behavior
-   ship, and the merely-nice-to-know ones don't.
-
-   There is a **circularity** to watch for when *generating* grounding. You can't use Opus 4.8 to
-   author grounding *for* Opus 4.8 — if Opus can produce the fact on request, it already knows it,
-   so the act of writing it down only proves it's redundant. The productive direction is
-   **asymmetric**: use the strong model to author grounding for the *weaker* ones (Sonnet, and
-   especially Haiku). That is essentially **distillation** — the frontier model's resident knowledge
-   becomes the weak model's shipped context — and it almost certainly helps the tier that needs it.
-   The constraint is the other half of the asymmetry: **don't harm the strong tier in the process.**
-   Opus tokens are far more expensive, so grounding that bloats or misleads the frontier to rescue
-   the weak tier is a bad trade. Help the weak, no harm to the strong — the
-   [do-no-harm gate](#grounding-vs-skills-our-policy), and the asymmetry, restated as a generation
-   recipe.
-
-2. **The clean mechanism, isolated.** On the controlled Markout probe we can run all five delivery
-   channels (same task, same content, varying only delivery). runs=3:
-
-   | Channel | what the agent gets | Opus IET | Haiku IET |
-   |---------|---------------------|---------:|----------:|
-   | **A** raw package, no MCP | finds + reads the **README** | 78k | 49k |
-   | **A′** raw package, grounding doc present | *still reads the README* — the grounding doc is **invisible** | 124k | 62k |
-   | **B** NuGet MCP, no grounding doc | server returns the **README** | 38k | 40k |
-   | **C** NuGet MCP, grounding doc present | server returns the **grounding doc** | **28k** | 39k |
-   | **D** MCP + resident index | curated grounding, self-gated | 31k | **31k** |
-
-3. **Content alone is worthless without a delivery channel.** Channel A′ — grounding doc shipped but
-   no MCP — is the *most* expensive cell on both tiers: the agent never sees it and reads the README
-   anyway. Writing grounding only pays off when the MCP delivers it.
-
-4. **The README is a measurable liability, and targeted value is size-invariant.** Sweeping the
-   shipped README from 3 KB → 74 KB (24×) while holding the grounding doc at 3.5 KB: the README path
-   tracks its own bloat (72k–117k IET, high-variance), while the grounding-doc path stays **flat at
-   ~36–42k IET / 9–11 tools** — a **48–69% saving** that *widens* as the README grows. Full sweep:
-   [`docs/reports/readme-liability.md`](docs/reports/readme-liability.md). And the liability isn't
-   hypothetical: a [download-ranked survey of popular packages](docs/reports/readme-size-survey.md)
-   (top 40 Microsoft-owned + top 40 community) finds a median in-package README of ~4–5 kB with a
-   real tail to ~26 kB (Azure.Identity, OpenTelemetry.Api) — and **~25–30% that ship no README at
-   all**, net-new ground for targeted grounding.
-
-5. **For weak models it's correctness, not just cost.** The README-without-MCP path *fails* the weak
-   tier; the delivered grounding doc flips it to a pass. Grounding rescues the tier that needs it
-   while costing the frontier tier nothing — the do-no-harm gate above, met in the data.
-
-## Start here: the recommendation
-
-**[`docs/recommendation.md`](docs/recommendation.md)** — the executive summary for the NuGet
-v-team. It answers two team decisions — **(1) should we author grounding content for packages?**
-and **(2) should the NuGet MCP change?** — backing each with one progression (raw package → NuGet
-MCP → shipped grounding doc → resident-index MCP) measured across **2 real tasks × 5 delivery
-channels × 2 model tiers**, with raw data in [`data/`](data/) and worked grounding examples for
-four real packages. The supporting deep-dives are
-[`docs/authoring-principles.md`](docs/authoring-principles.md) (*what* to write),
-[`docs/delivery-and-retrieval.md`](docs/delivery-and-retrieval.md) (*how* it reaches the agent),
-and the per-package reports in [`docs/reports/`](docs/reports/).
-
-## How a grounding doc is written
-
-A grounding doc records **only what an agent is proven to lack** (by eval signal) and is written
-for the **section-based RAG retrieval** paradigm, not top-to-bottom reading — unlike a README. It must stay
-**concise** (the harness enforces a per-file line budget). See
-[`docs/authoring-principles.md`](docs/authoring-principles.md) for the principles and the
-empirical evidence behind them.
-
-The per-package reports under [`docs/reports/`](docs/reports/) are writeups suitable for an
-upstream PR:
-
-- [System.CommandLine](docs/reports/system-commandline.md) — needs grounding for a narrow set of
-  topics.
-- [System.Text.Json](docs/reports/system-text-json.md) — does **not** need general grounding.
-- [Microsoft.Extensions.AI](docs/reports/microsoft-extensions-ai.md) — grounding need is
-  **model-relative**: its headline gotcha is resident for Opus 4.6 (−1.0%) but a +63.3% rescue
-  for Haiku 4.5.
-- [Markout](docs/reports/markout.md) — a genuinely non-resident package whose grounding competes
-  with the package's own README: do-no-harm + ~3× token efficiency at the frontier, and a
-  fail→pass correctness rescue at the weak tier.
-- [README liability](docs/reports/readme-liability.md) — a README-size sweep showing a lean
-  ~3.5 KB targeted doc is **size-invariant** and beats a README of any realistic size (3–74 KB)
-  by **~2–3×** (weighted IET), while README reliance is a high-variance, high-ceiling regime — so
-  the lever is **completeness + targeting**, not a size ratio.
-
-## Running the evals
-
-The harness mechanics — building `skill-validator` from a pinned `dotnet/skills` SHA, the
-`grounding/` + `tests/` layout, and how to add a package — are documented in
-**[`docs/harness.md`](docs/harness.md)**. Quick start:
-
-```bash
-# Prereq: a .NET SDK matching dotnet/skills' global.json, git, and `gh auth login`.
-grounding check-agents                # validate every grounding file is within the line budget
-eng/run-evals.sh System.CommandLine
-```
+- **[`docs/overview.md`](docs/overview.md)** covers the concept and the method end to end, and is
+  the right place to start.
+- **[`docs/getting-started.md`](docs/getting-started.md)** builds the CLI, authors a skill, runs
+  the ladder, and reads the card.
+- **[`docs/harness.md`](docs/harness.md)** is the harness mechanics.
+- **[`docs/delivery-and-retrieval.md`](docs/delivery-and-retrieval.md)** covers how grounding
+  physically reaches the agent, which turns out to matter as much as what it says.
+- **[`docs/grounding-eval-methodology.md`](docs/grounding-eval-methodology.md)** is the full
+  evaluation approach, terms, threshold gate, and evidence dump.
+- **[`docs/recommendation.md`](docs/recommendation.md)** is the executive summary of what we found.
+- **[`docs/`](docs/)** indexes the rest, including the per-package reports.

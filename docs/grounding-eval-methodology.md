@@ -6,8 +6,8 @@
 
 This document defines the evaluation approach for package grounding. It covers the evaluation contrast,
 the CT-24 suite, run discipline, confounds, and the evidence a PR must carry. The shipped artifact under
-this model is a pull-installed skill set: a base skill named for the package plus domain skills, with a
-root meta-skill orchestrating install into the consuming repo.
+this model is a pull-installed skill set: a base skill named for the package plus domain skills,
+installed into the consuming repo.
 
 Core rule: **a grounding change is a claim, and the claim ships with evidence.** A skill-set edit without
 a reproducible grounded-vs-baseline eval is not reviewable.
@@ -30,8 +30,50 @@ Push-style always-on package delivery is not a current ship target.
 
 ## 2. Suite and repetition
 
-The benchmark suite is **CT-24**, an opaque 24-task workflow ladder. Keep the label opaque in infra docs;
-it names the suite, not a document tier.
+The benchmark suite is **CT-24**, a 24-task workflow ladder ordered by difficulty. The label names the
+suite, not a document tier; do not read the letters as a claim about which artifact is under test.
+
+CT-24 is a shape, not a fixed set of tasks. Each package gets its own suite authored against its own
+API surface, and two details follow from that:
+
+- **Size is per-package.** 24 is the standard and the default. Deviate only with a reason and state it
+  in the report: `System.Text.Json` runs 48 tasks because its gotchas are numerous and individually
+  cheap to test, so the extra resolution was worth the run cost.
+- **Task IDs are per-package and are not required to say `CT`.** `System.CommandLine` uses `C01`…,
+  `System.Text.Json` uses `J1`…, Markout uses `CT01`…. IDs only need to be stable within a package, so
+  that a per-task result can be traced across runs and arms.
+
+Because sizes differ, never compare raw task counts or totals across packages. Every headline is a
+paired within-package ratio for exactly this reason.
+
+### Sourcing the tasks: adopters, not the API surface
+
+Derive tasks from **how the library is used in real applications**. Enumerating the public API and
+writing a task per member produces a suite that exercises the library the way its own documentation
+describes it, which is the distribution the model already predicts. Both arms then score well and the
+suite cannot discriminate, which reads as "grounding earns nothing" when it is really the instrument
+failing to ask a hard question.
+
+Working procedure:
+
+1. Pick real consumers of the package: first-party tools, sample apps, and dependent repositories.
+2. Extract the idioms they actually use, weighted by frequency, including attribute and option
+   combinations that no single doc example shows together.
+3. Diff that set against the current skill shelf and the current suite. Anything used in anger but
+   neither taught nor evaluated is a candidate task.
+4. Prefer tasks whose failure mode is silent. Compile-clean-but-wrong output discriminates far better
+   than anything the compiler already catches.
+
+A second oracle, when one exists, is the **artifact the skill set replaces**. When a package migrates
+from a single grounding doc to a shelf, diff the retired doc against the shelf: anything it taught and
+the shelf does not is a coverage regression that no passing eval will reveal, because the suite was
+written against the shelf.
+
+Both oracles were used on Markout and each found real gaps the other did not
+([markout#149](https://github.com/richlander/markout/issues/149)): an adopter diff against
+`dotnet-inspect` surfaced heavily used idioms with zero skill or eval coverage, and a diff against the
+retired `AGENTS.md` surfaced five further API surfaces, three of which predated the shelf and had
+never been carried over.
 
 Run discipline:
 

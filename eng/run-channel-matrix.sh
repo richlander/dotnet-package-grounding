@@ -3,13 +3,13 @@
 # results.json into data/<task>/. See data/README.md for the channel definitions.
 #
 # Channels captured per task:
-#   A  raw package on disk, README only      (baseline arm, cache AGENTS absent)
-#   A' raw package on disk, AGENTS present    (baseline arm, cache AGENTS present -> "invisible")
-#   B  real NuGet MCP -> README               (plugin arm of *-realmcp, cache AGENTS absent)
-#   C  real NuGet MCP -> AGENTS.md            (plugin arm of *-realmcp, cache AGENTS present)
+#   A  raw package on disk, README only      (baseline arm, cache doc absent)
+#   A' raw package on disk, doc present       (baseline arm, cache doc present -> "invisible")
+#   B  real NuGet MCP -> README               (plugin arm of *-realmcp, cache doc absent)
+#   C  real NuGet MCP -> grounding            (plugin arm of *-realmcp, cache doc present)
 #   D  our custom MCP (resident_index)        (plugin arm of *-custommcp)
-#   E  dotnet-inspect CLI -> README            (prefer-dotnet-inspect, cache AGENTS absent)
-#   E' dotnet-inspect CLI -> AGENTS.md         (prefer-dotnet-inspect, cache AGENTS present)
+#   E  dotnet-inspect CLI -> README            (prefer-dotnet-inspect, cache doc absent)
+#   E' dotnet-inspect CLI -> grounding         (prefer-dotnet-inspect, cache doc present)
 #
 # One *-realmcp run yields TWO channels (baseline + plugin) for a given cache state.
 # Channels E/E' are the CLI analog of B/C: the agent fetches the package's shipped doc with
@@ -30,7 +30,11 @@ BIN=$(ls -d .tools/skill-validator-*/skill-validator 2>/dev/null | head -1)
 ./eng/grounding gen-plugins >/dev/null
 
 CACHE="$HOME/.nuget/packages/markout/0.13.6"
-AGENTS_SRC="grounding/markout/AGENTS.md"
+# The grounding we serve is the authored skill. The cache FILENAME below is not ours:
+# it is the file the third-party NuGet MCP server and dotnet-inspect look for when they
+# resolve a restored package's agent doc, so it is fixed by their contract, not by us.
+DOC_SRC="grounding/markout/skills/markout/SKILL.md"
+CACHE_DOC_NAME="AGENTS.md"
 OUT="data/$TASK"; mkdir -p "$OUT"
 
 short() { case "$1" in *opus*) echo opus;; *haiku*) echo haiku;; *sonnet*) echo sonnet;; *) echo "$1";; esac; }
@@ -49,8 +53,8 @@ run() {  # run <unit> <results-tag> <extra-env...>
   done
 }
 
-agents_on()  { cp "$AGENTS_SRC" "$CACHE/AGENTS.md"; echo "cache AGENTS.md: ON"; }
-agents_off() { rm -f "$CACHE/AGENTS.md"; echo "cache AGENTS.md: OFF"; }
+agents_on()  { cp "$DOC_SRC" "$CACHE/$CACHE_DOC_NAME"; echo "cache agent doc: ON"; }
+agents_off() { rm -f "$CACHE/$CACHE_DOC_NAME"; echo "cache agent doc: OFF"; }
 
 echo "======== CHANNEL MATRIX: task=$TASK runs=$RUNS models=[$MODELS] ========"
 case "$TASK" in
@@ -61,13 +65,13 @@ case "$TASK" in
     agents_off; run "markout-realmcp"   "realmcp-noagents"                            # B + A
     agents_on;  run "markout-custommcp" "custommcp" GROUNDING_GATE=resident_index     # D
     # CLI delivery channel: dotnet-inspect --readme (the #960 alternative to the MCPs).
-    # Same cache toggle as realmcp: AGENTS present -> CLI serves AGENTS.md (E', analog of C);
+    # Same cache toggle as realmcp: doc present -> CLI serves the grounding (E', analog of C);
     # absent -> CLI serves README (E, analog of B). Requires dotnet-inspect >= 0.11.0 on PATH.
     agents_on;  run "prefer-dotnet-inspect" "inspect-agents"                           # E'
     agents_off; run "prefer-dotnet-inspect" "inspect-readme"                           # E
     ;;
   multipackage)
-    # Triage task: A / B / D. Channel C (inject AGENTS into 3 pkg caches at migration
+    # Triage task: A / B / D. Channel C (inject the doc into 3 pkg caches at migration
     # versions) is fragile and adds little beyond the markout anchor, so it is omitted
     # here by design (see data/README.md).
     run "nuget-mcp"         "realmcp-noagents"                              # B + A (real NuGet MCP -> README)

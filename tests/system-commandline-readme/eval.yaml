@@ -18,7 +18,7 @@ scenarios:
   # 3.x the 2nd positional arg is an ALIAS, so a naive migration compiles but silently
   # turns the description into a bogus alias and drops the help text. This is the one part
   # of the migration that compile errors + reflection CANNOT recover — only the documented
-  # gotcha in AGENTS.md does — so it is the dimension where grounding should move the
+  # gotcha in the grounding doc does — so it is the dimension where grounding should move the
   # quality/judgment score (which dominates the improvement metric), not just efficiency.
   # ---------------------------------------------------------------------------
 

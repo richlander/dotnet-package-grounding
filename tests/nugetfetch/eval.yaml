@@ -13,7 +13,7 @@ config:
 #
 # Without grounding, a web-allowed baseline reconstructs this only via expensive source
 # archaeology (nuget.org page, GitHub repo, raw .cs); a web-blocked / closed-source
-# baseline simply fails. The candidate AGENTS.md supplies exactly the missing shapes.
+# baseline simply fails. The candidate grounding supplies exactly the missing shapes.
 # Each scenario gates on: project builds, Program.cs actually uses the NuGetFetch API
 # (not hand-rolled HttpClient calls to the nuget.org REST API), and the run prints the
 # expected, stable anchor value.

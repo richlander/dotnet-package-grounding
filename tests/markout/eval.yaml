@@ -270,8 +270,8 @@ scenarios:
     timeout: 900
 
   # ---------------------------------------------------------------------------
-  # MM tier (+6 -> 12): the rest of what the compact AGENTS.md documents — the
-  # remaining built-in shapes, section levels, and formatters. AGENTS.md should
+  # MM tier (+6 -> 12): the rest of what the compact grounding doc documents — the
+  # remaining built-in shapes, section levels, and formatters. The grounding doc should
   # clear these (overfit guard: it was tuned on MM1-6, must generalize here too).
   # ---------------------------------------------------------------------------
 
@@ -521,7 +521,7 @@ scenarios:
 
   # ===========================================================================
   # CT tier (+12 -> 24): advanced attributes documented in the broad SKILL.md,
-  # NOT the compact AGENTS.md. The Missing Manual is EXPECTED to fall off here;
+  # NOT the compact grounding doc. The Missing Manual is EXPECTED to fall off here;
   # these measure where the Textbook's extra tokens earn their place.
   # ===========================================================================
 

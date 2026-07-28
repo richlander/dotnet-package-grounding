@@ -70,9 +70,9 @@ internal static class Channels
     private static readonly (string Ch, string Tag, string Arm, string Label)[] ExtractCh =
     {
         ("A", "realmcp-noagents", "baseline", "raw pkg on disk -> README"),
-        ("A'", "realmcp-agents", "baseline", "raw pkg on disk, AGENTS present (invisible)"),
+        ("A'", "realmcp-agents", "baseline", "raw pkg on disk, grounding present (invisible)"),
         ("B", "realmcp-noagents", "skilledPlugin", "real NuGet MCP -> README"),
-        ("C", "realmcp-agents", "skilledPlugin", "real NuGet MCP -> AGENTS.md"),
+        ("C", "realmcp-agents", "skilledPlugin", "real NuGet MCP -> grounding"),
         ("D", "custommcp", "skilledPlugin", "custom MCP (resident_index)"),
     };
 
@@ -122,10 +122,10 @@ internal static class Channels
     {
         ("A  baseline (no MCP/CLI, README on disk)", "realmcp-noagents", "baseline"),
         ("B  NuGet MCP -> README", "realmcp-noagents", "skilledPlugin"),
-        ("C  NuGet MCP -> AGENTS.md", "realmcp-agents", "skilledPlugin"),
-        ("D  custom MCP (resident index) -> AGENTS", "custommcp", "skilledPlugin"),
+        ("C  NuGet MCP -> grounding", "realmcp-agents", "skilledPlugin"),
+        ("D  custom MCP (resident index) -> grounding", "custommcp", "skilledPlugin"),
         ("E  dotnet-inspect CLI -> README", "inspect-readme", "skilledIsolated"),
-        ("E' dotnet-inspect CLI -> AGENTS.md", "inspect-agents", "skilledIsolated"),
+        ("E' dotnet-inspect CLI -> grounding", "inspect-agents", "skilledIsolated"),
     };
 
     private static readonly (string Tier, string Model)[] Tiers =

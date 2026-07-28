@@ -8,8 +8,7 @@
 
 Grounding is the technique of installing package-specific skill docs so an agent can stop rediscovering
 facts the package can teach directly. The shipped artifact is a **pull-installed skill set**, not an
-always-on package doc. A consuming repo opts in, the root meta-skill orchestrates installation, and the
-skill set is removable.
+always-on package doc. A consuming repo opts in, and the skill set is removable.
 
 A package skill set has three layers:
 
@@ -113,15 +112,11 @@ right authoring order is:
 3. Use the resulting gap list to check whether the README also teaches humans the necessary facts.
 4. Fix README omissions in human prose, not as a substitute for the skill set.
 
-## 6. Respect the line budget and progressive disclosure
+## 6. Keep each skill tight and use progressive disclosure
 
-The harness enforces a per-file line budget because retrieval quality falls when sections bloat. Cut
-model-resident basics first. Move lengthy examples, matrices, and deep references into supporting files
-that the skill links to only when needed.
-
-This repo is mid-transition: some grounding units still use the historical file shape, and the real
-command `grounding check-agents` still validates those files and their line budget. Keep the command name
-when working existing units; frame the prose as grounding files and skill-set authoring.
+Retrieval quality falls when sections bloat, so keep the base skill short. Cut model-resident basics
+first. Move lengthy examples, matrices, and deep references into domain skills on the shelf that the
+agent pulls only when the task calls for them.
 
 ## 7. Target silent, obscure, non-self-correcting gaps
 

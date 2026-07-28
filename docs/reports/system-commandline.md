@@ -1,5 +1,11 @@
 # Does System.CommandLine need agent grounding? A measured answer
 
+> **Legacy record (pre-pivot).** This report is a frozen measurement record from the
+> AGENTS.md era: the grounding under test was an AGENTS.md doc, and the instrument was the
+> older binary/min-of-arms scorer, not the graded-yield quality card. Its numbers are
+> reproduced verbatim from the raw verdicts and are **not** evidence for the authored
+> skill-shelf model. See `docs/quality-card-model.md` for the current methodology.
+
 **Package:** `System.CommandLine`
 **Date:** 2026-06-19
 **Status:** Findings complete; intended to support an upstream PR adding an `AGENTS.md`

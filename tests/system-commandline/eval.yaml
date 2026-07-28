@@ -4,7 +4,7 @@ config:
 # =============================================================================
 # System.CommandLine — Core-6. A representative spread of CLI-authoring tasks
 # against the CURRENT 3.x API (M1-M5, greenfield) plus one specialized migration
-# task (M6). HYPOTHESIS: the shipped AGENTS.md is narrow on PURPOSE — it documents
+# task (M6). HYPOTHESIS: the shipped grounding is narrow on PURPOSE — it documents
 # only the beta->GA/3.x migration mapping and the silent alias-vs-description
 # gotcha. So M1-M5 are expected to be MODEL-RESIDENT (a strong model already
 # writes correct 3.x; grounding should be NEUTRAL / no-harm and the README answers

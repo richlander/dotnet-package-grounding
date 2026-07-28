@@ -6,8 +6,8 @@
 > and ≥20% economic-win gates.
 
 How this repo **builds and runs** the [`dotnet/skills`](https://github.com/dotnet/skills)
-`skill-validator` to measure whether grounding helps. The root [`README`](../README.md) covers
-*what* grounding is and the findings; this file covers *how* the evals run.
+`skill-validator` to measure whether grounding helps. [`overview.md`](./overview.md) covers *what*
+grounding is and why it is measured this way; this file covers *how* the evals run.
 
 > The harness scaffolding — generated plugin manifests, transient validator wrappers, slug rules,
 > and runner scripts — is **not** shipped grounding. The artifact under test is the package skill set
@@ -198,8 +198,8 @@ pointing at the latest `dotnet/skills` main commit.
 The package-authored grounding under test is a pull-based skill set rooted at
 `grounding/<slug>/SKILL.md`. That base skill uses the Anthropic Agent Skills convention: YAML
 frontmatter with `name` and a use-when `description`, followed by concise guidance and progressive
-disclosure into domain skills or supporting files. The package can carry multiple domain skills, and a
-root meta-skill orchestrates install into the consuming repo.
+disclosure into domain skills or supporting files. The package can carry multiple domain skills, and
+the set is installed into the consuming repo.
 
 `skill-validator` still needs a runnable skill surface during eval. The harness may synthesize transient
 plugin scaffolding or copy the skill set into the validator layout, then clean up after the run. Do not

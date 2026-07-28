@@ -7,9 +7,9 @@ explicit return and efficiency axes plus two ship gates.
 > **Superseded framing.** Earlier versions of this doc used a single gate and verdict vocabulary,
 > README comparison arms, and a push-delivered package file. That framing is retired. Read this doc as
 > the current SKILL.md framing: a package carries a **base skill** named for the package plus **domain
-> skills**, and a root meta-skill orchestrates install using Anthropic Agent Skills conventions
-> (YAML frontmatter with `name` and a use-when `description`, then progressive disclosure into
-> supporting files).
+> skills**, installed into the consuming repo using Anthropic Agent Skills conventions (YAML
+> frontmatter with `name` and a use-when `description`, then progressive disclosure into supporting
+> files).
 
 ---
 
@@ -122,13 +122,8 @@ mid-transition repository constraints).
 ### Validation (reproducible)
 
 ```bash
-grounding check-agents
 grounding run <slug> --source skill --eval-mode holistic --runs 5
 ```
-
-The `grounding check-agents` command name is still literal in this repository; it validates historical
-grounding file formats while the codebase is mid-transition. Do not rename the command in docs unless
-`src/grounding/Program.cs` changes first.
 
 ## Reviewer checklist
 

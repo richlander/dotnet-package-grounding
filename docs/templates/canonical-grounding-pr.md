@@ -2,6 +2,11 @@
 
 Grounding for `<package>`: grounded vs baseline on CT-24, using the package `SKILL.md` skill set.
 
+> **Worked instance:** [markout#148](https://github.com/richlander/markout/pull/148) is this
+> template filled in and shipped. Read it alongside the placeholders below to see how much detail
+> each field actually needs, including how to report a skill that was cut and a delivery route that
+> was dropped.
+
 ## Claim
 
 Installing the `<package>` skill set improves `<return and/or efficiency claim>` for `<model tier(s)>`
@@ -12,7 +17,7 @@ without measurable harm, under the quality-card model.
 - Base skill: `<skill-name>/SKILL.md`
 - Domain skills: `<domain-skill-list>`
 - Supporting files: `<supporting-files>`
-- Install path or root meta-skill: `<install-or-meta-skill>`
+- Install path: `<install-path>`
 
 ## Eval setup
 
@@ -76,7 +81,6 @@ grounding run <slug> --source skill --eval-mode holistic --runs 5
 Optional, for mid-transition units that still use the legacy grounding-file budget check:
 
 ```bash
-grounding check-agents
 ```
 
 ## Reviewer checklist

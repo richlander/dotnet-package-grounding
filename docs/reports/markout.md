@@ -1,5 +1,11 @@
 # Does Markout need agent grounding? A measured answer — and what the README competes with
 
+> **Legacy record (pre-pivot).** This report is a frozen measurement record from the
+> AGENTS.md era: the grounding under test was an AGENTS.md doc, and the instrument was the
+> older binary/min-of-arms scorer, not the graded-yield quality card. Its numbers are
+> reproduced verbatim from the raw verdicts and are **not** evidence for the authored
+> skill-shelf model. See `docs/quality-card-model.md` for the current methodology.
+
 **Package:** `Markout` (0.13.6)
 **Date:** 2026-06-20
 **Status:** First measurement on a *genuinely non-resident* package (unlike System.CommandLine,
