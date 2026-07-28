@@ -147,8 +147,8 @@ a property of the repository, and its skills should be too. That is why package 
 
 - **[`docs/overview.md`](docs/overview.md)** covers the concept and the method end to end, and is
   the right place to start.
-- **[`docs/getting-started.md`](docs/getting-started.md)** builds the CLI, authors a skill, runs
-  the ladder, and reads the card.
+- **[`docs/getting-started.md`](docs/getting-started.md)** maps the workflow stage by stage and
+  says which stages an agent can drive.
 - **[`docs/harness.md`](docs/harness.md)** is the harness mechanics.
 - **[`docs/delivery-and-retrieval.md`](docs/delivery-and-retrieval.md)** covers how grounding
   physically reaches the agent, which turns out to matter as much as what it says.

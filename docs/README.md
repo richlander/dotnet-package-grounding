@@ -16,8 +16,8 @@ Generic infrastructure for evaluating NuGet package **grounding**. Start at the 
 - **[quality-card-spec.md](./quality-card-spec.md)** — the **row-level reference** for the card
   (`analyze --view card`): every row as Label · Equation · Example · Description. Derives from the
   model doc.
-- **[getting-started.md](./getting-started.md)** — build the `grounding` CLI, author a unit, run the
-  ladder, read the card.
+- **[getting-started.md](./getting-started.md)** — the map of the whole workflow: every stage in
+  order, who drives it, and the doc that owns it.
 - **[running-eval.md](./running-eval.md)** — point the harness at a package repo's grounding and read
   the result. Grounding lives in the target repo; the harness reads it in place (no packing).
 - **[grounding-eval-methodology.md](./grounding-eval-methodology.md)** — the *approach*: the

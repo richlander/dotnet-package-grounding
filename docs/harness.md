@@ -228,6 +228,42 @@ eng/
 The grounding folder name must match the skill `name` (e.g. `system-commandline`). Fixtures live under
 the eval bundle so the baseline arm receives only task setup, never the grounded skill set.
 
+## Prerequisites
+
+- A **.NET SDK** matching `dotnet/skills`' `global.json` (the harness builds `skill-validator` from
+  a pinned commit).
+- `git`, and **`gh auth login`** (`skill-validator`'s Copilot SDK uses your `gh` credentials).
+- *(optional)* `dotnet-inspect` for library inspection, but **not** for clean content runs (see
+  [Keeping content arms tool-clean](#keeping-content-arms-tool-clean)).
+
+## Build and install the `grounding` CLI
+
+The CLI is in `src/grounding/` (`System.CommandLine`, net11.0). It is **not yet on a public feed**, so
+build it from this repo. Pick the path that suits you:
+
+```bash
+# A. Run without installing (dev inner loop) — build once, forward args:
+eng/grounding --help                       # bash;  eng/grounding.ps1 for PowerShell
+# or run the built dll directly (any OS, no WSL):
+dotnet build src/grounding -c Release && dotnet src/grounding/bin/Release/net11.0/grounding.dll --help
+
+# B. Install as a global tool (framework-dependent; easiest, fully cross-platform):
+dotnet pack src/grounding -c Release
+dotnet tool install -g --add-source src/grounding/nupkg dotnet-package-grounding
+grounding --help                           # runs via the dotnet host
+
+# C. Install as a Native AOT binary (self-contained ~5 MB, no dotnet host needed):
+eng/install-grounding.sh                   # bash;  eng/install-grounding.ps1 for PowerShell
+#   (wraps `dotnet publish -c Release -r <rid>` + copy to ~/.dotnet/tools)
+grounding --help
+```
+
+> **FDD vs AOT:** option **B** packs a conventional framework-dependent global tool (run via `dotnet`);
+> option **C** produces a single native executable with no managed-host dependency. Both install a
+> `grounding` command on PATH — use one. AOT is gated to the `-r <rid>` publish, so plain `build`/`pack`
+> stay fast and framework-dependent. Once published to a feed,
+> `dotnet tool install -g dotnet-package-grounding` will work directly.
+
 ## Run locally
 
 ```bash

@@ -12,7 +12,8 @@ and a re-run.
 
 ## Prerequisites
 
-- The `grounding` CLI, built from this repo — see [`getting-started.md`](./getting-started.md#build--install-the-grounding-cli-from-source).
+- The `grounding` CLI, built from this repo — see
+  [`harness.md`](./harness.md#build-and-install-the-grounding-cli).
 - The `skill-validator` harness, built once into `.tools/skill-validator-<sha>/` (see [`harness.md`](./harness.md)).
   This is the only machine-specific artifact; `.tools/` is git-ignored, so build it for the platform you
   run on (e.g. `-r osx-arm64` or `-r linux-x64`).

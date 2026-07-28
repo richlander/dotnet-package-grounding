@@ -1,101 +1,147 @@
 # Getting started
 
-> **Want the scoring model first?** How a run is graded and shipped is the
-> **[quality-card model](./quality-card-model.md)** (two axes — return + efficiency — and two ship
-> gates). This doc is the hands-on path: build the CLI, author a skill set, run CT-24, read the card.
+This repo is **generic infrastructure** for measuring whether grounding helps an AI agent use a
+NuGet package correctly. It ships no grounding content of its own. You point it at a package repo
+that carries candidate grounding, and it tells you whether that grounding earns its keep.
 
-This repo is **generic infrastructure** for evaluating NuGet package *grounding* — it ships no
-grounding content of its own. You point it at a package repo with candidate grounding and measure
-whether the grounding helps an AI agent use the package correctly. Concepts live in
-[`grounding-eval-methodology.md`](./grounding-eval-methodology.md); how the harness runs is in
-[`harness.md`](./harness.md).
+This page is the **map of the whole workflow**. It walks the stages in order, says who should drive
+each one, and hands you off to the document that owns the details. It deliberately carries no
+commands and no file layouts, so nothing here can drift out of step with the docs that do.
 
-## Prerequisites
+If you want the concept before the process, read [`overview.md`](./overview.md) first.
 
-- A **.NET SDK** matching `dotnet/skills`' `global.json` (the harness builds `skill-validator` from a
-  pinned commit — see [`harness.md`](./harness.md)).
-- `git`, and **`gh auth login`** — `skill-validator`'s Copilot SDK uses your `gh` credentials.
-- *(optional)* `dotnet-inspect` for library inspection — but **not** for clean content runs (see below).
+## How the work divides between you and the agent
 
-## Build & install the `grounding` CLI from source
+The workflow is mostly mechanical, and agents run the mechanical parts well: building fixtures,
+running the suite, collecting artifacts, drafting the PR. Three things are not mechanical, and they
+are where your attention pays for itself.
 
-The CLI is in `src/grounding/` (`System.CommandLine`, net11.0). It is **not yet on a public feed**, so
-build it from this repo. Pick the path that suits you:
+**You own the tasks.** The suite is your definition of what using the package well looks like, so it
+has to come from real workflows rather than from what a model expects to be asked. Models can
+propose scenarios; coverage, prompt fairness, and assertions need you.
 
-```bash
-# A. Run without installing (dev inner loop) — build once, forward args:
-eng/grounding --help                       # bash;  eng/grounding.ps1 for PowerShell
-# or run the built dll directly (any OS, no WSL):
-dotnet build src/grounding -c Release && dotnet src/grounding/bin/Release/net11.0/grounding.dll --help
+**You own what differentiates.** Two things sit here: finding the library patterns that carry real
+workflows, and knowing which of them make your package worth choosing. The eval will probably
+produce worse results than you expect at first, which may be a result of a poorly written skill,
+weakly worded questions, or even unintuitive library APIs.
 
-# B. Install as a global tool (framework-dependent; easiest, fully cross-platform):
-dotnet pack src/grounding -c Release
-dotnet tool install -g --add-source src/grounding/nupkg dotnet-package-grounding
-grounding --help                           # runs via the dotnet host
+**You own what is true.** True in both senses, accurate and worth having. An agent asked to author
+grounding writes from the same model knowledge the grounding exists to correct, and the iteration
+loop rewards fitting the skill to the 24 prompts in front of it. What ships has to hold for other
+users, other environments, and other workflows than the ones you tested.
 
-# C. Install as a Native AOT binary (self-contained ~5 MB, no dotnet host needed):
-eng/install-grounding.sh                   # bash;  eng/install-grounding.ps1 for PowerShell
-#   (wraps `dotnet publish -c Release -r <rid>` + copy to ~/.dotnet/tools)
-grounding --help
-```
+Everything else can be delegated.
 
-> **FDD vs AOT:** option **B** packs a conventional framework-dependent global tool (run via `dotnet`);
-> option **C** produces a single native executable with no managed-host dependency. Both install a
-> `grounding` command on PATH — use one. AOT is gated to the `-r <rid>` publish, so plain `build`/`pack`
-> stay fast and framework-dependent. Once published to a feed,
-> `dotnet tool install -g dotnet-package-grounding` will work directly.
+## The workflow
 
-## The grounding loop
+### 1. Start with the baseline, and find the trap
 
-1. **Author a skill set.** Add the shipped grounding artifact and a small eval:
+Before writing anything, run the ungrounded arm against the package and watch where the agent goes
+wrong. If the baseline already scores well and never resorts to **archaeology** (decompiling your
+assembly, rummaging the NuGet cache, searching the web), the model already knows your package and
+there is nothing to author. Grounding is justified only by a measured gap.
 
-   ```text
-   grounding/<slug>/SKILL.md      # base skill: YAML name + use-when description, then guidance
-   grounding/<slug>/<domain>/...  # optional domain skills/supporting files for progressive disclosure
-   grounding/<slug>/meta.yaml     # name (== <slug>), package, description
-   grounding/<slug>/eval.yaml     # CT-24 scenarios: prompt + setup fixtures + assertions
-   grounding/<slug>/fixtures/...  # sample project(s), gated by `dotnet build`/`run`
-   ```
+When it does fail, the failures name your target: the wrong API, the deprecated entrypoint, the
+renamed type, the workflow nobody guesses.
 
-   Write `SKILL.md` additively from an **empty baseline** — only what an agent is *proven* to lack (see
-   [`authoring-principles.md`](./authoring-principles.md)). Keep the base skill small, put deeper
-   package knowledge behind domain skills or supporting files, and install the set into the consuming
-   repo.
+> **Agent:** runs the baseline, collects transcripts, summarizes where runs failed and where the
+> agent went digging. **You:** decide whether each failure is a real gap in the package's story or a
+> bad task. This needs first-party knowledge and cannot be outsourced.
 
-2. **Run CT-24.** The live suite is the 24-task CT-24 suite, k=5 runs per task, across haiku, sonnet,
-   and opus. The eval is grounded (`SKILL.md`) vs baseline (no grounding):
+**Owns this stage:** [`grounding-lifecycle.md`](./grounding-lifecycle.md) §0.
 
-   ```bash
-   DATA="${GROUNDING_DATA_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/grounding}/<slug>-ct24"
-   grounding run <slug> --source skill --eval-mode holistic --runs 5 \
-     -m "claude-haiku-4.5 claude-sonnet-4.6 claude-opus-4.8" --out "$DATA"
-   ```
+### 2. Author the skill shelf
 
-   For a **clean content measurement**, runs scrub `~/.dotnet/tools` from the agent's PATH so
-   `dotnet-inspect` can't substitute for the skill set (tool availability is a separate lever). Verify
-   with `di == 0` on the grounded arm.
+Write additively from an empty baseline: record **only what the model is proven to lack**. The shape
+that has worked for us is a small base skill named after the package, carrying the pattern every
+task needs, plus domain skills the agent pulls only when a task calls for them.
 
-3. **Read the result** (datasets land in the grounding cache, not the tree):
+> **Agent:** drafts structure, tightens the `description` hook, checks each claim is first-party and
+> package-local, keeps skills inside the size budget. **You:** supply and verify the facts. Every
+> claim should trace to release notes, source, or an observed baseline failure, never to what a
+> model believes about your package.
 
-   ```bash
-   grounding analyze        "$DATA/<slug>.<model>.json"   # full table (baseline + grounded)
-   grounding analyze --card "$DATA"/<slug>.*.json         # quality-card dump for the PR
-   ```
+**Owns this stage:** [`authoring-principles.md`](./authoring-principles.md) for the rules,
+[`skill-shelf-methodology.md`](./skill-shelf-methodology.md) for how a shelf composes.
 
-Iterate **eval-driven**: run, find where the grounding falls short, patch the skill set *generally*
-(not to the specific prompts), repeat. Then ship per [`grounding-lifecycle.md`](./grounding-lifecycle.md)
-with the evidence dump and the [PR template](./templates/canonical-grounding-pr.md).
+### 3. Write the eval suite
 
-> The layout above authors a unit **inside this repo** for convenience. Grounding's real home is the
-> **package's own repo**: the harness reads `grounding/<unit>/` in place from any target via
-> `grounding run <unit> --root <target-repo>` — no packing or publishing to iterate. See
-> [`running-eval.md`](./running-eval.md).
+Grounding is only as trustworthy as the suite that tests it. The live standard is **CT-24**, a fixed
+per-package suite of 24 graded tasks ordered roughly from what a developer meets on day 1 to what
+they meet on day 100, each with fixtures and assertions that gate on a real build or test.
 
-## Where to go next
+> **Agent:** builds fixtures, writes assertions, wires the scenarios up. **You:** choose the tasks
+> and check the assertions actually test the behavior rather than the phrasing. Watch for tasks that
+> exist because the skill exists.
 
-- [`running-eval.md`](./running-eval.md) — how to point the harness at a package repo's skill set and
-  read the result (grounding lives in the target repo, not here).
-- [`grounding-eval-methodology.md`](./grounding-eval-methodology.md) — the baseline-vs-grounded
-  measurement framing, CT-24 suite, cost model, and ship gates.
-- [`authoring-principles.md`](./authoring-principles.md) — how to write package `SKILL.md` skill sets.
-- [`harness.md`](./harness.md) — how `skill-validator` is built and run, and the confounds.
+**Owns this stage:** [`grounding-eval-methodology.md`](./grounding-eval-methodology.md) §2 for suite
+design, [`eval-protocol.md`](./eval-protocol.md) for the rules that keep a run honest.
+
+### 4. Run it
+
+Paired arms, baseline and grounded, k=5 runs per task, across a weak, mid, and frontier model,
+because the answer differs by tier. Runs are scrubbed of local tooling so a tool cannot silently
+substitute for the grounding under test.
+
+> **Agent:** this stage is entirely mechanical. Hand it over, or put it in CI. **You:** nothing,
+> until it finishes.
+
+**Owns this stage:** [`running-eval.md`](./running-eval.md) to point the harness at a package repo,
+[`harness.md`](./harness.md) to build the machinery and understand the confounds.
+
+### 5. Read the card
+
+A run becomes a ship or no-ship call through the **quality card**: two axes, return and efficiency,
+and two gates. A grounded arm has to deliver more, or deliver the same for less, and it must not
+regress what already worked.
+
+> **Agent:** computes the card, dumps the tables, flags high-variance scenarios. **You:** judge
+> whether the win is real. A suite-level gain can hide a per-task regression, and a per-scenario
+> verdict does not hold under high variance. The card is designed to make that visible, but somebody
+> has to look.
+
+**Owns this stage:** [`quality-card-model.md`](./quality-card-model.md) for the model,
+[`scoring.md`](./scoring.md) for reading and reporting one.
+
+### 6. Iterate
+
+Run, find where the grounding falls short, patch the shelf **for the workflow rather than for the
+task**, repeat. Failures do not all have the same cause, and reading them correctly is a skill in
+itself: a task can fail because the skill was never pulled, because it was pulled and said nothing
+useful, or because the library itself has a bug worth fixing.
+
+> **Agent:** re-runs, diffs cards between iterations, proposes edits. **You:** refuse fixes that
+> only work on the tasks in the suite. This is the stage where measurement quietly turns into
+> overfitting.
+
+**Owns this stage:** [`eval-protocol.md`](./eval-protocol.md).
+
+### 7. Ship, then keep measuring
+
+A grounding PR carries its evidence: the card, the dataset, the model list, and the caveats. After
+it ships, the clock starts. The next model generation may already know what you just wrote down, and
+the next release of your package may invalidate it.
+
+> **Agent:** assembles the evidence package and fills the PR template. **You:** sign off on the
+> claims, and schedule the re-measurement. Grounding that is never re-evaluated is grounding you can
+> no longer vouch for.
+
+**Owns this stage:** [`grounding-lifecycle.md`](./grounding-lifecycle.md) for create, update,
+delete, and re-evaluate, plus the [PR template](./templates/canonical-grounding-pr.md).
+
+## Setting up
+
+Prerequisites, building the `grounding` CLI, and building the `skill-validator` harness are all in
+[`harness.md`](./harness.md). Once the CLI is on your PATH, [`running-eval.md`](./running-eval.md)
+is the shortest path to a first run against a package repo.
+
+## Reference
+
+- [`overview.md`](./overview.md) — the concept and the method in one pass.
+- [`iet-model.md`](./iet-model.md) — the fused cost metric the efficiency axis is built on.
+- [`quality-card-spec.md`](./quality-card-spec.md) — the normative spec, including the invariants
+  that keep a card from lying to you.
+- [`delivery-methodology.md`](./delivery-methodology.md) — measuring delivery itself, when the
+  question is whether the agent pulls the skill at all.
+- [`recommendation.md`](./recommendation.md) — what we concluded about delivery channels.
+- [`reports/`](./reports/) — per-package measurement records.
