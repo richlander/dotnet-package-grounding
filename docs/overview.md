@@ -41,6 +41,19 @@ the model is on a given package.
   model may already know the answer. The measurement has to respect that asymmetry — a grounding change
   can be a real win for one model and redundant for another.
 
+A second decay curve runs on time rather than popularity. **Staleness** is the gap between what a
+model learned and what your package is now: features added after the training cut, and revisions
+that changed behavior out from under code the model still writes from memory. A breaking change is
+the worst case, because it does not merely leave a hole in what the model knows, it invalidates
+instincts the model still has, and a confident wrong answer is more expensive than an absent one.
+Staleness hits the frontier and the mini tier alike, since neither can know what shipped after it
+was trained.
+
+The two curves are worth keeping apart. Popularity decides whether the model ever knew your package.
+Staleness decides whether what it knew is still true. A niche package is a gap to fill; a popular
+package that just shipped a breaking change is a correction to make, and the second is the more
+urgent of the two because the agent does not know it is wrong.
+
 Knowledge here means *resident* model knowledge — not what the model could recover with web search or
 tools. Recovering a fact by digging is exactly the cost grounding removes.
 
