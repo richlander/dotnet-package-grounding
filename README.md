@@ -112,13 +112,13 @@ ship a dozen skills covering features a given repo will never touch, and an agen
 read that repo is better placed to pick the relevant subset than the package author was.
 
 **The last column defines scoping and consistency, which is what matters in a team environment.**
-Rows 1 and 2 install per machine, which is the right scope for a developer's own preferences and
-the wrong scope for a dependency. A skill only one teammate has installed makes that person's
-results irreproducible for everyone else, and it is invisible in review, so nobody can tell whether
-an odd suggestion came from the model or from something in a home directory. Worse, the version is
-chosen by whoever installed it rather than by the repo that depends on the package, so two
-contributors sitting on the same commit can be running different guidance against the same code. A dependency is a property of the repository, and its
-skills should be too. That is why package skills target row 3.
+Rows 1 and 2 install per machine, which is the right scope for a developer's own preferences and the
+wrong scope for a dependency. A skill only one teammate has installed makes that person's results
+irreproducible for everyone else, and it is invisible in review, so nobody can tell whether an odd
+suggestion came from the model or from something in a home directory. Worse, the version is chosen
+by whoever installed it rather than by the repo that depends on the package, so two contributors
+sitting on the same commit can be running different guidance against the same code. A dependency is
+a property of the repository, and its skills should be too. That is why package skills target row 3.
 
 Row 4 is an alternative **distribution channel for row 1**. The user already fetched your package,
 so the skill can ride along with a dependency they chose, instead of being something they have to
