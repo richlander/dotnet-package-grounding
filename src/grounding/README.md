@@ -14,12 +14,16 @@ eng/grounding --help            # launcher: builds once, then forwards args
 
 ## Install as a native tool on PATH
 
-The CLI is **Native AOT**. Publish the native binary and drop it into the
-dotnet tools dir (already on PATH) so `grounding` runs without `dotnet run`:
+The CLI is **Native AOT** and publishes as a single self-contained file (SQLite is
+compiled in — see `e_sqlite3-static.targets`). Install it with
+[`dotnet-install`](https://github.com/richlander/dotnet-install), which places it in
+`~/.dotnet/bin` — on PATH, and not the SDK's tool store, so `dotnet tool` operations
+cannot prune it:
 
 ```bash
-eng/install-grounding.sh        # publish AOT + copy to ~/.dotnet/tools/grounding
-grounding --help                # now a bare command, anywhere
+dotnet tool install -g dotnet-install   # one-time
+dotnet-install .                        # from the repo root
+grounding --help                        # now a bare command, anywhere
 ```
 
 Conventional (framework-dependent) global-tool route, if preferred:
