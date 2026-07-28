@@ -314,6 +314,14 @@ at the plugin boundary, so a conflict or a collaboration that spans two plugins 
 single-plugin holistic benchmark as an intra-plugin conflict is to a per-skill test. Cross-package
 composition is the next frontier of this methodology, not something it currently measures.
 
+One class of cross-package conflict is nonetheless **prevented rather than measured**: a name
+collision between two independently published shelves. The naming rule in
+[authoring principles](./authoring-principles.md#naming-derive-every-skill-name-from-the-package-id)
+derives every skill name from the package id, so uniqueness is inherited from NuGet and never has to
+be observed in a run. That is worth stating explicitly, because it is the only cross-package hazard
+this methodology currently disposes of — and it disposes of it by construction, not by evidence. The
+harder cases, where two shelves interfere semantically rather than nominally, remain unmeasured.
+
 ---
 
 ## One line

@@ -15,7 +15,7 @@ A package skill set has three layers:
 - **Base skill** — named for the package; tells the agent when this package is relevant and where to find
   domain skills.
 - **Domain skills** — focused `SKILL.md` files for task families, migrations, gotchas, and workflows
-  proven to need grounding.
+  proven to need grounding, each named `<package-slug>-<domain>`.
 - **Supporting files** — examples, reference notes, fixtures, or checklists loaded by progressive
   disclosure only when a skill needs them.
 
@@ -23,12 +23,71 @@ Every `SKILL.md` uses the Agent Skills convention:
 
 ```yaml
 ---
-name: package-or-domain-name
+name: package-slug-domain   # base skill: the package slug alone
 description: Use when the task involves the package-specific gap this skill teaches.
 ---
 ```
 
 The `description` is the resident discovery hook. The body and supporting files carry the details.
+
+## Naming: derive every skill name from the package id
+
+Skill names live in a **flat, global namespace**. A repeat is a hard error rather than a
+degradation — the harness fails the check outright (`CheckDuplicateSkillNames`) — and the format is
+1–64 lowercase alphanumeric characters and hyphens.
+
+| Layer | Name | Example |
+| --- | --- | --- |
+| Base skill | the unit slug: the package id, lowercased and hyphenated | `system-text-json` |
+| Domain skill | `<unit-slug>-<domain>` | `system-text-json-source-generation-aot` |
+
+The skill's directory name, its frontmatter `name`, and — for the base skill — `meta.yaml`'s `name`
+all carry the same string.
+
+### Why prefix, when the shelf already groups them
+
+Because the shelf is not the boundary that matters. A package skill set is installed into a
+consumer's repo *alongside every other package's skill set*, so the names that must not collide are
+not the ones inside one shelf. They are the ones across every package the consumer depends on.
+
+`dotnet/skills` carries 98 skills with no collisions, but it gets that for free: one repository, one
+gatekeeper, one duplicate check. Package-published skills have **no coordinating authority**.
+Nothing stops two maintainers who have never met from both shipping `output-formats` — and fifteen of
+the 98 names already there are generic enough that a second author could plausibly pick the same
+string (`run-tests`, `filter-syntax`, `property-patterns`, `configure-auth`, `collect-user-input`,
+and others).
+
+Deriving the name from the package id dissolves the problem instead of managing it. NuGet already
+administers a globally unique id namespace with a real owner, so a derived name **inherits**
+uniqueness rather than negotiating it: no registry to build, no allocation step, no central list to
+consult before authoring. This is the same trade the ecosystem already accepts in package ids
+themselves, where `System.Text.Json.SourceGeneration` is verbose for exactly this reason.
+
+The cost is bounded and small. The longest name this scheme produces in this repo is
+`system-text-json-converters-and-polymorphism` — 44 characters against the 64-character cap.
+
+### What this does not solve
+
+Prefixing guarantees **identity** uniqueness. It does nothing to stop an agent selecting the wrong
+package's skill for a task; that is a description problem (§3) and is orthogonal. Do not treat the
+naming rule as protection against mis-selection, and do not let a mis-selection finding argue
+against the naming rule.
+
+### Where a residual conflict is caught
+
+The convention binds only the packages that follow it. An installer copying shelves into a consumer
+repo must therefore still detect a name it has already seen — and **refuse and report it**, not
+rename it.
+
+Renaming at install time is not a safe repair. Every domain skill here names its base skill *inside
+its own `description`* (``base `system-text-json` skill``), so a renamer would have to rewrite the one
+field retrieval depends on, in every sibling. That forks the shelf: the installed copy stops
+matching the published one, and the doc content hash — half of the dataset provenance key — no
+longer identifies what was measured. Prevention belongs to the author; the installer only reports.
+
+> *Conformance: the base skills follow this rule today; the nine domain skills across the `markout`,
+> `system-text-json`, and `system-commandline` shelves do not yet. Migrating them re-hashes their
+> datasets, so it is sequenced after the runs in flight. Remove this note when they conform.*
 
 ## 1. Record only what the model is proven to need
 

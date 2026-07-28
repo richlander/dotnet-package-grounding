@@ -225,8 +225,10 @@ Nothing under `skills/` is needed to *run* the harness — it is the thing under
 
 Each unit is named with a **lowercase-hyphen slug** (the skill-validator skill name rule), e.g.
 `system-commandline` for `System.CommandLine`. The unit folder, `meta.yaml`'s `name`, and the base
-skill's own directory all carry that slug. The real package id is recorded in `meta.yaml`
-(`package:`).
+skill's own directory all carry that slug; domain skills prefix it (`<slug>-<domain>`) so names stay
+unique across every package a consumer installs — see
+[authoring principles](./authoring-principles.md#naming-derive-every-skill-name-from-the-package-id).
+The real package id is recorded in `meta.yaml` (`package:`).
 
 ### In a package repo
 
