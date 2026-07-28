@@ -16,18 +16,19 @@ The workflow is mostly mechanical, and agents run the mechanical parts well: bui
 running the suite, collecting artifacts, drafting the PR. Three things are not mechanical, and they
 are where your attention pays for itself.
 
-**You own what is true.** An agent asked to write grounding for a package will write it from the
-same model knowledge the grounding is supposed to correct. That is the circularity trap, and it is
-why [`authoring-principles.md`](./authoring-principles.md) §9 asks for post-cutoff sources and
-baseline-observed failures rather than model recall.
+**You own the tasks.** Start here. The suite is your definition of what using the package well looks
+like, so it has to come from real workflows rather than from what a model expects to be asked.
+Models can propose scenarios; coverage, prompt fairness, and assertions need you.
 
-**You own what is general.** The iteration loop rewards patching the skill until the suite passes,
-which is how a skill quietly becomes a lookup table for 24 known prompts. Only a human reading the
-diff can tell a general fix from a fitted one.
+**You own what differentiates.** Grounding is worth writing where your package does something the
+alternatives do not, or does it in a way nobody guesses. Finding those patterns is package work. So
+is deciding what to do about them, because the answer is not always a skill: sometimes the task was
+wrong, and sometimes the library is.
 
-**You own the tasks.** Models may suggest scenarios, but coverage, prompt fairness, and assertions
-need human validation, for the same reason: a model-authored task tends to test what the model
-already expects.
+**You own what is true.** True in both senses, accurate and worth having. An agent asked to author
+grounding writes from the same model knowledge the grounding exists to correct, and the iteration
+loop rewards fitting the skill to the 24 prompts in front of it. What ships has to hold for other
+users, other environments, and other workflows than the ones you tested.
 
 Everything else can be delegated.
 
@@ -104,10 +105,10 @@ regress what already worked.
 
 ### 6. Iterate
 
-Run, find where the grounding falls short, patch the shelf **generally**, repeat. Failures do not
-all have the same cause, and reading them correctly is a skill in itself: a task can fail because
-the skill was never pulled, because it was pulled and said nothing useful, or because the library
-itself has a bug worth fixing.
+Run, find where the grounding falls short, patch the shelf **for the workflow rather than for the
+task**, repeat. Failures do not all have the same cause, and reading them correctly is a skill in
+itself: a task can fail because the skill was never pulled, because it was pulled and said nothing
+useful, or because the library itself has a bug worth fixing.
 
 > **Agent:** re-runs, diffs cards between iterations, proposes edits. **You:** refuse fixes that
 > only work on the tasks in the suite. This is the stage where measurement quietly turns into
