@@ -22,9 +22,12 @@ cannot prune it:
 
 ```bash
 dotnet tool install -g dotnet-install   # one-time
-dotnet-install .                        # from the repo root
+dotnet-install . -o ~/.dotnet/bin       # from the repo root
 grounding --help                        # now a bare command, anywhere
 ```
+
+Without `-o`, `dotnet-install` installs repo-locally to `<repo>/.dotnet/bin`, which is not
+on PATH.
 
 Conventional (framework-dependent) global-tool route, if preferred:
 
