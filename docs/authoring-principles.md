@@ -79,11 +79,19 @@ The convention binds only the packages that follow it. An installer copying shel
 repo must therefore still detect a name it has already seen — and **refuse and report it**, not
 rename it.
 
-Renaming at install time is not a safe repair. Every domain skill here names its base skill *inside
-its own `description`* (``base `system-text-json` skill``), so a renamer would have to rewrite the one
-field retrieval depends on, in every sibling. That forks the shelf: the installed copy stops
-matching the published one, and the doc content hash — half of the dataset provenance key — no
-longer identifies what was measured. Prevention belongs to the author; the installer only reports.
+Renaming at install time is not a safe repair. Where a shelf's domain skills name their base skill
+*inside their own `description`* — as the `system-text-json` shelf does today
+(``base `system-text-json` skill``) — a renamer would have to rewrite the one field retrieval depends
+on, in every sibling. Where they do not, the rename is cheaper but still not free: the directory
+name, the frontmatter `name`, and `meta.yaml` have to move together (§Naming), so the file still
+changes. Either way it forks the shelf: the installed copy stops matching the published one, and the
+doc content hash — half of the dataset provenance key — no longer identifies what was measured.
+Prevention belongs to the author; the installer only reports.
+
+> *A shelf whose skills stand alone lowers this cost but does not remove it. `markout` dropped its
+> cross-references in [markout#171](https://github.com/richlander/markout/pull/171) and gave each
+> domain skill the setup it had been borrowing, so renaming one no longer breaks its siblings — but
+> renaming still rewrites `name`, and the hash still moves.*
 
 > *Conformance: the base skills follow this rule today; the nine domain skills across the `markout`,
 > `system-text-json`, and `system-commandline` shelves do not yet. Migrating them re-hashes their
