@@ -378,7 +378,7 @@ internal static class Runner
     {
         var tools = Path.Combine(root, ".tools");
         if (!Directory.Exists(tools)) return null;
-        // eng/skill-validator.sha pins the dotnet/skills commit the harness is built from, so a
+        // eng/skill-validator.sha pins the skill-validator commit the harness is built from, so a
         // build for that SHA wins. Older builds linger in .tools/ after a pin bump, and picking one
         // of those would measure through a harness the run does not claim to use.
         var shaFile = Path.Combine(root, "eng", "skill-validator.sha");

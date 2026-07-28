@@ -1,8 +1,16 @@
 name: update-harness
 
-# Periodically bump the pinned dotnet/skills commit so we "take updates from
-# dotnet/skills" without vendoring its source. We build skill-validator from
-# this commit (see eng/run-evals.sh). Opens a PR with the new SHA.
+# Periodically bump the pinned skill-validator commit so we take harness updates
+# without vendoring its source. We build skill-validator from this commit (see
+# eng/run-evals.sh). Opens a PR with the new SHA.
+#
+# The pin tracks the holistic-harness branch of richlander/skills, NOT dotnet/skills
+# main. That branch carries three commits this study's protocol depends on and that
+# were never upstreamed: the expected_skill scenario prior, holistic eval mode with
+# the isolated-arm skip, and per-run outcomes persisted before averaging. Upstream
+# accepts --eval-mode and ignores it, so a pin at dotnet/skills main silently
+# downgrades every run to legacy pairwise. Taking upstream updates means rebasing
+# holistic-harness onto dotnet/skills main, then letting this job bump the pin.
 on:
   schedule:
     - cron: '0 6 * * 1'   # Mondays 06:00 UTC
@@ -12,21 +20,40 @@ permissions:
   contents: write
   pull-requests: write
 
+env:
+  HARNESS_REPO: richlander/skills
+  HARNESS_BRANCH: holistic-harness
+
 jobs:
   bump:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Resolve dotnet/skills main HEAD
+      - name: Resolve harness branch HEAD
         id: latest
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          sha=$(gh api repos/dotnet/skills/commits/main -q .sha)
+          sha=$(gh api "repos/$HARNESS_REPO/commits/$HARNESS_BRANCH" -q .sha)
           [ -n "$sha" ] || { echo "Could not resolve SHA"; exit 1; }
           echo "sha=$sha" >> "$GITHUB_OUTPUT"
           echo "short=${sha:0:8}" >> "$GITHUB_OUTPUT"
+
+      - name: Verify the commit still implements holistic eval mode
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # A pin that cannot run the documented protocol is worse than a stale one:
+          # the flag is accepted and ignored, and the run looks fine.
+          path=eng/skill-validator/src/Evaluate/EvaluateCommand.cs
+          gh api "repos/$HARNESS_REPO/contents/$path?ref=${{ steps.latest.outputs.sha }}" \
+            -q .content | base64 -d > /tmp/EvaluateCommand.cs
+          grep -q -- '--eval-mode' /tmp/EvaluateCommand.cs || {
+            echo "::error::${{ steps.latest.outputs.short }} has no --eval-mode option."
+            echo "::error::Rebase $HARNESS_BRANCH onto upstream before bumping the pin."
+            exit 1
+          }
 
       - name: Update eng/skill-validator.sha
         run: echo "${{ steps.latest.outputs.sha }}" > eng/skill-validator.sha
@@ -42,7 +69,7 @@ jobs:
           git config user.name  'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
           git checkout -b "$branch"
-          git commit -am "Bump skill-validator to dotnet/skills@${{ steps.latest.outputs.short }}"
+          git commit -am "Bump skill-validator to $HARNESS_REPO@${{ steps.latest.outputs.short }}"
           git push -u origin "$branch"
-          gh pr create --fill --title "Bump skill-validator to dotnet/skills@${{ steps.latest.outputs.short }}" \
-            --body "Automated harness update: rebuild skill-validator from the latest dotnet/skills main commit."
+          gh pr create --fill --title "Bump skill-validator to ${{ steps.latest.outputs.short }}" \
+            --body "Automated harness update: rebuild skill-validator from the latest \`$HARNESS_BRANCH\` commit."

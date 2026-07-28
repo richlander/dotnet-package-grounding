@@ -188,10 +188,22 @@ We follow the same pattern `dotnet/skills` uses for its own evals: **build** the
 binary from source (`dotnet publish eng/skill-validator/src/SkillValidator.csproj`) and run it.
 skill-validator is **not published to any NuGet feed** (not nuget.org, not GitHub Packages) —
 `dotnet/skills` only builds it in-repo and publishes a rolling `--prerelease` nightly to a GitHub
-Release. So we pin a `dotnet/skills` commit in [`eng/skill-validator.sha`](../eng/skill-validator.sha)
-and build the validator from it. "Taking updates" = bump that SHA — automated by
-[`.github/workflows/update-harness.yml`](../.github/workflows/update-harness.yml), which opens a PR
-pointing at the latest `dotnet/skills` main commit.
+Release. So we pin a commit in [`eng/skill-validator.sha`](../eng/skill-validator.sha) and build the
+validator from it.
+
+The pin tracks the **`holistic-harness` branch of
+[`richlander/skills`](https://github.com/richlander/skills/tree/holistic-harness)**, not
+`dotnet/skills` main. That branch carries three commits this study's protocol depends on and that
+were never upstreamed: the `expected_skill` scenario prior, holistic eval mode with the isolated-arm
+skip, and per-run outcomes persisted before averaging. Upstream **accepts `--eval-mode` and ignores
+it**, so a pin at `dotnet/skills` main silently downgrades every run to legacy pairwise with a live
+isolated arm, producing numbers that are not comparable to any published card and no warning that
+anything changed. Both [`eng/run-evals.sh`](../eng/run-evals.sh) and the bump workflow now refuse a
+pin whose `EvaluateCommand.cs` carries no `--eval-mode`.
+
+"Taking updates" = rebase `holistic-harness` onto `dotnet/skills` main, then bump the SHA. The bump
+is automated by [`.github/workflows/update-harness.yml`](../.github/workflows/update-harness.yml),
+which opens a PR pointing at the latest `holistic-harness` commit.
 
 ## Shipped skill set vs transient validator wrapper
 
