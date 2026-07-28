@@ -319,9 +319,14 @@ grounding --help                           # runs via the dotnet host
 
 # C. Install the Native AOT binary on PATH (self-contained single file, no dotnet host needed):
 dotnet tool install -g dotnet-install       # one-time, if you don't have it
-dotnet-install .                            # reads .dotnet-install/.dotnet-install.json
+dotnet-install . -o ~/.dotnet/bin           # reads .dotnet-install/.dotnet-install.json
 grounding --help
 ```
+
+> **`-o` is not optional.** Given a project path inside a git repo, `dotnet-install` defaults to a
+> *repo-local* install under `<repo>/.dotnet/bin`, which is not on PATH — you would have to
+> `. .dotnet/bin/env` in every shell. Passing `-o ~/.dotnet/bin` installs it once, globally.
+> Confirm with `dotnet-install ls`; the tool should be listed with the commit it was built from.
 
 > **FDD vs AOT:** option **B** packs a conventional framework-dependent global tool (run via `dotnet`);
 > option **C** produces a single native executable with no managed-host dependency. Both install a

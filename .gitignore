@@ -11,7 +11,7 @@ obj/
 *.swp
 
 # Generated MCP plugin manifests (run `grounding gen-plugins`; templates are *.in)
-grounding/*mcp/plugin.json
+**/grounding/*mcp/plugin.json
 
 # Tool pack output
 src/grounding/nupkg/
