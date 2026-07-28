@@ -73,16 +73,18 @@ were reliably confused, and a skill correcting them would have been a large effi
 window has since closed. The efficacy case for a stale-knowledge skill has a half-life set by the
 training runs, not by you.
 
-We have seen this pattern in our own numbers, on the packages we have measured so far. Where
-the frontier model already sat near the ceiling, its win was almost entirely efficiency: it was
-already delivering the task, so the skill only made the delivery cheaper. The weaker tiers gained on
-both axes at once, which is the more interesting case: they started delivering tasks they had been
+We have seen this pattern in our own numbers, on the packages we have measured so far. Where the
+frontier model already sat near the ceiling, its win was almost entirely efficiency: it was already
+delivering the task, so the skill only made the delivery cheaper. The weaker tiers gained on both
+axes at once, which is the more interesting case: they started delivering tasks they had been
 failing outright (efficacy), *and* did the tasks they already managed for far fewer tokens
-(efficiency). Read that as a shape to test for rather than a certainty: whether the frontier has headroom
-on *your* package depends on how well it already knows it, and on a package it genuinely does not
-know it can have a real capability gap too. The cross-generation version of the claim is thinner
-still, resting on two Opus generations of a single package, so we would not lean on it yet. The
-per-package reports in [`docs/reports/`](reports/) carry the detail and the caveats.
+(efficiency). Read that as a shape to test for rather than a certainty: whether the frontier has
+headroom on *your* package depends on how well it already knows it, and on a package it genuinely
+does not know it can have a real capability gap too.
+
+We have much less to say about what changes from one model generation to the next. The evidence
+there is one package measured on two generations of Opus, which is too little to draw a line from.
+The per-package reports in [`docs/reports/`](reports/) carry the detail and the caveats.
 
 The reason the frontier's win lands on one axis and not the other is **resourcefulness**, and it
 cuts both ways. An ungrounded agent usually gets there in the end. When it does not know your
