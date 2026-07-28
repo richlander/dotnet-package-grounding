@@ -16,16 +16,28 @@ jobs:
         id: pin
         run: echo "sha=$(tr -d '[:space:]' < eng/skill-validator.sha)" >> "$GITHUB_OUTPUT"
 
-      # Build the validator from the pinned dotnet/skills commit, mirroring how
-      # dotnet/skills builds it in-repo (dotnet publish SkillValidator.csproj).
-      - name: Checkout dotnet/skills @ pinned SHA
+      # Build the validator from the pinned commit, mirroring how dotnet/skills
+      # builds it in-repo (dotnet publish SkillValidator.csproj). The pin lives on
+      # a fork branch carrying the holistic eval mode this study's protocol needs;
+      # see docs/harness.md "How it relates to dotnet/skills".
+      - name: Checkout skill-validator @ pinned SHA
         uses: actions/checkout@v4
         with:
-          repository: dotnet/skills
+          repository: richlander/skills
           ref: ${{ steps.pin.outputs.sha }}
           path: .tools/skills-src
 
-      - name: Setup .NET (matches dotnet/skills global.json)
+      - name: Verify the pin implements holistic eval mode
+        run: |
+          # Upstream accepts --eval-mode and ignores it, so a pin without the option
+          # produces legacy pairwise numbers and no warning that anything changed.
+          if ! grep -q -- '--eval-mode' \
+            .tools/skills-src/eng/skill-validator/src/Evaluate/EvaluateCommand.cs; then
+            echo "::error::Pinned commit has no --eval-mode; rebase holistic-harness."
+            exit 1
+          fi
+
+      - name: Setup .NET (matches skill-validator global.json)
         uses: actions/setup-dotnet@v4
         with:
           global-json-file: .tools/skills-src/global.json
