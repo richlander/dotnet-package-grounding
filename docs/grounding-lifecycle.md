@@ -43,7 +43,7 @@ knows this package — **do not author a skill**. A skill is justified only by a
    [`grounding-eval-methodology.md`](./grounding-eval-methodology.md#sourcing-the-tasks-adopters-not-the-api-surface):
    pick real consumers, extract their idioms weighted by frequency, diff that set against the shelf
    and the suite, and prefer tasks whose failure mode is silent.
-2. **Write the shelf under `grounding/<unit>/skills/`** — the base skill at
+2. **Write the shelf under `<unit>/skills/`** — the base skill at
    `skills/<unit>/SKILL.md`, each domain skill at `skills/<unit>-<domain>/SKILL.md`. Keep the base
    skill small and describe only the trap and the correct path. See
    [`authoring-principles.md`](./authoring-principles.md).
@@ -138,8 +138,8 @@ per-skill marginals. Neither is evidence for a ship decision.
 
 Same artifact list and reviewer checklist as the quality-card model:
 
-- `grounding/<unit>/skills/**/SKILL.md` plus supporting files for the base and domain skills.
-- `grounding/<unit>/eval.yaml` — the committed scenarios, linked from the PR.
+- `<unit>/skills/**/SKILL.md` plus supporting files for the base and domain skills.
+- `<unit>/grounding/<unit>/eval.yaml` — the committed scenarios, linked from the PR.
 - The quality cards pasted into *Metrics*, with the provenance pin and harness commit that produced
   them.
 - An **Analysis** of what the shelf changes (typically eliminating the *resourcefulness* the agent

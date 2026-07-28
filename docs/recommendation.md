@@ -52,9 +52,9 @@ We have **worked examples for four real packages**, each with a backing report:
 
 | Package | Authored grounding | Why it was written that way (report) |
 |---------|--------------------|--------------------------------------|
-| Markout | [`grounding/markout/`](../grounding/markout/) | [`reports/markout.md`](reports/markout.md) — non-resident; a no-reflection-fallback trap |
-| System.CommandLine | [`grounding/system-commandline/`](../grounding/system-commandline/) | [`reports/system-commandline.md`](reports/system-commandline.md) — beta4→3.x migration breakage |
-| System.Text.Json | [`grounding/system-text-json/`](../grounding/system-text-json/) | [`reports/system-text-json.md`](reports/system-text-json.md) — model-resident; what the model *lacks* |
+| Markout | [`examples/markout/`](../examples/markout/) | [`reports/markout.md`](reports/markout.md) — non-resident; a no-reflection-fallback trap |
+| System.CommandLine | [`examples/system-commandline/`](../examples/system-commandline/) | [`reports/system-commandline.md`](reports/system-commandline.md) — beta4→3.x migration breakage |
+| System.Text.Json | [`examples/system-text-json/`](../examples/system-text-json/) | [`reports/system-text-json.md`](reports/system-text-json.md) — model-resident; what the model *lacks* |
 | Microsoft.Extensions.AI | [`grounding/microsoft-extensions-ai/`](../grounding/microsoft-extensions-ai/) | [`reports/microsoft-extensions-ai.md`](reports/microsoft-extensions-ai.md) — function-invocation surface |
 
 The authoring rule (only write what the model *provably* lacks) is in

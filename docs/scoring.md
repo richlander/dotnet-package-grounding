@@ -107,9 +107,9 @@ fell 4 → 0, session IET fell 45%, and cost fell 71%.
 
 | Artifact | Path |
 | --- | --- |
-| Base package skill | `grounding/<unit>/skills/<unit>/SKILL.md` |
-| Domain skills and supporting files | `grounding/<unit>/skills/<unit>-<domain>/**` |
-| Committed eval scenarios | `grounding/<unit>/eval.yaml` |
+| Base package skill | `<unit>/skills/<unit>/SKILL.md` |
+| Domain skills and supporting files | `<unit>/skills/<unit>-<domain>/**` |
+| Committed eval scenarios | `<unit>/grounding/<unit>/eval.yaml` |
 | Package report | `docs/reports/<unit>.md` |
 
 Datasets are **not** committed; cite the provenance pin (`grounding provenance`) and the harness

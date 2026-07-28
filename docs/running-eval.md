@@ -5,8 +5,8 @@
 > gates). This doc is the *operational* how-to: build the harness, point it at a repo, run.
 
 This repo is the **generic eval harness**. It holds no package grounding of its own — the package's
-`SKILL.md` skill set and its eval (`eval.yaml` + `fixtures/`) live in the **package's own repo**, under
-`grounding/<unit>/`. You run eval by pointing the harness at that repo. Nothing is packed or published
+`SKILL.md` skill set lives in the **package's own repo** under `skills/`, with its eval
+(`eval.yaml` + `fixtures/`) beside it under `grounding/<unit>/`. You run eval by pointing the harness at that repo. Nothing is packed or published
 to iterate: the harness reads the skill set **in place** from the target tree, so a typo fix is an edit
 and a re-run.
 
@@ -25,14 +25,16 @@ and a re-run.
 A package repo carries a self-contained grounding bundle (inputs only — datasets are **not** committed):
 
 ```text
-<target-repo>/grounding/<unit>/
-  SKILL.md           # base skill: YAML name + use-when description, then guidance
-  <domain>/...        # optional domain skills and progressive-disclosure support files
-  meta.yaml           # name (== <unit>), package, description
-  eval.yaml           # CT-24 scenarios: prompt + setup fixtures + assertions
-  fixtures/...        # starting project(s), gated by `dotnet build`/`run`
-  README.md           # optional durable prose eval summary (the card lives in the PR)
-  run.sh / run.ps1    # optional wrappers to regenerate the datasets
+<target-repo>/
+  skills/             # what ships inside the package
+    <unit>/SKILL.md   #   base skill: YAML name + use-when description, then guidance
+    <domain>/...      #   domain skills and progressive-disclosure support files
+    plugin.json       #   installs the set together
+  grounding/<unit>/   # what measures it, and never ships
+    meta.yaml         #   name (== <unit>), package, description
+    eval.yaml         #   CT-24 scenarios: prompt + setup fixtures + assertions
+    fixtures/...      #   starting project(s), gated by `dotnet build`/`run`
+    results.md        #   optional durable prose summary (the card lives in the PR)
 ```
 
 The package may include a small base skill plus domain skills, installed into the consuming repo, so
@@ -41,7 +43,7 @@ delivery stays pull-based, opt-in, and removable.
 ## Point the harness at it
 
 ```bash
-# Reads <target-repo>/grounding/<unit>/skills/ as the shelf under test. No packing, no publish.
+# Reads <target-repo>/skills/ as the shelf under test. No packing, no publish.
 DATA="${GROUNDING_DATA_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/grounding}/<unit>-ct24"
 grounding run <unit> --root <target-repo> --source skill --eval-mode holistic --runs 5 \
   -m "claude-haiku-4.5 claude-sonnet-5 claude-opus-5" --out "$DATA"

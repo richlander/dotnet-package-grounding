@@ -18,7 +18,6 @@ internal static class McpServer
     // Repo root holding grounding/. Resolved from --root / GROUNDING_ROOT / discovery,
     // since the harness spawns the MCP server with an unrelated working directory.
     private static string RepoRootPath = "";
-    private static string GroundingDir => Path.Combine(RepoRootPath, "grounding");
     private static string CallLog => Path.Combine(RepoRootPath, ".tools", "mcp-calls.log");
 
     private static readonly Dictionary<string, string> GateDescriptions = new()
@@ -258,17 +257,16 @@ internal static class McpServer
 
     private static string ResidentManifest()
     {
-        if (!Directory.Exists(GroundingDir)) return "";
         var lines = new List<string>();
         var seen = new HashSet<string>();
-        foreach (var unit in Directory.EnumerateFileSystemEntries(GroundingDir).OrderBy(x => x, StringComparer.Ordinal))
+        foreach (var unit in UnitPaths.EnumerateRoots(RepoRootPath))
         {
             var agents = UnitSkill(unit);
             if (agents is null) continue;
             var (fm, _) = SplitFrontmatter(File.ReadAllText(agents));
             var fields = FrontmatterFields(fm);
             var name = fields.TryGetValue("name", out var nm) && nm.Length > 0 ? nm : Path.GetFileName(unit);
-            var meta = Path.Combine(unit, "meta.yaml");
+            var meta = Path.Combine(UnitPaths.Dir(RepoRootPath, Path.GetFileName(unit)), "meta.yaml");
             if (File.Exists(meta))
             {
                 foreach (var ml0 in PyLines(File.ReadAllText(meta)))
@@ -289,7 +287,7 @@ internal static class McpServer
         return string.Join("\n", lines);
     }
 
-    // A unit's grounding is its base authored skill: grounding/<unit>/skills/<unit>/SKILL.md.
+    // A unit's grounding is its base authored skill: <unit-root>/skills/<unit>/SKILL.md.
     // Falls back to a lone skill dir when the base skill is not named after the unit.
     private static string? UnitSkill(string unitDir)
     {
@@ -313,14 +311,13 @@ internal static class McpServer
     {
         var index = new Dictionary<string, string>();
         var claimedBy = new Dictionary<string, string>();
-        if (!Directory.Exists(GroundingDir)) return index;
-        foreach (var unit in Directory.EnumerateFileSystemEntries(GroundingDir).OrderBy(x => x, StringComparer.Ordinal))
+        foreach (var unit in UnitPaths.EnumerateRoots(RepoRootPath))
         {
             var agents = UnitSkill(unit);
             if (agents is null) continue;
             var unitName = Path.GetFileName(unit);
             index[Norm(unitName)] = agents;
-            var meta = Path.Combine(unit, "meta.yaml");
+            var meta = Path.Combine(UnitPaths.Dir(RepoRootPath, unitName), "meta.yaml");
             if (!File.Exists(meta)) continue;
             foreach (var line0 in PyLines(File.ReadAllText(meta)))
             {

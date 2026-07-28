@@ -37,7 +37,7 @@ internal sealed partial class RescoreAssertions
         {
             var node = JsonNode.Parse(File.ReadAllText(ds))!;
             var unit = unitOpt ?? node["verdicts"]?[0]?["skillName"]?.GetValue<string>() ?? "";
-            var testsDir = testsDirOpt ?? (File.Exists(System.IO.Path.Combine(root, "grounding", unit, "eval.yaml")) ? "grounding" : "tests");
+            var testsDir = testsDirOpt ?? (File.Exists(System.IO.Path.Combine(Grounding.UnitPaths.Dir(root, unit), "eval.yaml")) ? "grounding" : "tests");
             var evalPath = System.IO.Path.Combine(root, testsDir, unit, "eval.yaml");
             var fixturesRoot = System.IO.Path.Combine(root, testsDir, unit);
             if (!File.Exists(evalPath)) { _o.WriteLine($"rescore-assertions: eval.yaml not found: {evalPath}"); rc |= 1; continue; }

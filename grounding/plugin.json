@@ -1,6 +1,0 @@
-{
-  "name": "dotnet-package-grounding",
-  "version": "0.1.0",
-  "description": "NuGet package grounding content, authored as skills and evaluated via skill-validator.",
-  "skills": ["./"]
-}

@@ -372,7 +372,7 @@ internal static class Loader
         if (!string.IsNullOrWhiteSpace(skillPath))
             dirs.Add(System.IO.Path.IsPathRooted(skillPath) ? skillPath : System.IO.Path.Combine(root, skillPath));
         if (!string.IsNullOrWhiteSpace(skillName))
-            dirs.Add(System.IO.Path.Combine(root, "grounding", skillName));
+            dirs.Add(Grounding.UnitPaths.Dir(root, skillName));
         foreach (var dir in dirs)
             foreach (var art in new[] { "SKILL.md" })
             {

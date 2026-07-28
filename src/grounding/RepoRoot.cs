@@ -1,9 +1,9 @@
 namespace Grounding;
 
-// Locates the INFRA repository root (holding the harness: grounding/, eng/,
+// Locates the INFRA repository root (holding the harness: examples/, eng/,
 // .tools/) by walking up from the cwd, then the binary location. This is where
-// skill-validator is found. The grounding UNIT can live elsewhere (a target
-// repo) — see RunOptions.Root — so eval reads that repo's grounding/<unit>
+// skill-validator is found. The graded UNIT can live elsewhere (a target
+// package repo) — see RunOptions.Root — so eval reads that repo's grounding/<unit>
 // in place, with no packing or publishing required to iterate.
 internal static class RepoRoot
 {
@@ -17,7 +17,7 @@ internal static class RepoRoot
             var dir = new DirectoryInfo(start);
             while (dir is not null)
             {
-                if (Directory.Exists(Path.Combine(dir.FullName, "grounding")) &&
+                if (Directory.Exists(Path.Combine(dir.FullName, "examples")) &&
                     Directory.Exists(Path.Combine(dir.FullName, "eng")))
                 {
                     _cached = dir.FullName;

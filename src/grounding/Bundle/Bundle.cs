@@ -83,7 +83,7 @@ internal static partial class Bundle
     {
         var root = RepoRoot.Find(); if (root is null) { Console.Error.WriteLine("no repo root"); return 1; }
         Directory.CreateDirectory(to);
-        var gdir = Path.Combine(root, "grounding", unit);
+        var gdir = UnitPaths.Dir(root, unit);
         File.Copy(Path.Combine(gdir, "SKILL.md"), Path.Combine(to, "SKILL.md"), true);
         File.Copy(Path.Combine(root, "tests", unit, "eval.yaml"), Path.Combine(to, "eval.yaml"), true);
         CopyDir(Path.Combine(root, "tests", unit, "fixtures"), Path.Combine(to, "fixtures"));
