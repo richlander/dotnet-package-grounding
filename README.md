@@ -31,8 +31,9 @@ shelf is the worked example: a `markout` base skill plus `conditional-compositio
 ([skills/](https://github.com/richlander/markout/tree/main/skills)).
 
 The files follow [Anthropic's Agent Skills](https://www.anthropic.com/news/skills) convention: a
-`SKILL.md` with YAML frontmatter (a `name` and a "use when…" `description`) that discloses into
-supporting files as the agent needs them. Any Skills-aware agent host can load them.
+`SKILL.md` with YAML frontmatter (a `name` and a "use when…" `description`) that points to
+supporting files the agent reads only when a task calls for them. Any Skills-aware agent host can
+load them.
 
 The approach heavily leverages agents, based on a set of best practices. These are examples, and
 both halves are based on experience: the ineffective half is mostly what we tried first, before the
@@ -92,8 +93,8 @@ feature.
 | **3. In-repo skill** | authored in place | `.github/skills/<name>/` | every developer in one repo |
 | **4. Package skill** | `skills/<name>/` in the `.nupkg` | `.github/skills/<name>/` | every developer in one repo |
 
-Each `<name>/` directory holds a `SKILL.md` plus whatever it discloses into. The paths above are
-Copilot CLI's, which
+Each `<name>/` directory holds a `SKILL.md` and any supporting files it references. The paths
+above are Copilot CLI's, which
 [documents](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-skills)
 `.github/skills/`, `.claude/skills/` and `.agents/skills/` for a repo, and `~/.copilot/skills/` or
 `~/.agents/skills/` for a user. Claude Code reads the `.claude` pair, which is why a skill written
