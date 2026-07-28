@@ -20,10 +20,10 @@ are where your attention pays for itself.
 has to come from real workflows rather than from what a model expects to be asked. Models can
 propose scenarios; coverage, prompt fairness, and assertions need you.
 
-**You own what differentiates.** Grounding is worth writing where your package does something the
-alternatives do not, or does it in a way nobody guesses. Finding those patterns is package work. So
-is deciding what to do about them, because the answer is not always a skill: sometimes the task was
-wrong, and sometimes the library is.
+**You own what differentiates.** Two things sit here: finding the library patterns that carry real
+workflows, and knowing which of them make your package worth choosing. Expect the eval to tell you
+something uncomfortable along the way, which is that agents often do not find your API intuitive.
+What to do about that is a longer conversation than this page.
 
 **You own what is true.** True in both senses, accurate and worth having. An agent asked to author
 grounding writes from the same model knowledge the grounding exists to correct, and the iteration
