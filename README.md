@@ -118,7 +118,8 @@ so the skill can ride along with a dependency they chose, instead of being somet
 know exists and go find in a marketplace. That is the entire pitch: discovery is the hard part of
 row 1, and a package they already depend on solves it. Markout's
 [`skills/`](https://github.com/richlander/markout/tree/main/skills) is the worked example of the
-vehicle.
+vehicle: the shelf ships from the repo root, and the eval that grades it sits apart in
+[`grounding/`](https://github.com/richlander/markout/tree/main/grounding).
 
 And once installed, row 4 **collapses into row 3**, into the same directory a hand-written repo
 skill would occupy. The skills land in the consumer's repo as checked-in files they can read,
