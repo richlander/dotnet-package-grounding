@@ -161,10 +161,12 @@ order:
    "modernize" working code. (A negative instruction that prevents wasted effort.)
 4. **New API members in 3.x** — a terse reference list (additive over 2.x).
 
-The current draft lives at
-[`grounding/system-commandline/AGENTS.md`](../../grounding/system-commandline/AGENTS.md)
-in this repo and is the artifact we would propose adding to the package
-(`dotnet/command-line-api`).
+The draft measured here was an `AGENTS.md`, since retired from this repo along with the rest of the
+format. It is [preserved at the last commit that carried
+it](https://github.com/richlander/dotnet-package-skills/blob/f55961b6525a80ff6c3994864cc8b02f9b0660db/grounding/system-commandline/AGENTS.md).
+The content has been superseded by the skill shelf in
+[`grounding/system-commandline/skills/`](../../grounding/system-commandline/skills/), which is what
+we would now propose adding to the package (`dotnet/command-line-api`).
 
 ## Threats to validity
 
