@@ -58,6 +58,13 @@ internal static class Runner
             return 1;
         }
         var metaPath = Path.Combine(unitDir, "meta.yaml");
+        // The shelf lives at <root>/skills/ in a target package repo (the shape a package
+        // ships), or under grounding/<unit>/skills/ for a unit authored inside this repo,
+        // which keeps the unit self-contained. Prefer the nested one when it exists.
+        var nestedSkills = Path.Combine(unitDir, "skills");
+        var skillsDir = Directory.Exists(nestedSkills) ? nestedSkills : Path.Combine(root, "skills");
+        var skillsRel = Path.GetRelativePath(root, skillsDir);
+
         // The graded artifact is always the authored shelf under skills/<unit>/. A unit carries
         // only name/description in meta.yaml, which the readme/none wrappers need.
         if (!File.Exists(metaPath))
@@ -80,14 +87,15 @@ internal static class Runner
         {
             case "skill":
                 // The authored grounding is a REAL Claude skill: it lives in a conventional
-                // skills/<unit>/SKILL.md (with a plugin.json), per Anthropic guidance — NOT under
-                // grounding/. Feed it verbatim (it is already a full SKILL.md).
-                var authoredSkill = Path.Combine(root, "skills", o.Unit, "SKILL.md");
+                // skills/<unit>/SKILL.md (with a plugin.json) per Anthropic guidance, whether that
+                // shelf sits at the repo root or nested in the unit. Feed it verbatim (it is
+                // already a full SKILL.md).
+                var authoredSkill = Path.Combine(skillsDir, o.Unit, "SKILL.md");
                 if (!File.Exists(authoredSkill))
                 {
                     Console.Error.WriteLine(
-                        $"grounding: --source skill needs skills/{o.Unit}/SKILL.md (an authored skill). "
-                        + "Add one under skills/ to eval the grounded arm.");
+                        $"grounding: --source skill needs {authoredSkill} (an authored skill). "
+                        + "Add one to eval the grounded arm.");
                     return 1;
                 }
                 skillText = File.ReadAllText(authoredSkill);
@@ -131,9 +139,9 @@ internal static class Runner
         // (readme/none, or push) drop the synthesized doc into grounding/<unit>.
         var multiSkill = o.Source == "skill" && o.Delivery != "push";
         var skillPath = multiSkill
-            ? Path.Combine(root, "skills", o.Unit, "SKILL.md")
+            ? Path.Combine(skillsDir, o.Unit, "SKILL.md")
             : Path.Combine(unitDir, "SKILL.md");
-        var groundingArg = multiSkill ? Path.Combine("skills", o.Unit) : Path.Combine("grounding", o.Unit);
+        var groundingArg = multiSkill ? Path.Combine(skillsRel, o.Unit) : Path.Combine("grounding", o.Unit);
 
         // Provenance = the pin key. Corpus (nuget + fixtures) + this arm's doc content-hash decide
         // whether an already-generated dataset can be REUSED instead of regenerated — the core of
@@ -146,7 +154,7 @@ internal static class Runner
         // committed package artifact, not scaffolding. Other arms synthesize a transient
         // grounding/plugin.json (cleaned up below) so target repos hold only grounding inputs.
         var pluginJson = multiSkill
-            ? Path.Combine(root, "skills", "plugin.json")
+            ? Path.Combine(skillsDir, "plugin.json")
             : Path.Combine(root, "grounding", "plugin.json");
         var wrotePlugin = false;
         if (multiSkill)
@@ -370,8 +378,18 @@ internal static class Runner
     {
         var tools = Path.Combine(root, ".tools");
         if (!Directory.Exists(tools)) return null;
+        // eng/skill-validator.sha pins the dotnet/skills commit the harness is built from, so a
+        // build for that SHA wins. Older builds linger in .tools/ after a pin bump, and picking one
+        // of those would measure through a harness the run does not claim to use.
+        var shaFile = Path.Combine(root, "eng", "skill-validator.sha");
+        if (File.Exists(shaFile))
+        {
+            var pinned = Path.Combine(tools, "skill-validator-" + File.ReadAllText(shaFile).Trim(), "skill-validator");
+            if (File.Exists(pinned)) return pinned;
+        }
         return Directory.EnumerateDirectories(tools, "skill-validator-*")
             .Select(d => Path.Combine(d, "skill-validator"))
+            .OrderBy(d => d, StringComparer.Ordinal)
             .FirstOrDefault(File.Exists);
     }
 
