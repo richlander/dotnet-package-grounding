@@ -329,10 +329,11 @@ grounding --help
 # Prereq: a .NET SDK matching dotnet/skills' global.json, git, and
 # `gh auth login` (skill-validator's Copilot SDK uses gh creds).
 grounding run system-commandline --source skill --eval-mode holistic --runs 5 \
-  -m "claude-haiku-4.5 claude-sonnet-4.6 claude-opus-4.8"
+  -m "claude-haiku-4.5 claude-sonnet-5 claude-opus-5"
 ```
 
-`run-evals.sh` clones `dotnet/skills` at the pinned SHA into `./.tools`, builds `skill-validator`, and
+`run-evals.sh` clones the harness fork (`SKILL_VALIDATOR_REPO`, default `richlander/skills`) at the
+pinned SHA into `./.tools`, builds `skill-validator`, and
 caches it per-SHA, so only the first run pays the build cost. Package repos may also provide their own
 `run.sh` / `run.ps1` wrappers around the same command.
 

@@ -1,8 +1,10 @@
 # Getting started
 
-This repo is **generic infrastructure** for measuring whether grounding helps an AI agent use a
-NuGet package correctly. It ships no grounding content of its own. You point it at a package repo
-that carries candidate grounding, and it tells you whether that grounding earns its keep.
+This repo is **generic infrastructure** for measuring whether a package's skills help an AI agent use
+that NuGet package correctly. Its own skill shelves under `grounding/` exist to be measured, not to
+ship from here: for a package we control, the shelf lives in the package repo and this repo points at
+it; for a package we do not control, the shelf is staged here until it has a home. Either way, the
+question is the same — does that shelf earn its keep?
 
 This page is the **map of the whole workflow**. It walks the stages in order, says who should drive
 each one, and hands you off to the document that owns the details. It deliberately carries no

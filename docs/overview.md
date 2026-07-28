@@ -124,9 +124,11 @@ Every claim here is backed by a paired experiment on one fixed harness:
   to pull.
 
 Each `(task, arm)` is run `k = 5` times, because grounding effects are noisy on any single run, and
-across a mini *and* a frontier model — `claude-haiku-4.5`, `claude-sonnet-4.5`, and
-`claude-opus-4.8` — so the mini-versus-frontier asymmetry shows up directly. We reuse the
-[`dotnet/skills`](https://github.com/dotnet/skills) **skill-validator** harness to run those pairs
+across a mini *and* a frontier model — `claude-haiku-4.5`, `claude-sonnet-5`, and
+`claude-opus-5` — so the mini-versus-frontier asymmetry shows up directly. We reuse the
+[`dotnet/skills`](https://github.com/dotnet/skills) **skill-validator** harness — via a
+[fork](https://github.com/richlander/skills/tree/holistic-harness) that carries holistic eval mode —
+to run those pairs
 and compare accuracy, token usage, and tool calls using pairwise LLM judging.
 
 We record, per run: whether the task was **delivered** (all functional assertions pass *and* it was

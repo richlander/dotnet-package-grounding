@@ -47,8 +47,8 @@ Generic infrastructure for evaluating NuGet package **grounding**. Start at the 
 - **[iet-model.md](./iet-model.md)** — how the analyzer maps Copilot token fields to IET, including
   prompt-cache evidence, provider models, and tool-turn IET.
 - **[harness.md](./harness.md)** — how `skill-validator` is built and run, and the confounds.
-- **[grounding-lifecycle.md](./grounding-lifecycle.md)** — the team playbook: create / update / delete /
-  evaluate.
+- **[grounding-lifecycle.md](./grounding-lifecycle.md)** — the skill lifecycle playbook: create /
+  update / delete / evaluate, and what evidence each operation owes.
 
 ## Study artifacts
 

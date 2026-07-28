@@ -41,10 +41,10 @@ delivery stays pull-based, opt-in, and removable.
 ## Point the harness at it
 
 ```bash
-# Reads <target-repo>/grounding/<unit>/ as the grounded skill set. No packing, no publish.
+# Reads <target-repo>/grounding/<unit>/skills/ as the shelf under test. No packing, no publish.
 DATA="${GROUNDING_DATA_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/grounding}/<unit>-ct24"
 grounding run <unit> --root <target-repo> --source skill --eval-mode holistic --runs 5 \
-  -m "claude-haiku-4.5 claude-sonnet-4.6 claude-opus-4.8" --out "$DATA"
+  -m "claude-haiku-4.5 claude-sonnet-5 claude-opus-5" --out "$DATA"
 ```
 
 - **`--root`** (or the `GROUNDING_ROOT` env var) is the grounding root — the target repo. The

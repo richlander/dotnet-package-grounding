@@ -103,14 +103,17 @@ historical, but the quantities are preserved here with current naming:
 Quality-card readout: tasks correct improved 5/6 → 6/6, nuget-cache reads fell 31 → 0, web calls
 fell 4 → 0, session IET fell 45%, and cost fell 71%.
 
-## What a grounding PR contains
+## What a skill PR contains
 
 | Artifact | Path |
 | --- | --- |
-| Base package skill | `grounding/<unit>/SKILL.md` |
-| Domain skills and supporting files | `grounding/<unit>/**` |
-| Matched grounded-vs-baseline dataset | `data/<unit>*/` |
+| Base package skill | `grounding/<unit>/skills/<unit>/SKILL.md` |
+| Domain skills and supporting files | `grounding/<unit>/skills/<unit>-<domain>/**` |
+| Committed eval scenarios | `grounding/<unit>/eval.yaml` |
 | Package report | `docs/reports/<unit>.md` |
+
+Datasets are **not** committed; cite the provenance pin (`grounding provenance`) and the harness
+commit instead.
 
 ### PR description format
 

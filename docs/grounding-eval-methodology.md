@@ -78,7 +78,7 @@ never been carried over.
 Run discipline:
 
 - `k = 5` repeats for every `(task, arm, model)` cell.
-- Models: `claude-haiku-4.5`, `claude-sonnet-5`, and `claude-opus-4.8`.
+- Models: `claude-haiku-4.5`, `claude-sonnet-5`, and `claude-opus-5`.
 - Hold prompts, assertions, package version, judge configuration, and tool policy fixed across arms.
 - Treat a result as model-relative; do not generalize a frontier-model null result to cheaper agents.
 
