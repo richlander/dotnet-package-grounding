@@ -41,26 +41,21 @@ the model is on a given package.
   model may already know the answer. The measurement has to respect that asymmetry — a grounding change
   can be a real win for one model and redundant for another.
 
-A second decay curve runs on time rather than popularity. **Staleness** is the gap between what a
-model learned and what your package is now: features added after the training cut, and revisions
-that changed behavior out from under code the model still writes from memory. A breaking change is
-the worst case, because it does not merely leave a hole in what the model knows, it invalidates
-instincts the model still has, and a confident wrong answer is more expensive than an absent one.
-Staleness hits the frontier and the mini tier alike, since neither can know what shipped after it
-was trained.
+A second curve runs on time rather than popularity, and it runs in both directions. Time fills the
+model in: a package published last month is absent from every model no matter how good it is, and
+each later generation knows a little more as public code, posts, and answers accumulate. Time also
+invalidates, and that half has a name. **Staleness** is the gap between what the model learned and
+what your package is now: features shipped after the training cut are simply missing, and revisions
+change behavior out from under code the model still writes from memory. Unlike popularity, neither
+direction spares the frontier tier, because no model can know what shipped after it was trained.
 
-Time cuts the other way too. The popularity curve is itself something a package moves along as it
-ages: a package published last month is absent from every model no matter how good it is, because
-there was nothing to train on yet. As it accumulates public code, posts, and answers, each model
-generation knows a little more about it than the last. So the time axis is not a one-way decay, it
-is a race between accumulation filling the model in and churn invalidating what got filled in. A
-stable, widely used package wins that race and needs grounding least. A young package loses on the
-first count, a fast-moving one on the second, and a young fast-moving package loses on both.
-
-The two curves are worth keeping apart. Popularity decides whether the model ever knew your package.
-Staleness decides whether what it knew is still true. A niche package is a gap to fill; a popular
-package that just shipped a breaking change is a correction to make, and the second is the more
-urgent of the two because the agent does not know it is wrong.
+The two curves answer different questions. Popularity decides whether the model ever knew your
+package; staleness decides whether what it knew is still true. A niche package is a gap to fill, and
+a package that just shipped a breaking change is a correction to make. The correction is the more
+urgent of the two: a gap leaves the agent without an answer, while a stale instinct leaves it with a
+confident wrong one and no way to tell it is wrong. Together they say who needs grounding least,
+which is the stable, widely used package, and who needs it most, which is the young or fast-moving
+one.
 
 Knowledge here means *resident* model knowledge — not what the model could recover with web search or
 tools. Recovering a fact by digging is exactly the cost grounding removes.
