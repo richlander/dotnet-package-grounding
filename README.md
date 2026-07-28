@@ -98,27 +98,15 @@ above are Copilot CLI's, which
 [documents](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-skills)
 `.github/skills/`, `.claude/skills/` and `.agents/skills/` for a repo, and `~/.copilot/skills/` or
 `~/.agents/skills/` for a user. Claude Code reads the `.claude` pair, which is why a skill written
-once tends to work in both. Row 1 is the exception: each host manages its own marketplace cache,
-under its own path.
+once tends to work in both.
+
+Row 1 is a formal skill distribution channel, roughly similar to publishing a container image to
+Docker Hub for others to use. Users subscribe to a marketplace (like [dotnet/skills](https://github.com/dotnet/skills))
+and a plugin (like [dotnet-advanced](https://github.com/dotnet/skills/tree/main/plugins/dotnet-advanced)).
 
 Rows 2 and 3 are authored where they are used. Rows 1 and 4 travel, which is the only reason either
-needs an installer. [dotnet/skills](https://github.com/dotnet/skills/tree/main/plugins) is the
-reference layout for row 1: a `.claude-plugin/marketplace.json` at the root over a tree of plugins.
-Row 4's vehicle is the package itself, since that is the artifact the consumer actually receives;
-the repo it was authored in is upstream of the question. What is unsettled is acquisition, which is
-what [#21](https://github.com/richlander/dotnet-package-skills/issues/21) tracks: a skill whose job
-is installing skills. The interesting part is that it need not install all of them. A package can
-ship a dozen skills covering features a given repo will never touch, and an agent that has just
-read that repo is better placed to pick the relevant subset than the package author was.
-
-**The last column defines scoping and consistency, which is what matters in a team environment.**
-Rows 1 and 2 install per machine, which is the right scope for a developer's own preferences and the
-wrong scope for a dependency. A skill only one teammate has installed makes that person's results
-irreproducible for everyone else, and it is invisible in review, so nobody can tell whether an odd
-suggestion came from the model or from something in a home directory. Worse, the version is chosen
-by whoever installed it rather than by the repo that depends on the package, so two contributors
-sitting on the same commit can be running different guidance against the same code. A dependency is
-a property of the repository, and its skills should be too. That is why package skills target row 3.
+needs an installer. Row 1 exposes `marketplace.json` over a set of plugins that can be downloaded, installed,
+and updated. Row 4's vehicle is the package itself; the row 4 `marketplace.json` is the user `app.csproj` file.
 
 Row 4 is an alternative **distribution channel for row 1**. The user already fetched your package,
 so the skill can ride along with a dependency they chose, instead of being something they have to
@@ -127,7 +115,7 @@ discovery is the hard part of row 1, and a package they already depend on solves
 Markout's [`skills/`](https://github.com/richlander/markout/tree/main/skills) is the worked example
 of the vehicle.
 
-And once installed, row 4 **collapses into row 3**, into the same directory a hand-written project
+And once installed, row 4 **collapses into row 3**, into the same directory a hand-written repo
 skill would occupy. The skills land in the consumer's repo as checked-in files they can read,
 review, diff, and delete. That is the recommended persistence pattern, and it is what keeps the cost
 of package skills near zero: no new runtime, no new trust boundary, nothing to support beyond files
@@ -135,8 +123,19 @@ in a repository.
 
 The step that is still missing is the installer itself, the part that notices a restored package
 ships a shelf and puts it in the consumer's repo. That is tracked in
-[#21](https://github.com/richlander/dotnet-package-skills/issues/21). Everything below is about
-row 4.
+[#21](https://github.com/richlander/dotnet-package-skills/issues/21). We intend to offer a skill whose job
+is installing package skills. The interesting part is that a "package skill agent" need not install all package skills.
+A package can ship a dozen skills covering features a given repo will never touch, and an agent that has just
+read that repo is better placed to pick the relevant subset than the package author was.
+
+**The last column defines scoping and consistency**, which is what matters in a team environment.
+Rows 1 and 2 install per machine, which is the right scope for a developer's own preferences and the
+wrong scope for a dependency. A skill only one teammate has installed makes that person's results
+irreproducible for everyone else, and it is invisible in review, so nobody can tell whether an odd
+suggestion came from the model or from something in a home directory. Worse, the version is chosen
+by whoever installed it rather than by the repo that depends on the package, so two contributors
+sitting on the same commit can be running different guidance against the same code. A dependency is
+a property of the repository, and its skills should be too. That is why package skills target row 3.
 
 ## Where to go next
 
