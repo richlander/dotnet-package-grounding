@@ -372,8 +372,8 @@ grounding unlocks tasks they never delivered, and slashes the cost and time of t
 
 ## Where to go next
 
-- **[getting-started.md](./getting-started.md)** — build the CLI, author a skill, run the ladder, read
-  the card.
+- **[getting-started.md](./getting-started.md)** — the workflow end to end, stage by stage, and who
+  should drive each stage.
 - **[grounding-eval-methodology.md](./grounding-eval-methodology.md)** — the full measurement approach.
 - **[quality-card-model.md](./quality-card-model.md)** — how a run becomes a graded, gated decision.
 - **[scoring.md](./scoring.md)** — turning a graded run into a reviewable grounding PR.
