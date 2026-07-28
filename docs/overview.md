@@ -30,8 +30,9 @@ decompiled assemblies or the web. Grounding earns its place by making that diggi
 
 ## What "knowledge" means here
 
-Grounding only helps where the model's own knowledge falls short, so the value depends on how *trained*
-the model is on a given package.
+Knowledge here means *resident* model knowledge — not what the model could recover with web search or
+tools. Recovering a fact by digging is exactly the cost grounding removes. Grounding only helps where the
+model's own knowledge falls short, so the value depends on how *trained* the model is on a given package.
 
 - **Models** are trained on popular packages and progressively less so on niche ones — a decay curve
   that roughly tracks blog-post and Stack-Overflow volume. A **frontier** model's curve decays later
@@ -48,9 +49,6 @@ invalidates, and that half has a name. **Staleness** is the gap between what the
 what your package is now: features shipped after the training cut are simply missing, and revisions
 change behavior out from under code the model still writes from memory. Unlike popularity, neither
 direction spares the frontier tier, because no model can know what shipped after it was trained.
-
-Knowledge here means *resident* model knowledge — not what the model could recover with web search or
-tools. Recovering a fact by digging is exactly the cost grounding removes.
 
 ## What a skill buys: efficacy and efficiency
 
@@ -69,18 +67,18 @@ change, and the efficacy win erodes to nothing. The efficiency win usually survi
 targeted skill still beats the agent rediscovering the answer by reading your README, decompiling
 your assembly, or searching the web.
 
-We have watched exactly this happen. `System.CommandLine` sat in beta for years, right through the
-period the current models trained on, and then shipped 2.0 with breaking changes. For a while models
+`System.CommandLine` is a good example; it sat in beta for years, when the initial batch of models
+were trained. Soon afterwards, 2.0 was shipped with breaking changes. For a while models
 were reliably confused, and a skill correcting them would have been a large efficacy win. That
 window has since closed. The efficacy case for a stale-knowledge skill has a half-life set by the
 training runs, not by you.
 
-We have seen this pattern in our own numbers, on the four packages we have measured so far. Where
+We have seen this pattern in our own numbers, on the packages we have measured so far. Where
 the frontier model already sat near the ceiling, its win was almost entirely efficiency: it was
 already delivering the task, so the skill only made the delivery cheaper. The weaker tiers gained on
 both axes at once, which is the more interesting case: they started delivering tasks they had been
 failing outright (efficacy), *and* did the tasks they already managed for far fewer tokens
-(efficiency). Read that as a shape to test for rather than a law: whether the frontier has headroom
+(efficiency). Read that as a shape to test for rather than a certainty: whether the frontier has headroom
 on *your* package depends on how well it already knows it, and on a package it genuinely does not
 know it can have a real capability gap too. The cross-generation version of the claim is thinner
 still, resting on two Opus generations of a single package, so we would not lean on it yet. The
