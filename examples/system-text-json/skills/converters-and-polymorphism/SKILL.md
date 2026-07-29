@@ -4,17 +4,39 @@ version: 10.0.0
 description: >-
   Use when System.Text.Json needs custom value handling — a JsonConverter<T> for a type STJ can't
   round-trip out of the box (custom dates, value objects, unions), string enums, or polymorphic
-  (base/derived) serialization with a type discriminator. Requires the base `system-text-json` skill.
+  (base/derived) serialization with a type discriminator.
 ---
 
 # Custom converters & polymorphism
+
+## Required setup
+
+Converter and polymorphism attributes live in `System.Text.Json.Serialization`, not
+`System.Text.Json` — the most common reason this code does not compile:
+
+```csharp
+using System.Text.Json;                 // JsonSerializer, JsonSerializerOptions, Utf8JsonReader/Writer
+using System.Text.Json.Serialization;   // JsonConverter<T>, [JsonConverter], [JsonPolymorphic], [JsonDerivedType]
+```
+
+Build one options instance and reuse it — a fresh one is expensive (it caches per-type metadata on
+first use), and options become effectively read-only after first use, so add converters before then:
+
+```csharp
+static readonly JsonSerializerOptions Options = new(JsonSerializerDefaults.Web)
+{
+    Converters = { new DateOnlyConverter() },
+};
+```
+
+`options` in the examples below is that instance.
 
 ## String enums
 
 Enums serialize as **numbers** by default. For strings:
 
 ```csharp
-// Per-type (AOT-safe with source-gen; see source-generation-aot for UseStringEnumConverter):
+// Per-type (AOT-safe under source generation, which is covered separately):
 [JsonConverter(typeof(JsonStringEnumConverter<MatchKind>))]   // generic form, .NET 8+
 public enum MatchKind { Exact, Prefix, Fuzzy }
 

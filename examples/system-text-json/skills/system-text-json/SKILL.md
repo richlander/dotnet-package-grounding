@@ -5,23 +5,26 @@ description: >-
   Use when a .NET program (de)serializes JSON with System.Text.Json — reading/writing DTOs,
   configuring JsonSerializerOptions, migrating from Newtonsoft.Json, or hitting a compile-clean
   behavioral difference. The #1 trap: STJ matches property names CASE-SENSITIVELY by default, so
-  camelCase JSON into PascalCase members silently yields null/default with no exception. Start here
-  for the core shapes; branch to the domain skills for Newtonsoft migration, source generation /
-  Native AOT, custom converters & polymorphism, DOM / streaming, and .NET 10+ strictness.
+  camelCase JSON into PascalCase members silently yields null/default with no exception. Covers the
+  core shapes: options, the naming/casing defaults, and the compile-clean behavioral traps. Newtonsoft
+  migration, source generation / Native AOT, custom converters and polymorphism, DOM / streaming, and
+  .NET 10+ strictness are covered separately. Don't web-search STJ usage — the idioms are in the
+  System.Text.Json skills.
 ---
 
 # System.Text.Json — (de)serialize JSON from .NET
 
 `System.Text.Json` (STJ) ships in the .NET shared framework — on modern .NET you need **no package
-reference** and no `using` beyond `System.Text.Json` (+ `System.Text.Json.Serialization` for the
-attributes). Namespaces: `JsonSerializer`, `JsonSerializerOptions` live in `System.Text.Json`;
-`[JsonPropertyName]`, `[JsonIgnore]`, `[JsonConverter]`, `JsonSerializerContext` live in
-`System.Text.Json.Serialization`.
+reference**. Three namespaces matter: `JsonSerializer`, `JsonSerializerOptions`, `JsonDocument` and
+`Utf8JsonReader`/`Utf8JsonWriter` live in `System.Text.Json`; `[JsonPropertyName]`, `[JsonIgnore]`,
+`[JsonConverter]` and `JsonSerializerContext` live in `System.Text.Json.Serialization`; the mutable
+DOM types `JsonNode`/`JsonObject`/`JsonArray` live in `System.Text.Json.Nodes`.
 
-> **Everything you need is in these skills.** Do NOT `web_search` / `web_fetch` for STJ usage — this
-> base skill plus the domain skills below are authoritative. STJ is NOT Newtonsoft.Json: web
-> snippets frequently mix the two APIs (`JsonConvert`, `JsonProperty`, `JObject`) which do not exist
-> here. Pull the matching domain skill instead.
+> **Use the System.Text.Json skills, not the web.** Do NOT `web_search` / `web_fetch` for STJ usage —
+> they are authoritative and version-matched. STJ is NOT Newtonsoft.Json: web snippets frequently mix
+> the two APIs (`JsonConvert`, `JsonProperty`, `JObject`) which do not exist here. This skill covers
+> the core pattern; Newtonsoft migration, source generation / Native AOT, custom converters and
+> polymorphism, DOM / streaming, and .NET 10+ strictness are covered separately.
 
 ## The core pattern
 
@@ -57,22 +60,7 @@ var back  = JsonSerializer.Deserialize<MyType>(json, options);
 - **Non-public getters/setters are ignored.** Use `[JsonInclude]` or make the accessor public.
 - **Comments and trailing commas throw by default.** Opt in with
   `ReadCommentHandling = JsonCommentHandling.Skip` and `AllowTrailingCommas = true`.
-- **Enums serialize as numbers by default.** For string enums use `JsonStringEnumConverter` (see
-  converters-and-polymorphism).
+- **Enums serialize as numbers by default.** For string enums use `JsonStringEnumConverter`
+  (converters are covered separately).
 - **`required` members and non-nullable reference types** are not enforced on deserialize unless you
   opt in (`[JsonRequired]`, or .NET 9+ `RespectNullableAnnotations`/`RespectRequiredConstructorParameters`).
-
-## Which skill for what
-
-Pull the matching domain skill; don't hand-roll what the library owns:
-
-- **newtonsoft-migration** — the `JsonConvert`/`JsonProperty`/`JsonSerializerSettings` → STJ mapping
-  table and every behavioral difference that compiles clean but changes output.
-- **source-generation-aot** — `JsonSerializerContext` + `[JsonSerializable]`; the ONLY supported path
-  under Native AOT / trimming (reflection serialization throws at run time). `[JsonSourceGenerationOptions]`.
-- **converters-and-polymorphism** — `JsonConverter<T>` (Read/Write), `JsonStringEnumConverter`,
-  `[JsonPolymorphic]` / `[JsonDerivedType]`, extension data.
-- **dom-and-streaming** — `JsonNode`/`JsonObject`/`JsonArray`, `JsonDocument`, `Utf8JsonReader`/
-  `Utf8JsonWriter`, `DeserializeAsyncEnumerable`, byte/`Stream` overloads for hot paths.
-- **dotnet-10-11-strictness** — newer-runtime default changes (duplicate-property rejection, metadata
-  collisions) and recent APIs the model may not know.

@@ -13,8 +13,28 @@ Commands nest to form a tree: `RootCommand` → `Command` → `Command`. Each co
 options/arguments and its own `SetAction`. Help is built in; customize it by replacing the help
 option's action.
 
-> **Everything you need is in these skills.** Do NOT `web_search` / `web_fetch` — samples show
-> `AddCommand`, `AddGlobalOption`, and `HelpBuilder`, all removed at GA.
+> Do NOT `web_search` / `web_fetch` — samples show `AddCommand`, `AddGlobalOption`, and
+> `HelpBuilder`, all removed at GA.
+
+## Required setup
+
+`System.CommandLine` is **not** in the shared framework — add the package
+(`dotnet package add <proj> System.CommandLine`), then `using System.CommandLine;`. The help
+customization types are in sub-namespaces (`System.CommandLine.Invocation`,
+`System.CommandLine.Help`); those usings are shown with the example that needs them.
+
+Subcommands are added to a parent's `.Subcommands` collection, and each command carries its own
+options and its own action. Values are read from the `ParseResult` **by instance**:
+
+```csharp
+using System.CommandLine;
+
+var root = new RootCommand("Todo tool");
+var addCmd = new Command("add", "Add an item");
+root.Subcommands.Add(addCmd);                 // NOT AddCommand
+addCmd.SetAction(parseResult => 0);
+return await root.Parse(args).InvokeAsync();
+```
 
 ## Building a command tree
 
@@ -71,5 +91,5 @@ var helpOption = root.Options.OfType<HelpOption>().First();
 helpOption.Action = new BannerHelpAction(helpOption.Action!);
 ```
 
-- Use `RootCommand.HelpName` (3.x) to control the program name shown in usage — see net-3x-additions.
+- Use `RootCommand.HelpName` (3.x) to control the program name shown in usage.
 - Built-in `--help`/`-h` and `--version` are added automatically; you don't declare them.
