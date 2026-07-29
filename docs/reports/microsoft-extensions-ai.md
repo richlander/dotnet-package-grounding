@@ -104,8 +104,8 @@ models** and the **judge held fixed at Opus 4.6**, same grounding content and fi
 | **Opus 4.6** | 5.0/5 | **+0%** | **+9%** (a tax) | **−1.0%** (CI [−1.6, −1.0]) | **−2.7%** |
 
 ¹ Real-dollar cost (output priced ~5× input, cache-read 0.1×) via `grounding rescore`.
-² Our grounding-specific score: `0.70·ΔQuality + 0.30·costReduction`, cost in real dollars — see
-[authoring-principles.md §4](../authoring-principles.md). All runs `--runs 5`.
+² Our grounding-specific score: `0.70·ΔQuality + 0.30·costReduction`, cost in real dollars — see the
+quality card in [authoring-principles.md](../authoring-principles.md). All runs `--runs 5`.
 
 **Grounding value is a monotonically declining function of agent capability, crossing zero at the
 frontier.** The weaker the agent, the more it flails without the fact (Haiku: 20 tool calls,

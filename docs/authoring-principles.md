@@ -13,11 +13,10 @@ always-on package doc. A consuming repo opts in, and the skill set is removable.
 A package skill set has three layers:
 
 - **Base skill** — named for the package; tells the agent when this package is relevant, carries the
-  pattern every task needs, and states the scope the rest of the shelf covers. It does **not** route
-  (§7).
+  pattern every task needs, and states the scope the rest of the shelf covers. It does **not** route.
 - **Domain skills** — focused `SKILL.md` files for task families, migrations, gotchas, and workflows
   proven to need grounding, each named `<package-slug>-<domain>` and each carrying the setup its own
-  examples require, so it works when read alone (§7).
+  examples require, so it works when read alone.
 - **Supporting files** — examples, reference notes, fixtures, or checklists loaded by progressive
   disclosure only when a skill needs them.
 
@@ -71,7 +70,7 @@ The cost is bounded and small. The longest name this scheme produces in this rep
 ### What this does not solve
 
 Prefixing guarantees **identity** uniqueness. It does nothing to stop an agent selecting the wrong
-package's skill for a task; that is a description problem (§3) and is orthogonal. Do not treat the
+package's skill for a task; that is a description problem and is orthogonal. Do not treat the
 naming rule as protection against mis-selection, and do not let a mis-selection finding argue
 against the naming rule.
 
@@ -85,7 +84,7 @@ Renaming at install time is not a safe repair. Where a shelf's domain skills nam
 *inside their own `description`* — as the `system-text-json` shelf does today
 (``base `system-text-json` skill``) — a renamer would have to rewrite the one field retrieval depends
 on, in every sibling. Where they do not, the rename is cheaper but still not free: the directory
-name, the frontmatter `name`, and `meta.yaml` have to move together (§Naming), so the file still
+name, the frontmatter `name`, and `meta.yaml` have to move together, so the file still
 changes. Either way it forks the shelf: the installed copy stops matching the published one, and the
 doc content hash — half of the dataset provenance key — no longer identifies what was measured.
 Prevention belongs to the author; the installer only reports.
@@ -211,7 +210,7 @@ routes will always look like a shelf whose base skill is indispensable, because 
 skill present passed 91.7–95.2% — the best bucket in the experiment. This is the direct payoff for
 giving each domain skill the setup it had been borrowing (for markout, the partial
 `MarkoutSerializerContext` every example needs). It also makes the shelf **subset-installable**: an
-installer can copy one skill without silently breaking it, and §Naming's rename cost drops.
+installer can copy one skill without silently breaking it, and the rename cost drops.
 
 **The dangerous sentence is the completeness claim, not the missing pointer.** The middle column
 regressed because dropping the table left the base skill asserting that *everything you need is
@@ -309,7 +308,7 @@ A skill-set edit is a claim. Ship the claim only with the card and evidence that
 - Use the `description` as a selection hook.
 - Split broad content into base and domain skills with supporting files.
 - Give each domain skill the setup its own examples need, and let the base skill state scope rather
-  than route (§7).
+  than route.
 - Never let a skill claim the shelf is complete.
 - Stay first-party and package-local.
 - Re-run the grounded-vs-baseline eval after material edits.
