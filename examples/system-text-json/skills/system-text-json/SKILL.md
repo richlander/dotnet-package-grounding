@@ -62,5 +62,13 @@ var back  = JsonSerializer.Deserialize<MyType>(json, options);
   `ReadCommentHandling = JsonCommentHandling.Skip` and `AllowTrailingCommas = true`.
 - **Enums serialize as numbers by default.** For string enums use `JsonStringEnumConverter`
   (converters are covered separately).
+- **Object cycles throw at runtime.** A graph that points back at itself (a parent/child pair, a
+  `Next` that reaches the root again) compiles cleanly and then fails with
+  `JsonException: A possible object cycle was detected.` The message goes on to blame "object depth
+  is larger than the maximum allowed depth of 64", so it reads like a depth limit to raise rather
+  than a cycle to handle. Set `ReferenceHandler = ReferenceHandler.IgnoreCycles` to write `null` at
+  the point of repetition (`{"Name":"root","Next":null}`), or `ReferenceHandler.Preserve` to emit
+  `$id`/`$ref` metadata (`{"$id":"1","Name":"root","Next":{"$ref":"1"}}`), which preserves the shape
+  well enough to round-trip. Both live in `System.Text.Json.Serialization`.
 - **`required` members and non-nullable reference types** are not enforced on deserialize unless you
   opt in (`[JsonRequired]`, or .NET 9+ `RespectNullableAnnotations`/`RespectRequiredConstructorParameters`).
