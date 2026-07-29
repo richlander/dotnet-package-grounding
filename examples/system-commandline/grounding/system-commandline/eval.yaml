@@ -15,7 +15,19 @@ config:
 # AcceptOnlyFromAmong(StringComparer,...) overload, RootCommand.HelpName). Web is
 # blocked so the eval reads model + skill knowledge, not archaeology. Every API
 # shape, error message, and exit code below was verified by building and running
-# against System.CommandLine 3.0.0-preview.5.26302.115 on net10.0.
+# against System.CommandLine 3.0.0-preview.5.26302.115 on net10.0. The fixtures
+# have since been repinned to 3.0.0-preview.6.26359.118 — the latest 3.x, and the
+# version the skills now tell readers to install — so the eval exercises the
+# guidance we actually give. preview.6 is additive over preview.5 and the three
+# 3.x members below were re-confirmed to compile against it, but the expected
+# outputs have NOT been re-executed on preview.6; that is part of the pending
+# verification pass.
+#
+# NOTE: C19-C21 grade members that do NOT exist in stable 2.0.10
+# (Argument<T>.CaptureRemainingTokens, RootCommand.HelpName, and the
+# AcceptOnlyFromAmong(StringComparer, ...) overload — all three fail to compile
+# against 2.0.10). This suite therefore cannot be repointed at the stable package
+# without dropping or reworking those three scenarios.
 #
 # PROMPTS state the USER'S GOAL — what someone typing the command should
 # experience, and the operational requirement behind it — and never name the API,

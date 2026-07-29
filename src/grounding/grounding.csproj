@@ -31,7 +31,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.CommandLine" Version="2.0.0" />
+    <PackageReference Include="System.CommandLine" Version="2.0.10" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.0" />
     <!-- Override transitive SQLitePCLRaw 2.1.x (GHSA-2m69-gcr7-jv3q) with the patched 3.0.3 line. -->
     <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.3" />
