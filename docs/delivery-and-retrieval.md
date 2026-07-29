@@ -118,7 +118,7 @@ package's grounding by resolving `packageName` to that unit's grounding file. Th
 | `task_type` | 1 (`get_package_context`) | "call whenever the user asks about a package" — mimics today's NuGet MCP |
 | `uncertainty_version` | 1 (`get_package_context`) | "call when not confident of the current API for the installed version, or the version may post-date your training" |
 | `progressive` | 2 (`summarize_package_context` + `get_package_context`) | a cheap summary tool and a full-body tool; the agent decides after reading the summary |
-| `resident_index` | 1 (`get_package_context`) | the body tool's description carries a free, always-in-context manifest (one line per package, from skill/grounding frontmatter); the agent reads the index for free and calls only for a relevant package — the faithful skills mechanic (§8) |
+| `resident_index` | 1 (`get_package_context`) | the body tool's description carries a free, always-in-context manifest (one line per package, from skill/grounding frontmatter); the agent reads the index for free and calls only for a relevant package — the faithful skills mechanic |
 
 The unit that attaches the server ships **no inline grounding** (an inert `SKILL.md`), so the
 content arrives *only* if the agent chooses to call a tool. Every call is logged (tool name,
@@ -140,9 +140,10 @@ MCP experiment tested whether a separate summary call could emulate that mechani
 
 > **We tested this hypothesis and it did not hold.** The summary channel does *not* function as
 > a selective filter — agents either pull everything after peeking (Opus) or ignore the summary
-> (Haiku). See [§4](#4-agents-self-triage-at-package-granularity-multi-package) and
-> [§5](#5-the-progressive-summary-is-an-on-ramp-not-a-filter) below. The mechanic is described
-> here because it is the design under evaluation, not because it won.
+> (Haiku). See [Agents self-triage at package granularity](#4-agents-self-triage-at-package-granularity-multi-package)
+> and [The progressive summary is an on-ramp, not a filter](#5-the-progressive-summary-is-an-on-ramp-not-a-filter)
+> below. The mechanic is described here because it is the design under evaluation, not because it
+> won.
 
 ## Metric: "call behavior" as the pre-screen
 
@@ -319,7 +320,7 @@ instrument. Three confirmations:
   curated gotcha** — i.e. the real server under-delivers exactly the silent/obscure content our
   authoring principles target.
 - **Self-triage holds:** when Opus called it, it queried **`System.CommandLine` only** — no
-  distractor over-pull, matching §4.
+  distractor over-pull, matching the self-triage finding.
 - **Under-firing on coding tasks:** Opus's `skilledPlugin` arm called the server **0 times**;
   Haiku called it **0 times in both arms** (it used `web_fetch` + its own knowledge, and the
   harness logged "Skill NOT activated"). The harness wiring works (Opus's isolated arm did call
@@ -328,12 +329,12 @@ instrument. Three confirmations:
   piece of feedback for the NuGet team: the gate wording targets "the user asks about a
   package," which a coding TODO is not.
 
-### 7. Why §5 backfired: we gated the *index*, not just the body
+### 7. Why the progressive summary backfired: we gated the *index*, not just the body
 
-The progressive scheme was meant to *be* the skills mechanic. It isn't — and the gap explains
-the §5 failure. Skills push **every** skill's frontmatter (`name` + `description`) into context
-**up front**: an always-on, zero-cost, *resident* index. The agent reads the whole index for
-free and *acts* (activates the body) only on the relevant entry. Two properties fall out:
+The progressive scheme was meant to *be* the skills mechanic. It isn't — and the gap explains the
+progressive-summary failure. Skills push **every** skill's frontmatter (`name` +
+`description`) into context **up front**: an always-on, zero-cost, *resident* index. The agent
+reads the whole index for free and *acts* (activates the body) only on the relevant entry. Two properties fall out:
 
 - **Selection is a free read, not an action.** Skimming a candidate costs nothing and commits
   to nothing.
@@ -352,8 +353,8 @@ both properties:
   summarize it. Haiku's response is the opposite failure: it won't pay the peek toll, so it
   ignores the channel entirely.
 
-So §5's two failure modes are **rational responses to gating the index behind a call**, not
-model error. The faithful port keeps the index **resident** and gates only the body:
+So the progressive summary's two failure modes are **rational responses to gating the index behind
+a call**, not model error. The faithful port keeps the index **resident** and gates only the body:
 
 | Layer | Skills | Broken `progressive` MCP | Faithful port (`resident_index`) |
 | --- | --- | --- | --- |
@@ -369,14 +370,14 @@ decline-by-default + gated bodies — the real skills mechanic — *without* a s
 
 | Design | Index | Body | Verdict |
 | --- | --- | --- | --- |
-| **All-or-nothing single tool** | none | one tool | works; agent self-triages on the package name — but only as well as its triage *signal* (the compiler), so it misses **silent** non-compiling gotchas (§8) |
+| **All-or-nothing single tool** | none | one tool | works; agent self-triages on the package name — but only as well as its triage *signal* (the compiler), so it misses **silent** non-compiling gotchas |
 | Two-tool `progressive` | gated (tool) | gated (tool) | **broken middle** — on-ramp (Opus) / ignored (Haiku) |
-| **Resident index + body tool** (skills) | pushed, free | one tool | **best for weak models** — the manifest surfaces silent gotchas the bare tool misses (§8) |
+| **Resident index + body tool** (skills) | pushed, free | one tool | **best for weak models** — the manifest surfaces silent gotchas the bare tool misses |
 
 The all-or-nothing tool works because the agent self-triages on the *package name* it already
-has (§4) — but its triage is only as good as the **compiler**, so it misses gotchas that
+has — but its triage is only as good as the **compiler**, so it misses gotchas that
 compile clean and fail silently. The resident-index design is the only one that surfaces those
-**without** a peek toll. §8 tests it directly.
+**without** a peek toll. The faithful skills design below tests it directly.
 
 ### 8. The faithful skills design: resident index + one body tool
 
@@ -426,7 +427,7 @@ progressive is the broken middle.
 
 ## Discovery & feasibility: how a resident index is delivered
 
-The lab result (§8) assumes the host *already knows* the installed package set. In production
+The lab result assumes the host *already knows* the installed package set. In production
 that is the hard part — and the trap is solving it with a pile of fragile heuristics (parse CI
 YAML, detect `OutputType=Exe`, walk the project graph, exclude test projects…). Such a stack is
 untestable and behaves wildly across repos. The discipline is the opposite:
@@ -455,7 +456,7 @@ told to build `src/dotnet-inspect`) are exactly the ones where the target is alr
    targeted (project open / build command), and **pushes the returned manifest into context**.
    The manifest is one line per direct dependency that has grounding (its skill description
    or grounding frontmatter). Because the *host* drives this call deterministically — not the agent on a
-   judgement call — it sidesteps the under-firing we measured against the real server (§6): the
+   judgement call — it sidesteps the under-firing we measured against the real server: the
    index becomes resident the same way skills' frontmatter is, without relying on the agent to
    decide to fetch it.
 2. `get_package_context(packageName, version)` — the body tool the **agent** calls on demand for
@@ -482,7 +483,7 @@ enabler — **NuGet exposing grounding frontmatter as service-side metadata** (r
 or a dedicated grounding resource), so `get_project_grounding_index` can build the manifest from
 the csproj alone, pre-restore. This is the same restore boundary that already exists today:
 NuGet's own `get_package_context` serves a grounding body only for locally-installed packages and
-falls back to a remote README otherwise (§6). So the resident index adds **no new restore
+falls back to a remote README otherwise. So the resident index adds **no new restore
 dependency for content** — only a desire to read frontmatter cheaply, which a small metadata
 addition solves.
 
@@ -495,12 +496,13 @@ addition solves.
 2. **Pair the body tool with a *resident* index — push it, don't gate it.** Add a
    `get_project_grounding_index(projectPath)` tool the **host** calls once per targeted project
    and pushes into context: a one-line-per-direct-dependency manifest from each skill description
-   or grounding frontmatter. The agent then calls the single `get_package_context` for bodies. This is the
-   actual skills mechanic — "a skill system, given a project file." Validated in §8: it strictly
-   dominates the two-tool progressive and is the **only** delivery that surfaces a silent,
+   or grounding frontmatter. The agent then calls the single `get_package_context` for bodies. This
+   is the actual skills mechanic — "a skill system, given a project file." Validated by the
+   resident-index result: it strictly dominates the two-tool progressive and is the **only**
+   delivery that surfaces a silent,
    compile-clean gotcha to a weak model (which otherwise triages on the compiler alone and never
-   looks at the offending package). Host-driven (not agent-judged) calling sidesteps the §6
-   under-firing.
+   looks at the offending package). Host-driven (not agent-judged) calling sidesteps the under-firing
+   measured against the real server.
 3. **Make discovery an input, not an inference.** Build the manifest only from a project the
    host already knows (IDE active project, or a `dotnet build|run` target); **abstain to
    on-demand when none is provided.** One narrow, testable rule — never a heuristic stack
@@ -512,7 +514,7 @@ addition solves.
 5. **Don't engineer the WHEN-TO-CALL string.** Across permissive and strict gates the retrieval
    decision was the same — the model gates on its own confidence and the package name. The one
    place wording demonstrably *hurts* is the real server's **task-type** gate ("call when the
-   user asks about a package"), which **under-fires on coding tasks** (§6) — the dominant
+   user asks about a package"), which **under-fires on coding tasks** — the dominant
    grounding case. Prefer an uncertainty/version-delta framing.
 6. **Keep agent instructions clean.** No "use the NuGet MCP" prompt. Register the tool / push
    the manifest; the model self-selects from normal context.
@@ -559,7 +561,7 @@ export GROUNDING_GATE=resident_index       # or task_type | uncertainty_version 
 "$BIN" evaluate --tests-dir tests --model claude-haiku-4.5 \
   --judge-model claude-opus-4.6 --runs 5 grounding/system-commandline-mcp
 
-# §8 — resident index surfaces a silent gotcha to a weak model (multi-package, ambiguous):
+# Resident index surfaces a silent gotcha to a weak model (multi-package, ambiguous):
 "$BIN" evaluate --tests-dir tests --model claude-haiku-4.5 \
   --judge-model claude-opus-4.6 --runs 3 grounding/multi-package-ambiguous-mcp
 
