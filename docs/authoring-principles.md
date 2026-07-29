@@ -12,10 +12,12 @@ always-on package doc. A consuming repo opts in, and the skill set is removable.
 
 A package skill set has three layers:
 
-- **Base skill** — named for the package; tells the agent when this package is relevant and where to find
-  domain skills.
+- **Base skill** — named for the package; tells the agent when this package is relevant, carries the
+  pattern every task needs, and states the scope the rest of the shelf covers. It does **not** route
+  (§7).
 - **Domain skills** — focused `SKILL.md` files for task families, migrations, gotchas, and workflows
-  proven to need grounding, each named `<package-slug>-<domain>`.
+  proven to need grounding, each named `<package-slug>-<domain>` and each carrying the setup its own
+  examples require, so it works when read alone (§7).
 - **Supporting files** — examples, reference notes, fixtures, or checklists loaded by progressive
   disclosure only when a skill needs them.
 
@@ -185,7 +187,50 @@ Retrieval quality falls when sections bloat, so keep the base skill short. Cut m
 first. Move lengthy examples, matrices, and deep references into domain skills on the shelf that the
 agent pulls only when the task calls for them.
 
-## 7. Target silent, obscure, non-self-correcting gaps
+## 7. Make each skill work on its own; never claim the shelf is complete
+
+Our shelves were built on a **hub** model: the base skill carried a "Which skill for what" routing
+table and the domain skills borrowed their setup from it. Measured on markout's CT-24 (26 scenarios,
+haiku, 130 plugin-arm runs per variant, one pinned baseline —
+[markout#171](https://github.com/richlander/markout/pull/171)), that model does not earn its keep.
+
+| CT-24, 130 runs per variant | hub (routing table) | standalone, base claims completeness | **standalone, base states scope** |
+| --- | --- | --- | --- |
+| overall pass | 84.6% | 78.5% | **87.7%** |
+| runs that read a domain skill and no base skill | 0 | 21 (95.2% pass) | **36 (91.7% pass)** |
+| domain-task runs stuck on the base skill alone | 1/100 | 25/100 | 8/100 |
+
+Three things follow.
+
+**Routing is causal, and it is a cost.** Removing the table moved base-skill reads from 85.4% to
+71.5% (p=0.007) and took domain-without-base from 0% to 16.2% (p<0.0001). The near-total base pull we
+had been reading as a genuine dependency was substantially an artifact of the pointer. A shelf that
+routes will always look like a shelf whose base skill is indispensable, because it made itself so.
+
+**A skill read alone outperforms the shelf average.** Runs that opened a domain skill with no base
+skill present passed 91.7–95.2% — the best bucket in the experiment. This is the direct payoff for
+giving each domain skill the setup it had been borrowing (for markout, the partial
+`MarkoutSerializerContext` every example needs). It also makes the shelf **subset-installable**: an
+installer can copy one skill without silently breaking it, and §Naming's rename cost drops.
+
+**The dangerous sentence is the completeness claim, not the missing pointer.** The middle column
+regressed because dropping the table left the base skill asserting that *everything you need is
+here*. That is false on a domain task and it **terminates the search** — 25 runs never opened another
+file. Restoring honest scope ("output formats and conditional composition are covered separately")
+recovered it. Note what did *not* happen: base-only runs did not get better (50% vs 48%); they got
+**rarer** (25→8). One sentence controls whether the agent keeps looking.
+
+So: name the topics, never the skill directories — a directory name is a pointer that dangles under
+subset install, and a topic name is a claim about scope that stays true.
+
+Be honest about the residual. A scope statement is a **weaker dispatcher than a router by design**,
+because it deliberately does not instruct: 8 runs still stalled against the hub's 1 (p=0.017). That
+cost does not reach overall pass rate at n=130 (+3.1 pts vs hub is *not* significant), so the trade
+is "same correctness, no lock-in" rather than a clean win. And this is **one model on one package**;
+the whole effect traces to a single sentence, so model-dependence is plausible. Re-measure before
+retiring routing from a shelf you have not tested.
+
+## 8. Target silent, obscure, non-self-correcting gaps
 
 Cross-package probes show that a gotcha must usually satisfy all three conditions to move strong agents:
 
@@ -211,7 +256,7 @@ Cross-package probes show that a gotcha must usually satisfy all three condition
 A silent break is necessary but not sufficient. It must also be obscure and not self-correcting at compile
 or run time.
 
-## 8. Grounding is model-relative
+## 9. Grounding is model-relative
 
 The same content can be redundant for a frontier model and decisive for a cheaper model. In the
 Microsoft.Extensions.AI function-invocation scenario, changing only the agent model flipped the result:
@@ -230,7 +275,7 @@ Author with the strongest available model, but measure the fleet that will use t
 knowledge distillation: serialize frontier-resident package facts for weaker agents without harming the
 strong tier.
 
-## 9. Harden discovery against circularity
+## 10. Harden discovery against circularity
 
 Discovery and measurement can become circular when candidate gaps come from the same model family being
 measured. Countermeasures:
@@ -242,7 +287,7 @@ measured. Countermeasures:
 - Let models suggest tasks, but have humans validate task coverage, prompt fairness, and assertions.
 - Test weaker deployed agents as well as frontier agents.
 
-## 10. Measure with the quality card
+## 11. Measure with the quality card
 
 Older score weights overemphasized judge quality and underweighted efficiency. Grounding often wins by
 preventing flailing: fewer tool calls, fewer output tokens, and less local package archaeology. The
@@ -263,5 +308,8 @@ A skill-set edit is a claim. Ship the claim only with the card and evidence that
 - Prefer migration and transformation tasks over greenfield usage when probing for gaps.
 - Use the `description` as a selection hook.
 - Split broad content into base and domain skills with supporting files.
+- Give each domain skill the setup its own examples need, and let the base skill state scope rather
+  than route (§7).
+- Never let a skill claim the shelf is complete.
 - Stay first-party and package-local.
 - Re-run the grounded-vs-baseline eval after material edits.
