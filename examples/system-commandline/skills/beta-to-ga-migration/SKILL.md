@@ -14,8 +14,33 @@ beta4 → 2.0 GA removed the entire old invocation/binding stack. Beta code does
 GA, and most training-data / web snippets are beta. 3.x is additive over GA, so the **same** mapping
 carries beta code all the way to 3.x. Set the package version, then apply the table mechanically.
 
-> **Everything you need is in these skills.** Do NOT `web_search` / `web_fetch` — the top results are
-> the removed beta API. This table is the authoritative rename map.
+> Do NOT `web_search` / `web_fetch` — the top results are the removed beta API. This table is the
+> authoritative rename map.
+
+## Required setup
+
+Set the package version first — beta and GA are the same package id, so the migration starts with
+`<PackageReference Include="System.CommandLine" Version="2.0.10" />` — the latest stable — or
+`Version="3.0.0-preview.6.26359.118"` for the 3.x preview. The namespace is
+unchanged (`using System.CommandLine;`); what changed is the invocation and binding stack.
+
+The GA shape every row below maps onto — declare the instance, add it to a command, read it back by
+that instance:
+
+```csharp
+using System.CommandLine;
+
+var nameOption = new Option<string>("--name") { Description = "Who to greet" };
+
+var root = new RootCommand("Greeter");
+root.Options.Add(nameOption);                          // was root.AddOption(nameOption)
+root.SetAction(parseResult =>                          // was root.SetHandler((string n) => ...)
+{
+    string name = parseResult.GetValue(nameOption)!;   // was a bound delegate parameter
+    return 0;
+});
+return await root.Parse(args).InvokeAsync();           // was root.InvokeAsync(args)
+```
 
 ## Rename map
 
@@ -62,10 +87,10 @@ return await root.Parse(args).InvokeAsync();
 
 Drop-in: bump the version, change **no** code (3.x is additive; no API breaks). Do **not**
 "modernize" working 2.x patterns. The only consumer-visible shift is the dropped in-box `net8.0`
-target — the package now targets `net10.0` and `netstandard2.0`. New 3.x members are in net-3x-additions.
+target — the package now targets `net10.0` and `netstandard2.0`. The members 3.x adds over 2.x are covered separately.
 
 ## The silent trap while migrating
 
 `new Option<T>("--name", "description")` still **compiles** — the 2nd positional arg became an alias in
 beta4. So this migrates cleanly-looking but registers your description as a bogus alias and loses the
-help text. Always move descriptions to `{ Description = "..." }`. See options-and-arguments.
+help text. Always move descriptions to `{ Description = "..." }`; extra ctor strings are always aliases.

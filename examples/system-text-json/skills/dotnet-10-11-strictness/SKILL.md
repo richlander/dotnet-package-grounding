@@ -5,10 +5,21 @@ description: >-
   Use when targeting recent .NET runtimes (8/9/10+) and you need the newer, stricter System.Text.Json
   behavior or APIs a model trained on older docs may not know — the JsonSerializerOptions.Strict
   preset, AllowDuplicateProperties, RespectNullableAnnotations / RespectRequiredConstructorParameters,
-  PipeReader overloads, and JsonMarshal. Requires the base `system-text-json` skill.
+  PipeReader overloads, and JsonMarshal.
 ---
 
 # Newer-runtime strictness & APIs (.NET 8 → 10)
+
+## Required setup
+
+```csharp
+using System.Text.Json;                 // JsonSerializerOptions, JsonSerializer, JsonMarshal
+using System.Text.Json.Serialization;   // JsonUnmappedMemberHandling, [JsonUnmappedMemberHandling]
+```
+
+These are options-level settings, so they apply only where you pass the options instance. Build it
+once and reuse it — options become effectively read-only after the first (de)serialization, so the
+strictness knobs must be set before then. `options` in the examples below is that instance.
 
 The frontier often defaults to older STJ behavior. These are the recent, verified changes worth
 reaching for on modern targets.
@@ -56,8 +67,8 @@ await foreach (var item in JsonSerializer.DeserializeAsyncEnumerable<Item>(pipeR
 
 ## AOT-safe string enums (.NET 9+)
 
-On a source-gen context prefer `[JsonSourceGenerationOptions(UseStringEnumConverter = true)]` (see
-source-generation-aot) over adding `new JsonStringEnumConverter()` to an options list — the latter is
+On a source-gen context prefer `[JsonSourceGenerationOptions(UseStringEnumConverter = true)]` over
+adding `new JsonStringEnumConverter()` to an options list — the latter is
 not trim/AOT-safe. The generic `JsonStringEnumConverter<TEnum>` (.NET 8+) is the AOT-friendly
 per-enum form.
 

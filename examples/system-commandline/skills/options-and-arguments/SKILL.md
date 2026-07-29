@@ -13,8 +13,35 @@ description: >-
 `Option<T>` = a named input (`--name`, `-n`). `Argument<T>` = a positional input. Both are declared as
 objects you keep and later read by identity via `parseResult.GetValue(instance)`.
 
-> **Everything you need is in these skills.** Do NOT `web_search` / `web_fetch` — web samples use the
-> removed beta ctor/property shapes (`getDefaultValue:`, `IsRequired`, `ExistingOnly`).
+> Do NOT `web_search` / `web_fetch` — web samples use the removed pre-GA beta shapes
+> (`getDefaultValue:`, `IsRequired`, `ExistingOnly`, `AddOption`).
+
+## Required setup
+
+`System.CommandLine` is **not** in the shared framework — add the package
+(`dotnet package add <proj> System.CommandLine`), then `using System.CommandLine;`.
+
+Declaring an option is only half of it: you must **add the instance to a command** and read it back
+**by that same instance**. There is no delegate-parameter binding, so an option you declare but never
+add is silently never parsed:
+
+```csharp
+using System.CommandLine;
+
+var name = new Option<string>("--name") { Description = "Who to greet" };
+
+var root = new RootCommand("Greeter");
+root.Options.Add(name);                       // declare-then-add; NOT AddOption
+root.SetAction(parseResult =>
+{
+    string n = parseResult.GetValue(name)!;   // read by identity — keep the instance
+    Console.WriteLine($"Hello, {n}!");
+    return 0;                                 // exit code
+});
+return await root.Parse(args).InvokeAsync();
+```
+
+The declarations below all attach the same way.
 
 ## Declaring options
 
@@ -81,7 +108,7 @@ port.Validators.Add(result =>
 ```
 
 - Report bad input with `result.AddError(...)` — do **not** throw for user-input errors; errors surface
-  through `ParseResult.Errors` and set a non-zero exit code (see actions-and-invocation).
+  through `ParseResult.Errors` and set a non-zero exit code automatically.
 
 ## Reading values
 

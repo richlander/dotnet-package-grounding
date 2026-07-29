@@ -14,8 +14,25 @@ description: >-
 code changes; do not "modernize" working 2.x code. This skill lists what 3.x adds and the current
 targeting.
 
-> **Everything you need is in these skills.** Do NOT `web_search` / `web_fetch`. The base skill plus
-> the domain skills are the current API; this one covers only the 3.x-specific delta.
+> Do NOT `web_search` / `web_fetch`. These skills are the current API; this one covers only the
+> 3.x-specific delta.
+
+## Required setup
+
+3.x is a package version bump — `<PackageReference Include="System.CommandLine" Version="3.0.0-preview.6.26359.118" />`
+(or `dotnet package add <proj> System.CommandLine`). It is **not** in the shared framework. The
+namespace is unchanged: `using System.CommandLine;`.
+
+The members below attach the same way as any other input — declare the instance, add it to a command,
+read it back by that instance:
+
+```csharp
+using System.CommandLine;
+
+var root = new RootCommand("My tool");
+// ... add options/arguments to root.Options / root.Arguments, then:
+return await root.Parse(args).InvokeAsync();
+```
 
 ## New members
 
@@ -38,10 +55,10 @@ var root = new RootCommand("My tool") { HelpName = "mytool" };
 
 - The package targets **`net10.0`** and **`netstandard2.0`**. The in-box **`net8.0`** target was
   dropped — that is the only consumer-visible shift going 2.x → 3.x.
-- Add it like any package: `<PackageReference Include="System.CommandLine" Version="3.0.0-*" />` (or
+- Add it like any package: `<PackageReference Include="System.CommandLine" Version="3.0.0-preview.6.26359.118" />` (or
   `dotnet package add <proj> System.CommandLine`). It is **not** in the shared framework.
 
 ## Upgrading 2.x → 3.x
 
 Bump the version, change no code. If you are coming from a 2.0.0-beta, that IS a breaking migration —
-use beta-to-ga-migration, then optionally adopt the members above.
+apply the beta→GA rename map first (covered separately), then optionally adopt the members above.

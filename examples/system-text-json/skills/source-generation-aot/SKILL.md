@@ -5,10 +5,21 @@ description: >-
   Use when System.Text.Json runs under Native AOT or trimming (PublishAot / PublishTrimmed), or when
   you want the faster, reflection-free serialization path — i.e. a JsonSerializerContext with
   [JsonSerializable]. Reflection-based JsonSerializer compiles but THROWS at run time under AOT; the
-  source generator is the only supported path. Requires the base `system-text-json` skill.
+  source generator is the only supported path.
 ---
 
 # Source generation & Native AOT
+
+## Required setup
+
+`JsonSerializerContext` and `[JsonSerializable]` are in `System.Text.Json.Serialization`, not
+`System.Text.Json`. The context class **must be `partial`** — the generator extends it, so a
+non-partial context does not compile:
+
+```csharp
+using System.Text.Json;                 // JsonSerializer, JsonSerializerOptions
+using System.Text.Json.Serialization;   // JsonSerializerContext, [JsonSerializable], [JsonSourceGenerationOptions]
+```
 
 Reflection-based `JsonSerializer.Serialize<T>(value)` / `Deserialize<T>(string)` is **disabled under
 Native AOT (`PublishAot=true`) and trimming**. It still **compiles** (only an `IL3050`/`IL2026`
