@@ -16,10 +16,18 @@ config:
 # blocked so the eval reads model + skill knowledge, not archaeology. Every API
 # shape, error message, and exit code below was verified by building and running
 # against System.CommandLine 3.0.0-preview.5.26302.115 on net10.0.
+#
+# DUAL GRADING: a build failure already catches the removed beta stack, but a
+# hand-rolled args[] loop both COMPILES and can print the expected line. So each
+# scenario also asserts CODE conformance — the specific GA/3.x member its rubric
+# names must appear, and manual argv indexing must not — alongside the OUTPUT
+# regex. expected_skill records the methodology prior: the ONE skill the scenario
+# targets, which is what the skill-attribution analysis joins against.
 # =============================================================================
 
 scenarios:
   - name: "C01: parse an option and run an action"
+    expected_skill: system-commandline   # methodology prior: the base skill owns declare -> add -> read-by-identity
     prompt: |
       In Program.cs, build a System.CommandLine app with a `--name` option. Wire an
       action that reads the option value and prints `Hello, <name>!`. Parse the
@@ -31,6 +39,8 @@ scenarios:
     reject_tools: [web_search, web_fetch]
     assertions:
       - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin SetAction .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_not_contains, path: "Program.cs", value: "args[0]" }
       - type: run_command_and_assert
         command_to_run: "dotnet"
         command_arguments: "run --no-build -- --name Ada"
@@ -43,6 +53,7 @@ scenarios:
     timeout: 900
 
   - name: "C02: option with a default value"
+    expected_skill: system-commandline   # methodology prior: default values are base-skill surface
     prompt: |
       In Program.cs, add a `--count` option that defaults to 3 when it is not supplied
       on the command line, and print `count=<count>`. Running with no arguments must
@@ -54,6 +65,8 @@ scenarios:
     reject_tools: [web_search, web_fetch]
     assertions:
       - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin DefaultValueFactory .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_not_contains, path: "Program.cs", value: "args[0]" }
       - type: run_command_and_assert
         command_to_run: "dotnet"
         command_arguments: "run --no-build --"
@@ -65,6 +78,7 @@ scenarios:
     timeout: 900
 
   - name: "C03: a required option"
+    expected_skill: system-commandline   # methodology prior: required is base-skill surface
     prompt: |
       In Program.cs, add a required `--city` option. When `--city` is missing the app
       must fail with a non-zero exit code and an error. When it is provided, print
@@ -76,6 +90,8 @@ scenarios:
     reject_tools: [web_search, web_fetch]
     assertions:
       - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin Required\s*=\s*true .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_not_contains, path: "Program.cs", value: "args[0]" }
       - type: run_command_and_assert
         command_to_run: "dotnet"
         command_arguments: "run --no-build -- --city Rome"
@@ -94,6 +110,7 @@ scenarios:
     timeout: 900
 
   - name: "C04: option alias and description"
+    expected_skill: system-commandline   # methodology prior: aliases/description are base-skill surface
     prompt: |
       In Program.cs, add an `--output` option with the alias `-o` and the help
       description `Destination directory`. Print `out=<output>`. Both `--output` and
@@ -105,6 +122,8 @@ scenarios:
     reject_tools: [web_search, web_fetch]
     assertions:
       - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: file_not_contains, path: "Program.cs", value: "args[0]" }
+      - { type: file_not_contains, path: "Program.cs", value: "\"--output\", \"Destination directory\"" }
       - type: run_command_and_assert
         command_to_run: "dotnet"
         command_arguments: "run --no-build -- -o dist"
@@ -123,6 +142,7 @@ scenarios:
     timeout: 900
 
   - name: "C05: a positional argument"
+    expected_skill: system-commandline   # methodology prior: positional arguments are base-skill surface
     prompt: |
       In Program.cs, add a positional argument named `path` and print `path=<path>`.
       Running with `foo.txt` should print `path=foo.txt`. Build and run to confirm.
@@ -133,6 +153,8 @@ scenarios:
     reject_tools: [web_search, web_fetch]
     assertions:
       - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin Arguments.Add .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_not_contains, path: "Program.cs", value: "args[0]" }
       - type: run_command_and_assert
         command_to_run: "dotnet"
         command_arguments: "run --no-build -- foo.txt"
@@ -144,6 +166,7 @@ scenarios:
     timeout: 900
 
   - name: "C06: typed integer options"
+    expected_skill: system-commandline   # methodology prior: typed options are base-skill surface
     prompt: |
       In Program.cs, add integer options `--left` and `--right` and print
       `sum=<left+right>`. Running `--left 2 --right 3` should print `sum=5`.
@@ -155,6 +178,8 @@ scenarios:
     reject_tools: [web_search, web_fetch]
     assertions:
       - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin Option<int> .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_not_contains, path: "Program.cs", value: "args[0]" }
       - type: run_command_and_assert
         command_to_run: "dotnet"
         command_arguments: "run --no-build -- --left 2 --right 3"
@@ -166,6 +191,7 @@ scenarios:
     timeout: 900
 
   - name: "C07: a subcommand"
+    expected_skill: subcommands-and-help   # methodology prior: subcommand composition
     prompt: |
       In Program.cs, create a `greet` subcommand with a `--name` option whose action
       prints `Hello <name>`. Running `greet --name Zoe` should print `Hello Zoe`.
@@ -177,6 +203,9 @@ scenarios:
     reject_tools: [web_search, web_fetch]
     assertions:
       - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin Subcommands.Add .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin SetAction .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_not_contains, path: "Program.cs", value: "args[0]" }
       - type: run_command_and_assert
         command_to_run: "dotnet"
         command_arguments: "run --no-build -- greet --name Zoe"
@@ -189,6 +218,7 @@ scenarios:
     timeout: 900
 
   - name: "C08: two subcommands with distinct actions"
+    expected_skill: subcommands-and-help   # methodology prior: subcommand composition
     prompt: |
       In Program.cs, create two subcommands: `add <item>` prints `added <item>`, and
       `list` prints `listing`. Running `add 5` should print `added 5`. Build and run to confirm.
@@ -199,6 +229,8 @@ scenarios:
     reject_tools: [web_search, web_fetch]
     assertions:
       - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin Subcommands.Add .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_not_contains, path: "Program.cs", value: "args[0]" }
       - type: run_command_and_assert
         command_to_run: "dotnet"
         command_arguments: "run --no-build -- add 5"
@@ -216,6 +248,7 @@ scenarios:
     timeout: 900
 
   - name: "C09: a global (recursive) option"
+    expected_skill: subcommands-and-help   # methodology prior: recursive option across a command tree
     prompt: |
       In Program.cs, add a global boolean `--verbose` option on the root command that a
       `run` subcommand can read. Running `run --verbose` should print `verbose=True`.
@@ -227,6 +260,8 @@ scenarios:
     reject_tools: [web_search, web_fetch]
     assertions:
       - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin Recursive\s*=\s*true .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_not_contains, path: "Program.cs", value: "args[0]" }
       - type: run_command_and_assert
         command_to_run: "dotnet"
         command_arguments: "run --no-build -- run --verbose"
@@ -239,6 +274,7 @@ scenarios:
     timeout: 900
 
   - name: "C10: constrained option values"
+    expected_skill: options-and-arguments   # methodology prior: value constraints live with options/arguments
     prompt: |
       In Program.cs, add a `--level` option constrained to exactly one of `debug`,
       `info`, or `warn`. A valid value prints `level=<level>`; an invalid value must
@@ -250,6 +286,8 @@ scenarios:
     reject_tools: [web_search, web_fetch]
     assertions:
       - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin AcceptOnlyFromAmong .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_not_contains, path: "Program.cs", value: "args[0]" }
       - type: run_command_and_assert
         command_to_run: "dotnet"
         command_arguments: "run --no-build -- --level info"
@@ -268,6 +306,7 @@ scenarios:
     timeout: 900
 
   - name: "C11: an option supplied multiple times"
+    expected_skill: options-and-arguments   # methodology prior: arity / repeated values
     prompt: |
       In Program.cs, add a `--tag` option that may be supplied multiple times,
       collecting all values. Running `--tag a --tag b` should print `tags=a,b`.
@@ -279,6 +318,8 @@ scenarios:
     reject_tools: [web_search, web_fetch]
     assertions:
       - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin Option<(string\[\]|List<string>)> .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_not_contains, path: "Program.cs", value: "args[0]" }
       - type: run_command_and_assert
         command_to_run: "dotnet"
         command_arguments: "run --no-build -- --tag a --tag b"
@@ -290,6 +331,7 @@ scenarios:
     timeout: 900
 
   - name: "C12: an asynchronous action"
+    expected_skill: actions-and-invocation   # methodology prior: async action + async invocation
     prompt: |
       In Program.cs, wire an asynchronous action. Add a `--url` option, asynchronously
       `fetch` it (await something), and print `fetched <url>`. Use the async action
@@ -302,6 +344,8 @@ scenarios:
     reject_tools: [web_search, web_fetch]
     assertions:
       - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin InvokeAsync .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_not_contains, path: "Program.cs", value: "args[0]" }
       - type: run_command_and_assert
         command_to_run: "dotnet"
         command_arguments: "run --no-build -- --url x"
@@ -313,6 +357,7 @@ scenarios:
     timeout: 900
 
   - name: "C13: migrate a beta greeter to GA/3.x"
+    expected_skill: beta-to-ga-migration   # methodology prior: removed beta API -> GA
     prompt: |
       Program.cs is a System.CommandLine 2.0.0-beta program that does NOT compile against
       the current GA / 3.x API. Migrate it so it builds and runs, preserving behavior:
@@ -325,6 +370,13 @@ scenarios:
     reject_tools: [web_search, web_fetch]
     assertions:
       - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin SetAction .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_not_contains, path: "Program.cs", value: "args[0]" }
+      - { type: file_not_contains, path: "Program.cs", value: "SetHandler" }
+      - { type: file_not_contains, path: "Program.cs", value: "AddOption" }
+      - { type: file_not_contains, path: "Program.cs", value: "AddGlobalOption" }
+      - { type: file_not_contains, path: "Program.cs", value: "getDefaultValue:" }
+      - { type: file_not_contains, path: "Program.cs", value: "IsRequired" }
       - type: run_command_and_assert
         command_to_run: "dotnet"
         command_arguments: "run --no-build -- --name Ada"
@@ -337,6 +389,7 @@ scenarios:
     timeout: 900
 
   - name: "C14: a file argument that must exist"
+    expected_skill: options-and-arguments   # methodology prior: argument validation on FileInfo
     prompt: |
       In Program.cs, add a positional `FileInfo` argument named `path` that must be an
       existing file. When it exists, print `read <name>` (the file's name). A missing
@@ -350,6 +403,8 @@ scenarios:
     reject_tools: [web_search, web_fetch]
     assertions:
       - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin AcceptExistingOnly .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_not_contains, path: "Program.cs", value: "args[0]" }
       - type: run_command_and_assert
         command_to_run: "dotnet"
         command_arguments: "run --no-build -- data.txt"
@@ -367,6 +422,7 @@ scenarios:
     timeout: 900
 
   - name: "C15: a custom parser with error reporting"
+    expected_skill: options-and-arguments   # methodology prior: custom parsing + error reporting
     prompt: |
       In Program.cs, add a `--port` integer option with a custom parser that accepts
       only values in 1..65535. A valid value prints `port=<port>`. An invalid value
@@ -379,6 +435,9 @@ scenarios:
     reject_tools: [web_search, web_fetch]
     assertions:
       - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin CustomParser .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin AddError .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_not_contains, path: "Program.cs", value: "args[0]" }
       - type: run_command_and_assert
         command_to_run: "dotnet"
         command_arguments: "run --no-build -- --port 8080"
@@ -395,6 +454,7 @@ scenarios:
     timeout: 900
 
   - name: "C16: a cross-cutting validator"
+    expected_skill: options-and-arguments   # methodology prior: cross-cutting validation
     prompt: |
       In Program.cs, add integer options `--min` and `--max`. Use a validator so that if
       `max` is less than or equal to `min` the app fails with a non-zero exit code and an
@@ -406,6 +466,9 @@ scenarios:
     reject_tools: [web_search, web_fetch]
     assertions:
       - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin Validators.Add .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin AddError .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_not_contains, path: "Program.cs", value: "args[0]" }
       - type: run_command_and_assert
         command_to_run: "dotnet"
         command_arguments: "run --no-build -- --min 1 --max 5"
@@ -423,6 +486,7 @@ scenarios:
     timeout: 900
 
   - name: "C17: inspect parse errors before invoking"
+    expected_skill: actions-and-invocation   # methodology prior: parse-then-inspect before invoking
     prompt: |
       In Program.cs, add a required `--name` option. Parse the args first; if there are
       parse errors, print each error message to standard error and return 1 BEFORE
@@ -434,6 +498,8 @@ scenarios:
     reject_tools: [web_search, web_fetch]
     assertions:
       - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin .Errors .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_not_contains, path: "Program.cs", value: "args[0]" }
       - type: run_command_and_assert
         command_to_run: "dotnet"
         command_arguments: "run --no-build -- --name Al"
@@ -451,6 +517,7 @@ scenarios:
     timeout: 900
 
   - name: "C18: customize --help with a banner"
+    expected_skill: subcommands-and-help   # methodology prior: help customization
     prompt: |
       In Program.cs, customize `--help` so it prints the banner line `acme-tool` above
       the default help output, while still showing the default help below the banner.
@@ -463,6 +530,8 @@ scenarios:
     reject_tools: [web_search, web_fetch]
     assertions:
       - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin (HelpOption|SynchronousCommandLineAction) .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_not_contains, path: "Program.cs", value: "args[0]" }
       - type: run_command_and_assert
         command_to_run: "dotnet"
         command_arguments: "run --no-build -- --help"
@@ -481,6 +550,7 @@ scenarios:
     timeout: 900
 
   - name: "C19: capture all remaining tokens (3.x)"
+    expected_skill: net-3x-additions   # methodology prior: 3.x addition: CaptureRemainingTokens
     prompt: |
       In Program.cs, create a `run` subcommand whose positional string-array argument
       captures ALL remaining tokens, and print `forwarded=<comma-joined>`. Running
@@ -492,6 +562,8 @@ scenarios:
     reject_tools: [web_search, web_fetch]
     assertions:
       - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin CaptureRemainingTokens .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_not_contains, path: "Program.cs", value: "args[0]" }
       - type: run_command_and_assert
         command_to_run: "dotnet"
         command_arguments: "run --no-build -- run -- --any thing"
@@ -503,6 +575,7 @@ scenarios:
     timeout: 900
 
   - name: "C20: case-insensitive constrained values (3.x)"
+    expected_skill: net-3x-additions   # methodology prior: 3.x addition: comparer overload
     prompt: |
       In Program.cs, add a `--level` option constrained to `debug`, `info`, or `warn`,
       but matched CASE-INSENSITIVELY. Running `--level INFO` must be accepted and print
@@ -514,6 +587,8 @@ scenarios:
     reject_tools: [web_search, web_fetch]
     assertions:
       - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin AcceptOnlyFromAmong\(\s*StringComparer .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_not_contains, path: "Program.cs", value: "args[0]" }
       - type: run_command_and_assert
         command_to_run: "dotnet"
         command_arguments: "run --no-build -- --level INFO"
@@ -525,6 +600,7 @@ scenarios:
     timeout: 900
 
   - name: "C21: custom program name in help (3.x)"
+    expected_skill: net-3x-additions   # methodology prior: 3.x addition: HelpName
     prompt: |
       In Program.cs, set the program name shown in the `--help` usage output to `acme`
       (not the assembly name). Running `--help` should show `acme` in the Usage line.
@@ -536,6 +612,8 @@ scenarios:
     reject_tools: [web_search, web_fetch]
     assertions:
       - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin HelpName .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_not_contains, path: "Program.cs", value: "args[0]" }
       - type: run_command_and_assert
         command_to_run: "dotnet"
         command_arguments: "run --no-build -- --help"
@@ -547,6 +625,7 @@ scenarios:
     timeout: 900
 
   - name: "C22: nested subcommands with a recursive option"
+    expected_skill: subcommands-and-help   # methodology prior: nested command tree
     prompt: |
       In Program.cs, build nested subcommands: root -> `db` -> `migrate`. Add a recursive
       `--verbose` option on the root. Running `db migrate --verbose` should print
@@ -558,6 +637,9 @@ scenarios:
     reject_tools: [web_search, web_fetch]
     assertions:
       - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin Subcommands.Add .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin Recursive\s*=\s*true .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_not_contains, path: "Program.cs", value: "args[0]" }
       - type: run_command_and_assert
         command_to_run: "dotnet"
         command_arguments: "run --no-build -- db migrate --verbose"
@@ -569,6 +651,7 @@ scenarios:
     timeout: 900
 
   - name: "C23: migrate a beta subcommand program to GA/3.x"
+    expected_skill: beta-to-ga-migration   # methodology prior: removed beta API -> GA
     prompt: |
       Program.cs is a System.CommandLine 2.0.0-beta program (subcommands + a global
       option) that does NOT compile against the current GA / 3.x API. Migrate it so it
@@ -581,6 +664,14 @@ scenarios:
     reject_tools: [web_search, web_fetch]
     assertions:
       - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin Subcommands.Add .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin SetAction .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_not_contains, path: "Program.cs", value: "args[0]" }
+      - { type: file_not_contains, path: "Program.cs", value: "SetHandler" }
+      - { type: file_not_contains, path: "Program.cs", value: "AddOption" }
+      - { type: file_not_contains, path: "Program.cs", value: "AddGlobalOption" }
+      - { type: file_not_contains, path: "Program.cs", value: "getDefaultValue:" }
+      - { type: file_not_contains, path: "Program.cs", value: "IsRequired" }
       - type: run_command_and_assert
         command_to_run: "dotnet"
         command_arguments: "run --no-build -- add 3"
@@ -593,6 +684,7 @@ scenarios:
     timeout: 900
 
   - name: "C24: capstone — a deploy command"
+    expected_skill: system-commandline   # methodology prior: capstone spans the base declare/add/read shape
     prompt: |
       In Program.cs, build a `deploy` subcommand with: a required `--env` option
       constrained to `dev` or `prod`; a `--replicas` integer option defaulting to 1; and
@@ -606,6 +698,16 @@ scenarios:
     reject_tools: [web_search, web_fetch]
     assertions:
       - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin AcceptOnlyFromAmong .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin DefaultValueFactory .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin Required\s*=\s*true .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin InvokeAsync .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_not_contains, path: "Program.cs", value: "args[0]" }
+      - { type: file_not_contains, path: "Program.cs", value: "SetHandler" }
+      - { type: file_not_contains, path: "Program.cs", value: "AddOption" }
+      - { type: file_not_contains, path: "Program.cs", value: "AddGlobalOption" }
+      - { type: file_not_contains, path: "Program.cs", value: "getDefaultValue:" }
+      - { type: file_not_contains, path: "Program.cs", value: "IsRequired" }
       - type: run_command_and_assert
         command_to_run: "dotnet"
         command_arguments: "run --no-build -- deploy --env prod --replicas 3"
