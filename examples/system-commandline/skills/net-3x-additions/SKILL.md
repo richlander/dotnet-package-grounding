@@ -19,7 +19,7 @@ targeting.
 
 ## Required setup
 
-3.x is a package version bump — `<PackageReference Include="System.CommandLine" Version="3.0.0-*" />`
+3.x is a package version bump — `<PackageReference Include="System.CommandLine" Version="3.0.0-preview.6.26359.118" />`
 (or `dotnet package add <proj> System.CommandLine`). It is **not** in the shared framework. The
 namespace is unchanged: `using System.CommandLine;`.
 
@@ -55,7 +55,7 @@ var root = new RootCommand("My tool") { HelpName = "mytool" };
 
 - The package targets **`net10.0`** and **`netstandard2.0`**. The in-box **`net8.0`** target was
   dropped — that is the only consumer-visible shift going 2.x → 3.x.
-- Add it like any package: `<PackageReference Include="System.CommandLine" Version="3.0.0-*" />` (or
+- Add it like any package: `<PackageReference Include="System.CommandLine" Version="3.0.0-preview.6.26359.118" />` (or
   `dotnet package add <proj> System.CommandLine`). It is **not** in the shared framework.
 
 ## Upgrading 2.x → 3.x
