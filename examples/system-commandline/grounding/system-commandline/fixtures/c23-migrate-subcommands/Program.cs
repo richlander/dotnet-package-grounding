@@ -1,5 +1,5 @@
-// Migrate this beta System.CommandLine program to the current GA / 3.x API so it builds and runs.
-// Running "add 3" must print "added 3". Remove the beta invocation/binding stack.
+// TODO: see the task description.
+
 using System.CommandLine;
 
 var item = new Argument<int>("item");

@@ -86,8 +86,8 @@ scenarios:
       Program.cs holds one UserProfile value. The service it is sent to requires every JSON
       property name to begin with a lower-case letter (`displayName`, not `DisplayName`). Print the
       JSON in the shape that service accepts. The model will grow over time, so the rule must apply
-      to every property automatically — a future property added to the record must not need its own
-      per-property annotation to be named correctly. Build and run to confirm.
+      to every property automatically: a property added to the record later must come out correctly
+      named without anyone having to touch that property individually. Build and run to confirm.
     setup:
       files:
         - { path: App.csproj, source: fixtures/s03-wire-names-camel/App.csproj }
@@ -528,7 +528,7 @@ scenarios:
     reject_tools: [web_search, web_fetch]
     assertions:
       - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin JsonStringEnumConverter< .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin (UseStringEnumConverter|JsonStringEnumConverter<) .', expected_exit_code: 0, command_timeout: 30 }
       - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin JsonSerializerContext .", expected_exit_code: 0, command_timeout: 30 }
       - type: run_command_and_assert
         command_to_run: "dotnet"
@@ -537,7 +537,7 @@ scenarios:
         expected_std_output_matches: '(?=[\s\S]*"Status": ?"Complete")(?![\s\S]*"Status": ?2)[\s\S]*'
         command_timeout: 120
     rubric:
-      - "Uses the closed-generic string-enum converter that carries its own metadata, not the open-generic reflection form"
+      - "Gets string enums the AOT-safe way — the context-level switch or the closed-generic converter — not the reflection-based JsonStringEnumConverter() instance"
     timeout: 900
 
   # ------------------------------------------ dotnet-10-11-strictness (S20-S21)
