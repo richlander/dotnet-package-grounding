@@ -34,8 +34,8 @@ skills the `dotnet/skills` way: each skill is brought to PR independently, with 
 graded in isolation. Person B writes the 24-task CT-24 suite ground-up — a representation of what a .NET developer
 will actually ask an agent — and scores the *shelf* holistically, letting the agent discover and
 select. These are different instruments answering different questions. **Adding B's paradigm is
-not compatible with how A tests today**, and that incompatibility is structural, not incidental
-(§8).
+not compatible with how A tests today**, and that incompatibility is structural, not incidental —
+see *Demoting the mandatory isolated arm* below.
 
 **This follows [eval-protocol.md rule 1](./eval-protocol.md)**: pre-register the grounded
 condition that matches the claim. Rule 1 governs **Q1**: a claim *about one skill* must not be
@@ -52,7 +52,7 @@ that scores the shelf plus the agent's discovery and selection, not any one skil
 
 - **Grounded condition.** Score `baseline` (no grounding) vs `skilledPlugin` (whole shelf,
   agent self-selects). `skilledIsolated` remains the target-skill condition for Q1 and an
-  on-demand precision probe for attribution (§6).
+  on-demand precision probe for attribution, per the attribution protocol below.
 - **Organic discovery.** Prompts **never name the skill** — the harness rejects any prompt
   containing the target skill's whole-word name — so the benchmark tests whether the agent
   *finds* the right skill from a functional description, not whether it can follow a signpost.
@@ -76,7 +76,8 @@ knowledge-gap cost it removes exceeds the doc tax it adds.
 > penalizes any task the isolated arm can't solve alone. Our shipping chart reads the **plugin
 > arm only**. For a holistic benchmark that is the *correct* lens: a task the shelf solves by
 > composing two skills is a success of the shelf, not a failure to be floored. The `min` verdict
-> belongs to Q1 (§1); the plugin arm belongs to Q2. See §7 for why the two even diverge.
+> belongs to Q1; the plugin arm belongs to Q2. *Why the holistic arm is not optional* explains why
+> the two even diverge.
 
 ---
 
@@ -154,9 +155,9 @@ transcript for which instruction misfired (or hold token count fixed and vary on
 
 ## 5. The interaction matrix — relatedness by compression, and the distillation reading
 
-§4 credits a skill by its **top edge** — the leave-one-out `v(full) − v(full ∖ {A})`. Read the
-**bottom edges** instead and you get the rest of the matrix. Let `v(S)` be the improvement score
-(over the ungrounded baseline) of the shelf restricted to subset `S`, so `v(∅) = 0`. The **diagonal**
+The three interference regimes credit a skill by its **top edge** — the leave-one-out
+`v(full) − v(full ∖ {A})`. Read the **bottom edges** instead and you get the rest of the matrix.
+Let `v(S)` be the improvement score (over the ungrounded baseline) of the shelf restricted to subset `S`, so `v(∅) = 0`. The **diagonal**
 is each skill's singleton value `v({A})` — a *keep-only-A* run, exactly the shelf we build by
 excluding every other skill. The **off-diagonal** is the second-order interaction
 
@@ -168,8 +169,8 @@ c(A, B) = v({A, B}) − v({A}) − v({B})
 and the keep-only bottom edge **disagree**. In a purely additive shelf every `c(A, B) = 0` and top and
 bottom edges coincide — so the whole interaction story lives in the off-diagonal, and a nonzero `c` is
 the fingerprint of composition. (The full lattice generalizes this to the
-[Shapley](https://en.wikipedia.org/wiki/Shapley_value) decomposition of §3; the pairwise `c` is its
-first interaction term.)
+[Shapley](https://en.wikipedia.org/wiki/Shapley_value) decomposition of the composition axis; the
+pairwise `c` is its first interaction term.)
 
 **Relatedness by compression.** The cross-term is a decompression of an old idea. Benedetto, Caglioti
 & Loreto, [*Language Trees and Zipping*](https://arxiv.org/abs/cond-mat/0108530) (2002; video
@@ -182,15 +183,15 @@ tasks are the queries against them, so `c(A, B)` is that same measurement in *ou
 much does loading B change what A is worth on this task?** Sign and magnitude classify a pair exactly
 as a compression distance classifies two texts — near-duplicate, complementary, or repellent.
 
-This extends §4's three single-skill regimes to a **four-way pair classification** (§4 is the diagonal
-view of the same facts):
+This extends the three single-skill regimes to a **four-way pair classification** (those regimes are
+the diagonal view of the same facts):
 
 | Cross-term `c(A, B)` | Singletons vs pair | Relation | Reading | Action |
 | --- | --- | --- | --- | --- |
 | ≈ 0 | both `v({·}) > 0`, `v({A,B}) ≈ v({A}) + v({B})` | **orthogonal** | independent, additive | safe to co-shelve |
 | < 0, and `v({A}) ≈ v({B}) ≈ v({A,B})` | either alone already reaches the ceiling | **redundant** (compression distance ≈ 0, near-duplicate) | interchangeable substitutes | **merge** their guidance |
 | > 0 (super-additive) | neither singleton reaches the ceiling, the pair does | **synergistic** | collaboration / integration | **keep or compose** |
-| < 0, and `v({A,B}) < min(v({A}), v({B}))` | a subset outscores its superset | **interfering** | conflict (§4 destructive) | scope / reconcile / cut |
+| < 0, and `v({A,B}) < min(v({A}), v({B}))` | a subset outscores its superset | **interfering** | conflict (the destructive regime) | scope / reconcile / cut |
 
 **Redundancy is not interference, and the distinction sets the lever.** A redundant pair looks like
 mutual free-riding on the diagonal (removing either changes little, because the other covers it), but
@@ -213,7 +214,7 @@ the activation surface (more chances to mis-pull) and diluting attention (more t
 around). Left uncompensated by description tightening, breadth trends toward erosion — **quality
 decays with each added skill unless each addition is re-priced on the whole shelf.** This is a
 pressure, not a theorem, and it is exactly why the tax is visible *only* on the holistic self-select
-arm (§7, §8): the isolated arm sets every cross-term to zero by construction. *(Worked example: on
+arm: the isolated arm sets every cross-term to zero by construction. *(Worked example: on
 markout CT18, the full five-skill shelf scored far below any focused two-skill shelf and with an
 order-of-magnitude higher run-to-run variance — the tax made concrete as instability, not merely a
 lower mean; the two section-gating skills proved **redundant**, not collaborative, so the lever was
@@ -256,15 +257,15 @@ Attribution is **on-demand**, triggered by the pull signal — not a mandatory a
    | falls | holds | A carries, B free-rides → tighten B's description |
    | holds | falls | symmetric → tighten A's description |
    | holds | holds | the rest of the shelf (or base knowledge) sufficed → tighten both |
-   | **rises** | — | A is **destructive** (§4) → scope or cut A |
+   | **rises** | — | A is **destructive** → scope or cut A |
 
 3. **Isolated as an on-demand precision probe.** Repurpose `skilledIsolated` from a mandatory arm to
    a targeted **absolute-sufficiency** test: run it *only* on multi-pull tasks to ask "does this one
    skill suffice alone?" — the complement of leave-one-out's "is this one skill necessary?"
 
-This is the frontier read of §3 made operational: singleton-on-the-ceiling = solved **separately**;
-pair-on-the-ceiling with both singletons short = solved **collaboratively**; superset-below-subset =
-**conflict**.
+This is the frontier read of the composition axis made operational: singleton-on-the-ceiling =
+solved **separately**; pair-on-the-ceiling with both singletons short = solved **collaboratively**;
+superset-below-subset = **conflict**.
 
 ---
 
@@ -277,11 +278,11 @@ any arm that loads one skill at a time — that includes **both** `dotnet/skills
 **co-loaded**, so it appears only in `skilledPlugin`. "Skills that disagree when loaded together" is
 therefore not merely another attribution reading — it is a **shelf-integration defect that only the
 holistic, self-select arm surfaces**, and it is a first-class reason the plugin arm is the shipping
-lens (§2) and isolated is demoted to on-demand (§6).
+lens and isolated is demoted to on-demand.
 
-This also explains the deliberate verdict divergence of §2: the `min(isolated, plugin)` harness
-verdict and the plugin-only chart diverge precisely on the tasks where composition matters — the
-tasks the holistic benchmark exists to reward.
+This also explains the deliberate verdict divergence noted for the holistic benchmark: the
+`min(isolated, plugin)` harness verdict and the plugin-only chart diverge precisely on the tasks
+where composition matters — the tasks the holistic benchmark exists to reward.
 
 ---
 
@@ -300,7 +301,8 @@ Two independent reasons, one change:
   dropping the default isolated arm are therefore the same change** — you cannot do one without the
   other.
 
-Isolated is not deleted; it is **repurposed** (§6, step 3) as an on-demand precision probe.
+Isolated is not deleted; it is **repurposed** by the attribution protocol, step 3, as an on-demand
+precision probe.
 
 ---
 
@@ -309,7 +311,7 @@ Isolated is not deleted; it is **repurposed** (§6, step 3) as an on-demand prec
 One limitation is worth naming because it is the same class as the isolated-vs-holistic gap.
 `dotnet/skills` ships **multiple plugins**, for good reason (domain separation, independent
 ownership). The CT-24 suite can run **within** a plugin — that's an implementation detail. But there
-is **no affordance for testing across packages / across plugins**: the composition axis of §3 stops
+is **no affordance for testing across packages / across plugins**: the composition axis stops
 at the plugin boundary, so a conflict or a collaboration that spans two plugins is as invisible to a
 single-plugin holistic benchmark as an intra-plugin conflict is to a per-skill test. Cross-package
 composition is the next frontier of this methodology, not something it currently measures.

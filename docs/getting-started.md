@@ -78,7 +78,7 @@ renamed type, the workflow nobody guesses.
 > agent went digging. **You:** decide whether each failure is a real gap in the package's story or a
 > bad task. This needs first-party knowledge and cannot be outsourced.
 
-**Owns this stage:** [`grounding-lifecycle.md`](./grounding-lifecycle.md) §0.
+**Owns this stage:** [`grounding-lifecycle.md`](./grounding-lifecycle.md).
 
 ### 2. Author the skill shelf
 
@@ -104,7 +104,7 @@ they meet on day 100, each with fixtures and assertions that gate on a real buil
 > and check the assertions actually test the behavior rather than the phrasing. Watch for tasks that
 > exist because the skill exists.
 
-**Owns this stage:** [`grounding-eval-methodology.md`](./grounding-eval-methodology.md) §2 for suite
+**Owns this stage:** [`grounding-eval-methodology.md`](./grounding-eval-methodology.md) for suite
 design, [`eval-protocol.md`](./eval-protocol.md) for the rules that keep a run honest.
 
 ### 4. Run it
