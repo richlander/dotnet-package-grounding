@@ -237,9 +237,21 @@ Cross-package probes show that a gotcha must usually satisfy all three condition
 | --- | --- | --- | --- | --- |
 | Silent | Yes | Yes | No; it throws | Yes; empty output |
 | Obscure | Yes | No; famous | Yes; post-training | No; common examples teach it |
-| Result | +15.1% | −12.5% | +7.9% | −1.0% |
+| Result | +15.1% | −12.5% (suspect) | +7.9% (suspect) | −1.0% |
 
 ### Evidence: System.Text.Json unit
+
+> **The two STJ numbers below are not trustworthy and are kept only for the record.** They were
+> produced by the pre-rebuild STJ suite, which was later found to leak: 47 of its 48 fixtures carried
+> a `// Hint:` line in `Program.cs` naming the exact API under test, and 30 of 48 prompts named it
+> too. A skill-less baseline passes such a scenario by transcription, which **inflates the baseline
+> and suppresses measured uplift** — exactly the shape of a small or negative movement. So these
+> figures cannot be used as evidence for the "too famous" and "loud failure" explanations offered in
+> the last column; the explanations may still be right, but this is not what shows it.
+>
+> The suite has since been rebuilt to 24 hint-free, goal-stated scenarios and verified end-to-end.
+> **Re-measure before citing either number.** The SCL and M.E.AI rows come from different suites and
+> are not affected.
 
 | Scenario | Baseline → grounded | Movement | Authoring lesson |
 | --- | --- | ---: | --- |
