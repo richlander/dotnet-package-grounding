@@ -2,8 +2,8 @@
 #
 # 24 workflow/user-problem scenarios that exercise the base "system-text-json" skill plus the
 # five domain skills. The first 6 are the basics (floor); the remaining 18 rise in difficulty
-# across converters-and-polymorphism, dom-and-streaming, source-generation-aot,
-# dotnet-10-11-strictness, and newtonsoft-migration.
+# across system-text-json-converters-and-polymorphism, system-text-json-dom-and-streaming, system-text-json-source-generation-aot,
+# system-text-json-dotnet-10-11-strictness, and system-text-json-newtonsoft-migration.
 #
 # DESIGN: each fixture ships a BARE domain model (plain POCOs/records) + populated data + a TODO
 # with NO hint. The agent authors ONLY the serialization. Prompts state the USER'S GOAL — the
@@ -294,10 +294,10 @@ scenarios:
       - "Handles the cycle through reference handling; does not null out Next or add a bespoke DTO"
     timeout: 900
 
-  # ------------------------------------- converters-and-polymorphism (S11-S13)
+  # ------------------------------------- system-text-json-converters-and-polymorphism (S11-S13)
 
   - name: "S11: a value type with its own on-the-wire spelling"
-    expected_skill: converters-and-polymorphism
+    expected_skill: system-text-json-converters-and-polymorphism
     prompt: |
       Program.cs holds one Temperature value and the exact text the instrument API uses for it:
       the string `"72F"` — degrees followed by an F, not an object and not a bare number. Print the
@@ -323,7 +323,7 @@ scenarios:
     timeout: 900
 
   - name: "S12: a mixed collection that must come back as the right kinds"
-    expected_skill: converters-and-polymorphism
+    expected_skill: system-text-json-converters-and-polymorphism
     prompt: |
       Program.cs holds an array typed as the Animal base type but holding a Dog and a Cat. Print the
       JSON for that array — it must carry each element's kind-specific data (the dog's GoodBoy, the
@@ -349,7 +349,7 @@ scenarios:
     timeout: 900
 
   - name: "S13: forward properties we do not model"
-    expected_skill: converters-and-polymorphism
+    expected_skill: system-text-json-converters-and-polymorphism
     prompt: |
       Program.cs holds the JSON an upstream service sends and a Product type that models only some
       of it. Upstream adds new properties without telling us, and we act as a relay: whatever we
@@ -374,10 +374,10 @@ scenarios:
       - "Captures undeclared properties on the model rather than adding properties for them or relaying raw text"
     timeout: 900
 
-  # ------------------------------------------------- dom-and-streaming (S14-S16)
+  # ------------------------------------------------- system-text-json-dom-and-streaming (S14-S16)
 
   - name: "S14: edit a payload whose shape we do not control"
-    expected_skill: dom-and-streaming
+    expected_skill: system-text-json-dom-and-streaming
     prompt: |
       Program.cs holds a JSON payload that arrives from a system whose schema changes without
       notice, so we deliberately do NOT model it as a C# type. Make two edits to it and print the
@@ -404,7 +404,7 @@ scenarios:
     timeout: 900
 
   - name: "S15: answer two questions about a payload without modelling it"
-    expected_skill: dom-and-streaming
+    expected_skill: system-text-json-dom-and-streaming
     prompt: |
       Program.cs holds a JSON payload. We only ever read from it — nothing is modified and nothing
       is written back — so it is not worth defining C# types for its shape. Print `count=<N>` where
@@ -429,7 +429,7 @@ scenarios:
     timeout: 900
 
   - name: "S16: process a feed that will not fit in memory"
-    expected_skill: dom-and-streaming
+    expected_skill: system-text-json-dom-and-streaming
     prompt: |
       feed.json ships beside the program and holds a JSON array of items. In production this file is
       far larger than available memory, so the program must handle each item as it arrives and never
@@ -455,10 +455,10 @@ scenarios:
       - "Streams the array element by element from a file stream; never reads the file into a string or an array"
     timeout: 900
 
-  # --------------------------------------------- source-generation-aot (S17-S19)
+  # --------------------------------------------- system-text-json-source-generation-aot (S17-S19)
 
   - name: "S17: make serialization survive an ahead-of-time published build"
-    expected_skill: source-generation-aot
+    expected_skill: system-text-json-source-generation-aot
     prompt: |
       This project is published ahead of time (see the .csproj) — the shipped binary contains no
       metadata for types that are only reached dynamically, and publishing warns about any code
@@ -487,7 +487,7 @@ scenarios:
     timeout: 900
 
   - name: "S18: apply a wire contract to an ahead-of-time build"
-    expected_skill: source-generation-aot
+    expected_skill: system-text-json-source-generation-aot
     prompt: |
       This project is published ahead of time (see the .csproj). Program.cs holds one PackageRow
       whose Notes is not set. The receiving service spells property names in lower case with
@@ -514,7 +514,7 @@ scenarios:
     timeout: 900
 
   - name: "S19: a word-valued enum in an ahead-of-time build"
-    expected_skill: source-generation-aot
+    expected_skill: system-text-json-source-generation-aot
     prompt: |
       This project is published ahead of time (see the .csproj). Program.cs holds one Job. Our
       partner rejects numeric statuses — the status must travel as the word `Complete`. Print the
@@ -540,10 +540,10 @@ scenarios:
       - "Gets string enums the AOT-safe way — the context-level switch or the closed-generic converter — not the reflection-based JsonStringEnumConverter() instance"
     timeout: 900
 
-  # ------------------------------------------ dotnet-10-11-strictness (S20-S21)
+  # ------------------------------------------ system-text-json-dotnet-10-11-strictness (S20-S21)
 
   - name: "S20: harden a trust boundary against a crafted payload"
-    expected_skill: dotnet-10-11-strictness
+    expected_skill: system-text-json-dotnet-10-11-strictness
     prompt: |
       Program.cs holds a payload arriving from an untrusted caller, and a Principal type it is read
       into. The payload states the same property twice with different values — a caller doing this
@@ -570,7 +570,7 @@ scenarios:
     timeout: 900
 
   - name: "S21: refuse configuration we do not understand"
-    expected_skill: dotnet-10-11-strictness
+    expected_skill: system-text-json-dotnet-10-11-strictness
     prompt: |
       Program.cs holds a Config type and a configuration payload that carries a property Config does
       not declare. Today that extra property is ignored, which means a user who misspells a setting
@@ -595,10 +595,10 @@ scenarios:
       - "Turns unmapped members into a failure declaratively; does not compare property lists by hand"
     timeout: 900
 
-  # --------------------------------------------- newtonsoft-migration (S22-S24)
+  # --------------------------------------------- system-text-json-newtonsoft-migration (S22-S24)
 
   - name: "S22: drop the third-party serializer from a report writer"
-    expected_skill: newtonsoft-migration
+    expected_skill: system-text-json-newtonsoft-migration
     prompt: |
       Program.cs works today using a third-party JSON library referenced in the .csproj. Remove that
       dependency — from the code and from the .csproj — and keep the program's observable behaviour
@@ -628,7 +628,7 @@ scenarios:
     timeout: 900
 
   - name: "S23: drop the third-party serializer from a telemetry reader"
-    expected_skill: newtonsoft-migration
+    expected_skill: system-text-json-newtonsoft-migration
     prompt: |
       Program.cs reads a telemetry payload today using a third-party JSON library referenced in the
       .csproj. Remove that dependency — from the code and from the .csproj — and keep the printed
@@ -656,7 +656,7 @@ scenarios:
     timeout: 900
 
   - name: "S24: capstone — migrate a profile service off the third-party serializer"
-    expected_skill: newtonsoft-migration
+    expected_skill: system-text-json-newtonsoft-migration
     prompt: |
       Program.cs serializes and reads a user profile today using a third-party JSON library
       referenced in the .csproj. Remove that dependency — from the code and from the .csproj — and

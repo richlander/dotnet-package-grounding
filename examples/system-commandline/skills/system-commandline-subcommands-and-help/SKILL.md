@@ -1,5 +1,5 @@
 ---
-name: subcommands-and-help
+name: system-commandline-subcommands-and-help
 version: 2.0.0
 description: >-
   Use when building a multi-command System.CommandLine app (nested Command hierarchy), sharing options

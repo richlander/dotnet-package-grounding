@@ -1,5 +1,5 @@
 ---
-name: dom-and-streaming
+name: system-text-json-dom-and-streaming
 version: 10.0.0
 description: >-
   Use when System.Text.Json work is not a plain POCO round-trip — inspecting/mutating JSON without a

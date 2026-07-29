@@ -218,7 +218,7 @@ scenarios:
     timeout: 900
 
   - name: "C07: a subcommand"
-    expected_skill: subcommands-and-help   # methodology prior: subcommand composition
+    expected_skill: system-commandline-subcommands-and-help   # methodology prior: subcommand composition
     prompt: |
       This tool will grow to several distinct operations, so greeting is its own
       verb rather than a bare flag on the tool. A user runs `tool greet --name Zoe` and
@@ -245,7 +245,7 @@ scenarios:
     timeout: 900
 
   - name: "C08: two subcommands with distinct actions"
-    expected_skill: subcommands-and-help   # methodology prior: subcommand composition
+    expected_skill: system-commandline-subcommands-and-help   # methodology prior: subcommand composition
     prompt: |
       The tool exposes two operations the user selects by name: `add <item>` prints
       `added <item>`, and `list` prints `listing`. Running `tool add 5` must print
@@ -276,7 +276,7 @@ scenarios:
     timeout: 900
 
   - name: "C09: a global (recursive) option"
-    expected_skill: subcommands-and-help   # methodology prior: recursive option across a command tree
+    expected_skill: system-commandline-subcommands-and-help   # methodology prior: recursive option across a command tree
     prompt: |
       `--verbose` applies to the tool as a whole rather than to one operation: a
       user may supply it alongside any operation and it means the same thing everywhere.
@@ -303,7 +303,7 @@ scenarios:
     timeout: 900
 
   - name: "C10: constrained option values"
-    expected_skill: options-and-arguments   # methodology prior: value constraints live with options/arguments
+    expected_skill: system-commandline-options-and-arguments   # methodology prior: value constraints live with options/arguments
     prompt: |
       The tool takes a `--level` setting that accepts only `debug`, `info`, or
       `warn`. A valid value prints `level=<level>`. Anything else must be refused before
@@ -337,7 +337,7 @@ scenarios:
     timeout: 900
 
   - name: "C11: an option supplied multiple times"
-    expected_skill: options-and-arguments   # methodology prior: arity / repeated values
+    expected_skill: system-commandline-options-and-arguments   # methodology prior: arity / repeated values
     prompt: |
       A user may label a run more than once, supplying the same `--tag` setting
       several times in one command line: `tool --tag a --tag b`. Every value must be
@@ -362,7 +362,7 @@ scenarios:
     timeout: 900
 
   - name: "C12: an asynchronous action"
-    expected_skill: actions-and-invocation   # methodology prior: async action + async invocation
+    expected_skill: system-commandline-actions-and-invocation   # methodology prior: async action + async invocation
     prompt: |
       The tool takes a `--url` setting naming something it fetches. That fetch is
       I/O-bound, so the tool must await the work rather than blocking while it waits,
@@ -388,7 +388,7 @@ scenarios:
     timeout: 900
 
   - name: "C13: migrate a beta greeter to GA/3.x"
-    expected_skill: beta-to-ga-migration   # methodology prior: removed beta API -> GA
+    expected_skill: system-commandline-beta-to-ga-migration   # methodology prior: removed beta API -> GA
     prompt: |
       Program.cs was written against an older release of System.CommandLine and no
       longer compiles against the version this project references. Get it building and
@@ -421,7 +421,7 @@ scenarios:
     timeout: 900
 
   - name: "C14: a file argument that must exist"
-    expected_skill: options-and-arguments   # methodology prior: argument validation on FileInfo
+    expected_skill: system-commandline-options-and-arguments   # methodology prior: argument validation on FileInfo
     prompt: |
       The tool takes a path as a bare operand and reports on that file, printing
       `read <name>` using the file's name. A path that does not exist must be refused
@@ -455,7 +455,7 @@ scenarios:
     timeout: 900
 
   - name: "C15: a custom parser with error reporting"
-    expected_skill: options-and-arguments   # methodology prior: custom parsing + error reporting
+    expected_skill: system-commandline-options-and-arguments   # methodology prior: custom parsing + error reporting
     prompt: |
       The tool takes a `--port` setting. Only whole numbers from 1 to 65535 are
       meaningful; a valid value prints `port=<port>`. A value outside that range, such
@@ -488,7 +488,7 @@ scenarios:
     timeout: 900
 
   - name: "C16: a cross-cutting validator"
-    expected_skill: options-and-arguments   # methodology prior: cross-cutting validation
+    expected_skill: system-commandline-options-and-arguments   # methodology prior: cross-cutting validation
     prompt: |
       The tool takes two whole numbers, `--min` and `--max`. The pair is only
       meaningful when max is greater than min. If it is not, the tool must exit with a
@@ -522,7 +522,7 @@ scenarios:
     timeout: 900
 
   - name: "C17: inspect parse errors before invoking"
-    expected_skill: actions-and-invocation   # methodology prior: parse-then-inspect before invoking
+    expected_skill: system-commandline-actions-and-invocation   # methodology prior: parse-then-inspect before invoking
     prompt: |
       The tool takes a mandatory `--name` setting. Before it runs any of its own
       logic, it must report every problem with what the user typed — all of them, not
@@ -554,7 +554,7 @@ scenarios:
     timeout: 900
 
   - name: "C18: customize --help with a banner"
-    expected_skill: subcommands-and-help   # methodology prior: help customization
+    expected_skill: system-commandline-subcommands-and-help   # methodology prior: help customization
     prompt: |
       When a user asks this tool for help, the output must open with the banner
       line `acme-tool` and then continue with the tool's usual help text, unchanged and
@@ -587,7 +587,7 @@ scenarios:
     timeout: 900
 
   - name: "C19: capture all remaining tokens (3.x)"
-    expected_skill: net-3x-additions   # methodology prior: 3.x addition: CaptureRemainingTokens
+    expected_skill: system-commandline-net-3x-additions   # methodology prior: 3.x addition: CaptureRemainingTokens
     prompt: |
       The tool has a `run` operation that hands everything the user typed after it
       to a downstream process untouched — including tokens that look like the tool's own
@@ -614,7 +614,7 @@ scenarios:
     timeout: 900
 
   - name: "C20: case-insensitive constrained values (3.x)"
-    expected_skill: net-3x-additions   # methodology prior: 3.x addition: comparer overload
+    expected_skill: system-commandline-net-3x-additions   # methodology prior: 3.x addition: comparer overload
     prompt: |
       The tool takes a `--level` setting that accepts only `debug`, `info`, or
       `warn`, but users type it in whatever capitalisation they please and it should
@@ -640,7 +640,7 @@ scenarios:
     timeout: 900
 
   - name: "C21: custom program name in help (3.x)"
-    expected_skill: net-3x-additions   # methodology prior: 3.x addition: HelpName
+    expected_skill: system-commandline-net-3x-additions   # methodology prior: 3.x addition: HelpName
     prompt: |
       When a user asks this tool for help, the usage line must name the program
       `acme` rather than the assembly name. Build and run to confirm `acme` appears in
@@ -665,7 +665,7 @@ scenarios:
     timeout: 900
 
   - name: "C22: nested subcommands with a recursive option"
-    expected_skill: subcommands-and-help   # methodology prior: nested command tree
+    expected_skill: system-commandline-subcommands-and-help   # methodology prior: nested command tree
     prompt: |
       The tool groups related operations under a shared name: the user reaches
       migration through `tool db migrate`. `--verbose` applies to the tool as a whole and
@@ -693,7 +693,7 @@ scenarios:
     timeout: 900
 
   - name: "C23: migrate a beta subcommand program to GA/3.x"
-    expected_skill: beta-to-ga-migration   # methodology prior: removed beta API -> GA
+    expected_skill: system-commandline-beta-to-ga-migration   # methodology prior: removed beta API -> GA
     prompt: |
       Program.cs was written against an older release of System.CommandLine and no
       longer compiles against the version this project references. Get it building and

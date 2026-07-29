@@ -1,7 +1,7 @@
 {
   "name": "system-commandline",
   "version": "2.0.0",
-  "description": "System.CommandLine workflow skills pinning the current GA / 2.x-3.x API: one base skill, system-commandline; five workflow-specific skills, beta-to-ga-migration, options-and-arguments, actions-and-invocation, subcommands-and-help, net-3x-additions. Each workflow-specific skill carries the package reference and declare-add-read setup its own examples need so it works on its own; the base skill is the fuller treatment of the library.",
+  "description": "System.CommandLine workflow skills pinning the current GA / 2.x-3.x API: one base skill, system-commandline; five workflow-specific skills, system-commandline-beta-to-ga-migration, system-commandline-options-and-arguments, system-commandline-actions-and-invocation, system-commandline-subcommands-and-help, system-commandline-net-3x-additions. Each workflow-specific skill carries the package reference and declare-add-read setup its own examples need so it works on its own; the base skill is the fuller treatment of the library.",
   "skills": [
     "."
   ]

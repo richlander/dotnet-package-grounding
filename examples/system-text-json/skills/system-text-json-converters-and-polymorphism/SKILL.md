@@ -1,5 +1,5 @@
 ---
-name: converters-and-polymorphism
+name: system-text-json-converters-and-polymorphism
 version: 10.0.0
 description: >-
   Use when System.Text.Json needs custom value handling — a JsonConverter<T> for a type STJ can't
