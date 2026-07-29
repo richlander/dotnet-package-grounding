@@ -5,14 +5,26 @@ description: >-
   Use when migrating serialization code from Newtonsoft.Json (Json.NET) to System.Text.Json —
   replacing JsonConvert / JsonSerializerSettings / [JsonProperty] and reconciling the behavioral
   differences that compile clean but silently change output (case-sensitivity, fields, nulls,
-  comments, dates). Requires the base `system-text-json` skill.
+  comments, dates).
 ---
 
 # Newtonsoft.Json → System.Text.Json migration
 
-Remove the `Newtonsoft.Json` package reference and `using Newtonsoft.Json;`. STJ is in the shared
-framework — no replacement package needed. Then apply the API map **and** re-check the behavioral
-defaults, because most breaks are silent (compile-clean, wrong output), not compiler errors.
+## Required setup
+
+Remove the `Newtonsoft.Json` package reference and every `using Newtonsoft.Json;`. STJ is in the
+shared framework — **no package reference is needed**. The attributes are in a different namespace
+from the serializer, which is the usual post-migration compile error:
+
+```csharp
+using System.Text.Json;                 // JsonSerializer, JsonSerializerOptions
+using System.Text.Json.Serialization;   // [JsonPropertyName], [JsonIgnore], [JsonConstructor], JsonIgnoreCondition
+```
+
+Then apply the API map **and** re-check the behavioral defaults, because most breaks are silent
+(compile-clean, wrong output), not compiler errors. The single most common regression: STJ matches
+property names **case-sensitively**, so camelCase JSON into PascalCase members yields null/default
+with no exception.
 
 ## API map
 
@@ -31,7 +43,7 @@ defaults, because most breaks are silent (compile-clean, wrong output), not comp
 | `ReferenceLoopHandling.Ignore` | `ReferenceHandler.IgnoreCycles` |
 | `PreserveReferencesHandling.All` | `ReferenceHandler.Preserve` |
 | `StringEnumConverter` | `JsonStringEnumConverter` |
-| `JObject` / `JArray` / `JToken` | `JsonNode` / `JsonObject` / `JsonArray` (see dom-and-streaming) |
+| `JObject` / `JArray` / `JToken` | `JsonNode` / `JsonObject` / `JsonArray` (namespace `System.Text.Json.Nodes`) |
 | `[JsonExtensionData]` | `[JsonExtensionData]` (dictionary must be `Dictionary<string, JsonElement>` or `object`) |
 
 ## Behavioral differences to reconcile (the silent ones)
@@ -45,7 +57,7 @@ defaults, because most breaks are silent (compile-clean, wrong output), not comp
 - **Comments / trailing commas.** Newtonsoft allows; STJ throws → `ReadCommentHandling =
   JsonCommentHandling.Skip`, `AllowTrailingCommas = true`.
 - **Dates.** No `DateFormatString`. STJ uses ISO 8601 round-trip; other formats need a custom
-  `JsonConverter<DateTime>` (see converters-and-polymorphism). `TimeSpan` also differs.
+  `JsonConverter<DateTime>` (custom converters are covered separately). `TimeSpan` also differs.
 - **Numbers.** Newtonsoft is lenient about quoted numbers; STJ rejects `"123"` into an `int` unless
   `NumberHandling = JsonNumberHandling.AllowReadingFromString`.
 - **Missing vs null.** STJ leaves a member at its default when the JSON omits it (no `MissingMemberHandling`).

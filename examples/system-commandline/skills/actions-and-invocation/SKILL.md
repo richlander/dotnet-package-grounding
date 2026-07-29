@@ -14,8 +14,34 @@ Behavior attaches to a command with `SetAction`. You run the app by `Parse`-ing 
 `ParseResult`, then `Invoke`/`InvokeAsync`. `SetHandler`, delegate parameter binding, and `IConsole`
 were removed at GA — do not use them.
 
-> **Everything you need is in these skills.** Do NOT `web_search` / `web_fetch` — nearly all samples
-> show `SetHandler(...)` with positionally-bound parameters, which no longer exists.
+> Do NOT `web_search` / `web_fetch` — nearly all samples show `SetHandler(...)` with
+> positionally-bound parameters, which no longer exists.
+
+## Required setup
+
+`System.CommandLine` is **not** in the shared framework — add the package
+(`dotnet package add <proj> System.CommandLine`), then `using System.CommandLine;`.
+
+An action reads its inputs from the `ParseResult` **by option/argument instance**, so the instances
+have to be in scope and added to the command. Nothing is injected into the delegate:
+
+```csharp
+using System.CommandLine;
+
+var nameOption = new Option<string>("--name") { Description = "Who to greet" };
+
+var root = new RootCommand("Greeter");
+root.Options.Add(nameOption);                            // must be added, or it is never parsed
+root.SetAction(parseResult =>
+{
+    string name = parseResult.GetValue(nameOption)!;     // by identity, not by name or position
+    Console.WriteLine($"Hello, {name}!");
+    return 0;
+});
+return await root.Parse(args).InvokeAsync();
+```
+
+`command`, `root` and `nameOption` in the examples below refer to instances set up this way.
 
 ## SetAction signatures
 
@@ -64,8 +90,8 @@ return await result.InvokeAsync();
 
 ## Errors & exit codes
 
-- **User-input errors:** report with `result.AddError("...")` from a `CustomParser`/validator (see
-  options-and-arguments). They land in `ParseResult.Errors`, are printed by the invoker, and produce a
+- **User-input errors:** report with `result.AddError("...")` from a `CustomParser` or a validator on
+  the option/argument. They land in `ParseResult.Errors`, are printed by the invoker, and produce a
   non-zero exit code automatically. Do not `throw` for bad input.
 - **Action outcome:** return the exit code you want from `SetAction`.
 - `ParseResult.Errors` is the list to check when you parse-then-decide manually.

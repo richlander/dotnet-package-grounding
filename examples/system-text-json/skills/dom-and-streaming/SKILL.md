@@ -5,10 +5,28 @@ description: >-
   Use when System.Text.Json work is not a plain POCO round-trip — inspecting/mutating JSON without a
   model (JsonNode / JsonDocument), reading or writing at high throughput (Utf8JsonReader /
   Utf8JsonWriter, byte and Stream overloads), or streaming large sequences
-  (DeserializeAsyncEnumerable). Requires the base `system-text-json` skill.
+  (DeserializeAsyncEnumerable).
 ---
 
 # DOM & streaming APIs
+
+## Required setup
+
+The DOM types are **not** in the `System.Text.Json` namespace. `JsonNode`/`JsonObject`/`JsonArray`
+live in `System.Text.Json.Nodes`; forgetting that using is the usual reason this code won't compile
+(`JsonDocument`, `JsonElement`, `Utf8JsonReader` and `Utf8JsonWriter` are in `System.Text.Json`):
+
+```csharp
+using System.Text.Json;         // JsonSerializer, JsonSerializerOptions, JsonDocument, JsonElement, Utf8JsonReader/Writer
+using System.Text.Json.Nodes;   // JsonNode, JsonObject, JsonArray, JsonValue
+```
+
+Build one options instance and reuse it — a fresh one is expensive (it caches per-type metadata on
+first use). `options` in the examples below is that instance:
+
+```csharp
+static readonly JsonSerializerOptions Options = new(JsonSerializerDefaults.Web);
+```
 
 ## Mutable DOM — `JsonNode` (the `JObject` replacement)
 
@@ -75,5 +93,5 @@ await foreach (var item in JsonSerializer.DeserializeAsyncEnumerable<Item>(strea
 ```
 
 - Only the current item is materialized — ideal for large feeds/logs.
-- All of the above compose with source generation: pass a `JsonTypeInfo<T>` from your context
-  (see source-generation-aot) instead of `options` to stay AOT-safe.
+- All of the above compose with source generation: pass a `JsonTypeInfo<T>` from a generated context
+  instead of `options` to stay AOT-safe. Source generation is covered separately.
