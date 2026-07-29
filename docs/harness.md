@@ -357,8 +357,19 @@ caches it per-SHA, so only the first run pays the build cost. Package repos may 
 ### Keeping content arms tool-clean
 
 For a clean **content** measurement the agent must not substitute a tool for the skill set, so eval runs
-**scrub `~/.dotnet/tools` from the agent's PATH** (removing `dotnet-inspect`, `ildasm`, `ilspycmd`) while
-keeping the system `dotnet`/`dnx`. Tool availability — e.g. a `dotnet-inspect` pointer — is a **separate
+**scrub the .NET tool directories from the agent's PATH** (removing `dotnet-inspect`, `ildasm`,
+`ilspycmd`) while keeping the system `dotnet`/`dnx`. Scrub **both** `~/.dotnet/tools` (the SDK tool
+store) and `~/.dotnet/bin` (where `dotnet-install` places tools) — `dotnet-inspect` is commonly present
+in both, so dropping only the tool store leaves it reachable. Because `grounding` itself usually lives
+in `~/.dotnet/bin`, invoke it by absolute path once the scrub is applied, and assert the scrub worked
+before spending on a run:
+
+```bash
+command -v dotnet-inspect && { echo "still on PATH"; exit 1; }
+"$HOME/.dotnet/bin/grounding" run ...
+```
+
+Tool availability — e.g. a `dotnet-inspect` pointer — is a **separate
 lever**, layered in deliberately as its own arm, not part of the baseline-vs-grounded content comparison.
 (Verify post-hoc: the `di` signal in `grounding analyze` must be `0` on the grounded arm.)
 
