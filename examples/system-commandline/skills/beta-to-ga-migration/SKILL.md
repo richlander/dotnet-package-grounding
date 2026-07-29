@@ -20,7 +20,8 @@ carries beta code all the way to 3.x. Set the package version, then apply the ta
 ## Required setup
 
 Set the package version first — beta and GA are the same package id, so the migration starts with
-`<PackageReference Include="System.CommandLine" Version="2.0.0" />` (or `3.0.0-*`). The namespace is
+`<PackageReference Include="System.CommandLine" Version="2.0.10" />` — the latest stable — or
+`Version="3.0.0-preview.6.26359.118"` for the 3.x preview. The namespace is
 unchanged (`using System.CommandLine;`); what changed is the invocation and binding stack.
 
 The GA shape every row below maps onto — declare the instance, add it to a command, read it back by
