@@ -5,7 +5,9 @@ description: >-
   Use when targeting recent .NET runtimes (8/9/10+) and you need the newer, stricter System.Text.Json
   behavior or APIs a model trained on older docs may not know — the JsonSerializerOptions.Strict
   preset, AllowDuplicateProperties, RespectNullableAnnotations / RespectRequiredConstructorParameters,
-  PipeReader overloads, and JsonMarshal.
+  PipeReader overloads, and JsonMarshal. Also covers why duplicate-key rejection matters at untrusted
+  parse boundaries, the .NET 11 [JsonNamingPolicy] attribute and its non-transitivity, and getting
+  newer STJ APIs on an older runtime via the out-of-band package.
 ---
 
 # Newer-runtime strictness & APIs (.NET 8 → 10)
@@ -43,6 +45,26 @@ var options = JsonSerializerOptions.Strict;   // a shared, read-only preset
 `Strict` is **read-compatible with `Default`**: anything serialized with `Default` deserializes under
 `Strict`. Prefer it for untrusted input rather than hand-assembling the same four options.
 
+### Why duplicate rejection matters (it is not theoretical)
+
+JSON does not define how a repeated object key resolves, so **two readers of the same payload can
+disagree** — and last-one-wins vs first-one-wins is exactly the split that turns a parse quirk into a
+spoofing bug. A real instance: one component resolved a source-file URL by longest-pattern match
+while another reported the repository URL by first-known-host match; given a repeated key, they
+selected **different entries** from one document, so the tool resolved content from one origin while
+reporting provenance from another.
+
+Set `AllowDuplicateProperties = false` (or use `Strict`) at **every parse boundary that accepts
+untrusted input**, and note the knob exists on the DOM entry points too, not just the serializer:
+
+```csharp
+var docOptions = new JsonDocumentOptions { AllowDuplicateProperties = false };
+using var doc = JsonDocument.Parse(untrustedJson, docOptions);
+```
+
+Callers that already treat malformed JSON as "no data" will treat duplicate-bearing JSON the same
+way — fail-closed, and consistent with their existing handling.
+
 ## Individual knobs (available without the whole preset)
 
 - `new JsonSerializerOptions { AllowDuplicateProperties = false }` — also on `JsonDocumentOptions`.
@@ -64,6 +86,33 @@ await foreach (var item in JsonSerializer.DeserializeAsyncEnumerable<Item>(pipeR
 
 `System.Text.Json.JsonMarshal` exposes the raw backing UTF-8 bytes of a `JsonElement`
 (`GetRawUtf8Value`) for zero-copy scenarios. Reach for it only in measured hot paths.
+
+## `.NET 11`: `[JsonNamingPolicy]` is **not transitive**
+
+.NET 11 adds a `JsonNamingPolicyAttribute` so a naming policy can sit on the model instead of being
+repeated on every context. It does **not** do what the name suggests: it overrides the context policy
+for **that type's own properties only**, and nested types keep the context policy. Verified:
+
+```text
+ctx = SnakeCase, [JsonNamingPolicy(CamelCase)] on Outer:
+{"outerProp":"a","nested":{"nested_prop":"b"}}
+                          ^ nested type ignored the attribute
+```
+
+So it does not make naming intrinsic to a model graph. Making it so would mean attributing **every
+type in the transitive graph**, which is more duplication than the per-context lines it removes — and
+any type you miss silently changes that shape's wire names. Prefer a test that asserts every wire
+name matches its context's declared policy over adopting the attribute for this purpose.
+
+## Getting .NET 11 STJ APIs without targeting .NET 11
+
+`System.Text.Json` also ships **out-of-band**, and the package's LTS-floor TFM does not stop a newer
+package from loading on an older runtime. Verified: a `net10.0` app referencing
+`System.Text.Json 11.0.0-preview.*` loads the app-local `System.Text.Json.dll` v11.0.0.0 on the
+.NET 10.0.8 runtime, with the net11-only APIs working and the source generator honoring them.
+
+So "that API is .NET 11" is not by itself a reason to rule it out on a .NET 10 target — add the
+package reference. Weigh it as a dependency decision, not an impossibility.
 
 ## AOT-safe string enums (.NET 9+)
 

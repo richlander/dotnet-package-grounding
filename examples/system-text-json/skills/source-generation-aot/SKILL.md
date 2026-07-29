@@ -5,7 +5,9 @@ description: >-
   Use when System.Text.Json runs under Native AOT or trimming (PublishAot / PublishTrimmed), or when
   you want the faster, reflection-free serialization path — i.e. a JsonSerializerContext with
   [JsonSerializable]. Reflection-based JsonSerializer compiles but THROWS at run time under AOT; the
-  source generator is the only supported path.
+  source generator is the only supported path. Also covers configuring a context with
+  [JsonSourceGenerationOptions] and why naming policy is per-context, not per-model, so one type
+  serialized by two contexts can emit two different spellings.
 ---
 
 # Source generation & Native AOT
@@ -72,6 +74,39 @@ internal partial class ReportContext : JsonSerializerContext { }
   the shape by choosing the context.
 - **`UseStringEnumConverter = true`** is the AOT-safe way to get string enums — the reflection-based
   `new JsonStringEnumConverter()` added to an options list is NOT AOT-safe for source-gen contexts.
+
+## Naming is declared per *context*, not per model
+
+`PropertyNamingPolicy` lives on the context (via `[JsonSourceGenerationOptions]`), **not** on the
+model type. Two consequences bite real tools:
+
+- **One model serialized by two contexts can get two spellings.** The indented/compact pair above,
+  or a row type shared between a document context and a JSONL context, are the usual cases. Nothing
+  ties the declarations together.
+- **A context declared without a naming policy silently emits CLR PascalCase**, while every sibling
+  context emits snake_case or camelCase. It compiles, it round-trips against itself, and it is only
+  visible to someone diffing actual output — a shipped wire format that is expensive to correct later.
+
+Neither is caught by the compiler, so assert it in a test. Discover contexts by **reflection** rather
+than listing them, so a newly declared context is covered the moment it exists, and walk each
+context's type graph **transitively** — naming attributes are not transitive, so nested types are
+exactly where a spelling change hides:
+
+```csharp
+using System.Reflection;   // the gate walks the assembly's types
+
+// For every JsonSerializerContext in the assembly, for every type reachable from it,
+// assert each serialized property name equals policy.ConvertName(clrPropertyName).
+foreach (Type ctx in assembly.GetTypes()
+             .Where(t => typeof(JsonSerializerContext).IsAssignableFrom(t) && !t.IsAbstract))
+{
+    // ... resolve the context's declared policy, walk JsonTypeInfo.Properties transitively,
+    //     and compare property.Name against the policy applied to the CLR member name.
+}
+```
+
+Verify the gate is not vacuous: it should fail if you remove a `PropertyNamingPolicy` from one
+context, and fail if discovery stops finding contexts.
 
 ## Gotchas
 
