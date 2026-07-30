@@ -237,26 +237,66 @@ Cross-package probes show that a gotcha must usually satisfy all three condition
 | --- | --- | --- | --- | --- |
 | Silent | Yes | Yes | No; it throws | Yes; empty output |
 | Obscure | Yes | No; famous | Yes; post-training | No; common examples teach it |
-| Result | +15.1% | −12.5% (suspect) | +7.9% (suspect) | −1.0% |
+| Result | +15.1% | +0.0 pts | +0.0 pts | −1.0% |
+
+Both STJ cells were re-measured on the rebuilt suite; the superseded figures and why they were wrong
+are below.
 
 ### Evidence: System.Text.Json unit
 
-> **The two STJ numbers below are not trustworthy and are kept only for the record.** They were
-> produced by the pre-rebuild STJ suite, which was later found to leak: 47 of its 48 fixtures carried
-> a `// Hint:` line in `Program.cs` naming the exact API under test, and 30 of 48 prompts named it
-> too. A skill-less baseline passes such a scenario by transcription, which **inflates the baseline
-> and suppresses measured uplift** — exactly the shape of a small or negative movement. So these
-> figures cannot be used as evidence for the "too famous" and "loud failure" explanations offered in
-> the last column; the explanations may still be right, but this is not what shows it.
->
-> The suite has since been rebuilt to 24 hint-free, goal-stated scenarios and verified end-to-end.
-> **Re-measure before citing either number.** The SCL and M.E.AI rows come from different suites and
-> are not affected.
+Measured on the rebuilt 24-scenario CT-24 suite (hint-free, goal-stated, assertions verified 48/48
+positive and 7/7 against negative controls), `claude-haiku-4.5`, 5 runs per scenario, 120 runs per
+arm. Whole suite: **77.5% → 86.7%, +9.2 pts.**
 
-| Scenario | Baseline → grounded | Movement | Authoring lesson |
+| Scenario family | Baseline → grounded | Movement | Authoring lesson |
 | --- | --- | ---: | --- |
-| Migrate Newtonsoft.Json code; silent break is case-sensitive matching by default | 5.0 → 4.8 in guaranteed context / 4.0 in discover-and-read | −12.5%; guaranteed-context −6.9% | The baseline already knew to add `PropertyNameCaseInsensitive = true`; the gotcha is too famous. |
-| Make reflection serialization Native AOT compatible with source generation | 5.0 → 5.0 | +7.9%; guaranteed-context +9.4% | The break was real but loud: the exception message points to source generation, so final quality tied. |
+| Migrate Newtonsoft.Json code; silent break is case-sensitive matching by default (3 scenarios) | 100% → 100% | +0.0 pts | The baseline gets it right in every run unaided. The gotcha really is too famous. |
+| Make reflection serialization Native AOT compatible with source generation (3 scenarios) | 100% → 100% | +0.0 pts | The break is real but loud: the exception names source generation, so the baseline self-corrects. |
+| Reject duplicate keys / unmapped members at a trust boundary (2 scenarios) | 30% → 70% | **+40.0 pts** | Silent, obscure and post-training — all three conditions hold, and this is where the shelf pays. |
+
+The third row is the one that carries the principle. It is the only STJ family where the failure is
+silent *and* the API postdates the model's training, and it moves four times the whole-suite average.
+Where either condition fails, grounding buys nothing.
+
+#### Superseded figures
+
+The same two families were previously reported as **−12.5%** and **+7.9%**. Those came from the
+pre-rebuild suite, which leaked: 47 of its 48 fixtures carried a `// Hint:` line in `Program.cs`
+naming the exact API under test, and 30 of 48 prompts named it too. A skill-less baseline passes such
+a scenario by transcription, which **inflates the baseline and suppresses measured uplift** — exactly
+the shape of a small or negative movement.
+
+The re-measurement lands at +0.0 for both, so the conclusions in the last column survive; it was the
+magnitudes, and the apparent *negative*, that were artifacts. The SCL and M.E.AI rows come from
+different suites and were never affected.
+
+### Evidence: System.CommandLine unit
+
+Same protocol, on the rebuilt 24-scenario SCL suite against `3.0.0-preview.6.26359.118`. Whole suite:
+**11.7% → 65.0%, +53.3 pts** — the largest effect measured anywhere in this repo, and the cleanest
+illustration of the principle.
+
+| Scenario family | Baseline → grounded | Movement |
+| --- | --- | ---: |
+| Subcommands and help customization (5 scenarios) | 0% → 76% | **+76.0 pts** |
+| 3.x-only additions (3 scenarios) | 6.7% → 80% | **+73.3 pts** |
+| Base skill scenarios (7) | 17.1% → 82.9% | +65.7 pts |
+| beta→GA migration (2 scenarios) | 50% → 100% | +50.0 pts |
+| Actions and invocation (2 scenarios) | 0% → 30% | +30.0 pts |
+| Options and arguments (5 scenarios) | 8% → 20% | +12.0 pts |
+
+The baseline does not merely underperform here — it scores **0%** on two families. The failures are
+not subtle judgement calls: the ungrounded arm writes the 2.0-beta4 API it was trained on and misses
+`SetAction`, `DefaultValueFactory` and `Required = true`, which the code greps catch directly. Every
+one of the three conditions holds at once, and this is what that looks like.
+
+The contrast with STJ is the useful part. Both suites were built the same way by the same author with
+the same rigour; the difference in outcome is a property of **the libraries**, not of the writing. A
+mainstream BCL type the model has seen a decade of examples of yields +9.2; a preview API that
+postdates training yields +53.3. Content quality is not the variable that separates them.
+
+`options-and-arguments` is the outlier and the open question: grounded still only reaches 20%, so the
+shelf is not yet carrying that family. It is the first place to look for content work.
 
 ### Evidence: Microsoft.Extensions.AI unit
 
