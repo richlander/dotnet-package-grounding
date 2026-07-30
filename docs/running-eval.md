@@ -64,9 +64,18 @@ from the package repo.
 
 ## Clean-content hygiene
 
-For a content measurement, scrub `~/.dotnet/tools` from the agent's PATH so `dotnet-inspect` can't
-substitute for the skill set (tool availability is a separate lever). Verify `di == 0` on the grounded
-arm in the table.
+For a content measurement, scrub the .NET tool directories from the agent's PATH so `dotnet-inspect`
+can't substitute for the skill set (tool availability is a separate lever). Scrub **both**
+`~/.dotnet/tools` and `~/.dotnet/bin` — `dotnet-inspect` is commonly installed in both, and dropping
+only one leaves it reachable. Since `grounding` normally lives in `~/.dotnet/bin`, call it by absolute
+path afterwards, and assert the scrub took effect before you spend anything on a run:
+
+```bash
+command -v dotnet-inspect && { echo "still on PATH"; exit 1; }
+"$HOME/.dotnet/bin/grounding" run ...
+```
+
+Verify `di == 0` on the grounded arm in the table.
 
 ## Read the result
 
