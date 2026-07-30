@@ -3,7 +3,7 @@ config:
 
 # =============================================================================
 # System.CommandLine — CT-24. A grounding packet for the CURRENT GA / 3.x API
-# (System.CommandLine 3.0.0-preview.5, net10.0). The 2.0 GA release was a
+# (System.CommandLine 3.0.0-preview.6, net10.0). The 2.0 GA release was a
 # breaking redesign that REMOVED the beta invocation/binding stack (SetHandler,
 # AddOption/AddCommand/AddGlobalOption, BinderBase<T>, IConsole, HelpBuilder,
 # getDefaultValue:, IsRequired, ExistingOnly). Training data and the open web are
@@ -18,10 +18,14 @@ config:
 # against System.CommandLine 3.0.0-preview.5.26302.115 on net10.0. The fixtures
 # have since been repinned to 3.0.0-preview.6.26359.118 — the latest 3.x, and the
 # version the skills now tell readers to install — so the eval exercises the
-# guidance we actually give. preview.6 is additive over preview.5 and the three
-# 3.x members below were re-confirmed to compile against it, but the expected
-# outputs have NOT been re-executed on preview.6; that is part of the pending
-# verification pass.
+# guidance we actually give.
+#
+# STATUS: VERIFIED on preview.6. Every scenario was re-executed end-to-end by
+# running a reference solution through the real assertions: all 24 build, run,
+# and satisfy their code greps and output regexes on
+# 3.0.0-preview.6.26359.118/net10.0. Negative controls were also run and
+# correctly FAIL (e.g. C09 with the option repeated per-subcommand instead of
+# declared Recursive, and C11 hand-rolling repeated-option parsing off raw args).
 #
 # NOTE: C19-C21 grade members that do NOT exist in stable 2.0.10
 # (Argument<T>.CaptureRemainingTokens, RootCommand.HelpName, and the

@@ -19,8 +19,13 @@
 #     names, casing, presence/absence, restored values — so an over-/under-configured serializer
 #     fails while the intended idiom lands.
 #
-# STATUS: output regexes are AUTHORED, not yet executed against the net10.0 SDK. Verification is
-# a deliberate follow-up pass; do not cite numbers from this suite until that pass lands.
+# STATUS: VERIFIED. Every scenario was executed end-to-end against the net10.0 SDK by running a
+# reference solution through the real assertions: all 24 build, run, and satisfy their code greps
+# and output regexes. Negative controls (a plausible ungrounded solution per scenario shape) were
+# also run and correctly FAIL — e.g. S22's naive migration compiles and looks right but drops the
+# old library's implicit field and case-insensitive defaults, and only the OUTPUT regex catches it,
+# while S16's non-streaming solution emits byte-identical output and only the CODE grep catches it.
+# That is the dual-grading rationale, confirmed rather than assumed.
 config:
   max_parallel_scenarios: 2
   max_parallel_runs: 2
