@@ -101,13 +101,30 @@ var port = new Option<int>("--port")
     },
 };
 
-// Cross-cutting/range validation on an already-parsed value:
+// Validate ONE already-parsed value — the validator hangs off that option:
 port.Validators.Add(result =>
 {
     if (result.GetValue(port) == 0) result.AddError("--port is required and must be valid");
 });
+
+// A rule spanning TWO inputs cannot live on either one. Put it on the COMMAND,
+// and read both values off the CommandResult:
+var min = new Option<int>("--min");
+var max = new Option<int>("--max");
+var root = new RootCommand("range") { min, max };
+
+root.Validators.Add(result =>
+{
+    if (result.GetValue(max) <= result.GetValue(min))
+        result.AddError("max must be greater than min");
+});
 ```
 
+- **Pick the level by how many inputs the rule touches.** One input → `option.Validators`. Two or more,
+  or a rule about the command as a whole → `command.Validators`. Reaching for an option-level validator
+  for a cross-input rule is the common mistake; it cannot see the other value.
+- Do the check in a validator, **not** inside the action. A validator runs before invocation, so the
+  action never has to cope with a combination the parser should have refused.
 - Report bad input with `result.AddError(...)` — do **not** throw for user-input errors; errors surface
   through `ParseResult.Errors` and set a non-zero exit code automatically.
 
