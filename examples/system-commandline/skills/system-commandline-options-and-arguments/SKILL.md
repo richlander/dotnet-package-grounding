@@ -3,9 +3,10 @@ name: system-commandline-options-and-arguments
 version: 2.0.0
 description: >-
   Use when declaring or configuring System.CommandLine inputs — Option<T> and Argument<T>: names vs
-  aliases, Description, Required, DefaultValueFactory, Arity, constrained values via
-  AcceptOnlyFromAmong, file/dir validation, and custom parsing/validation with CustomParser and
-  Validators.Add. Covers the constructor-alias gotcha in depth.
+  aliases, Description, Required, DefaultValueFactory, Arity, restricting a value to a fixed set with
+  AcceptOnlyFromAmong, requiring that a file or directory path already exists, rejecting bad or
+  out-of-range input, and checking one option against another. This is where CustomParser,
+  Validators.Add and result.AddError belong. Covers the constructor-alias gotcha in depth.
 ---
 
 # System.CommandLine: options & arguments

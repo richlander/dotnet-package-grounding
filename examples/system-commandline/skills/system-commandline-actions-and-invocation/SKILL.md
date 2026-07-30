@@ -4,8 +4,9 @@ version: 2.0.0
 description: >-
   Use when wiring behavior and running a System.CommandLine app — SetAction (sync and async
   signatures), reading values with parseResult.GetValue, Parse(args) then Invoke/InvokeAsync, exit
-  codes, and handling parse errors via ParseResult.Errors / result.AddError. SetHandler and
-  positional binding are gone.
+  codes, and inspecting ParseResult.Errors after parsing. SetHandler and positional binding are gone.
+  Declaring the inputs themselves, and raising validation errors while parsing them, are separate
+  topics.
 ---
 
 # System.CommandLine: actions & invocation
