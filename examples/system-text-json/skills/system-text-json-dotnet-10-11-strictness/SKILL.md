@@ -1,5 +1,5 @@
 ---
-name: dotnet-10-11-strictness
+name: system-text-json-dotnet-10-11-strictness
 version: 10.0.0
 description: >-
   Use when targeting recent .NET runtimes (8/9/10+) and you need the newer, stricter System.Text.Json

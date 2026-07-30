@@ -1,5 +1,5 @@
 ---
-name: beta-to-ga-migration
+name: system-commandline-beta-to-ga-migration
 version: 2.0.0
 description: >-
   Use when migrating a .NET CLI from System.CommandLine 2.0.0-beta (beta1–beta4) to the GA / 3.x

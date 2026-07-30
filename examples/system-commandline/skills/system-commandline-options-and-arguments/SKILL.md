@@ -1,5 +1,5 @@
 ---
-name: options-and-arguments
+name: system-commandline-options-and-arguments
 version: 2.0.0
 description: >-
   Use when declaring or configuring System.CommandLine inputs — Option<T> and Argument<T>: names vs

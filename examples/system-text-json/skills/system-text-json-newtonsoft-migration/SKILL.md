@@ -1,5 +1,5 @@
 ---
-name: newtonsoft-migration
+name: system-text-json-newtonsoft-migration
 version: 10.0.0
 description: >-
   Use when migrating serialization code from Newtonsoft.Json (Json.NET) to System.Text.Json —

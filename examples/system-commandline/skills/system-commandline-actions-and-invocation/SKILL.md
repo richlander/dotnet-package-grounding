@@ -1,5 +1,5 @@
 ---
-name: actions-and-invocation
+name: system-commandline-actions-and-invocation
 version: 2.0.0
 description: >-
   Use when wiring behavior and running a System.CommandLine app — SetAction (sync and async

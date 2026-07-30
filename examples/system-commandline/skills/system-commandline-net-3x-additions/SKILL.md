@@ -1,5 +1,5 @@
 ---
-name: net-3x-additions
+name: system-commandline-net-3x-additions
 version: 3.0.0
 description: >-
   Use when targeting System.CommandLine 3.x specifically — the members added over 2.x GA

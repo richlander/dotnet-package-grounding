@@ -1,5 +1,5 @@
 ---
-name: source-generation-aot
+name: system-text-json-source-generation-aot
 version: 10.0.0
 description: >-
   Use when System.Text.Json runs under Native AOT or trimming (PublishAot / PublishTrimmed), or when
