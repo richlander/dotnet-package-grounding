@@ -159,6 +159,37 @@ Do not include full code patterns, exhaustive API lists, or method signatures in
 belong in the body or supporting files. A sharper discovery hook measurably improved the
 System.CommandLine discover-and-read path from +9.6% to +15.1%; longer would not have been better.
 
+### A domain skill must not restate what the base skill already claims
+
+The base skill is the entry point and is read almost every time. A domain skill whose description
+repeats the base skill's universal claims will therefore be pulled almost every time too — not because
+it fits the task, but because it echoes the thing that always matches.
+
+Measured on the System.CommandLine CT-24 suite (haiku, 24 scenarios × 5 runs). `actions-and-invocation`
+opened its description with `SetAction` and "reading values with parseResult.GetValue" — both already
+claimed by the base skill's "Covers the core shapes: declaring inputs, building the command tree,
+SetAction, and reading values by identity". Retrieval precision, counting a pull as correct when the
+skill is the scenario's expected family:
+
+| Skill | Scenarios pulled into | Precision | Family pass rate |
+| --- | --- | --- | --- |
+| `net-3x-additions` | 1 / 24 | 100% | 80.0% |
+| `subcommands-and-help` | 4 / 24 | 75% | 60.0% |
+| `beta-to-ga-migration` | 4 / 24 | 50% | 100.0% |
+| `options-and-arguments` | 11 / 24 | 45% | 28.0% |
+| `actions-and-invocation` | 13 / 24 | **15%** | **10.0%** |
+
+Precision tracks the outcome: the skill pulled into more than half the suite while being the right
+answer twice was also the worst-scoring family. Being read is not the same as being useful, and a
+description that over-attracts costs the run the skill it should have read instead.
+
+The same trap applies to any cross-cutting mechanism. Naming a bare "exit codes" attracts every
+scenario that mentions a non-zero exit, whatever the scenario is actually about; scoping it to the
+decision the skill owns — choosing the process exit code from what an action returns — does not.
+
+State what is distinctive about the skill, and let the base skill keep the shapes common to the whole
+package.
+
 ## 4. Keep claims first-party and package-local
 
 A package skill set may speak with authority only about its own surface: overload choices, version
