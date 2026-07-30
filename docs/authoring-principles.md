@@ -93,10 +93,14 @@ Prevention belongs to the author; the installer only reports.
 > cross-references in [markout#171](https://github.com/richlander/markout/pull/171) and gave each
 > domain skill the setup it had been borrowing, so renaming one no longer breaks its siblings — but
 > renaming still rewrites `name`, and the hash still moves.*
-
-> *Conformance: the base skills follow this rule today; the nine domain skills across the `markout`,
-> `system-text-json`, and `system-commandline` shelves do not yet. Migrating them re-hashes their
-> datasets, so it is sequenced after the runs in flight. Remove this note when they conform.*
+>
+> *Conformance: the base skills follow this rule today. The domain skills now do too — `markout`
+> adopted the prefix in [markout#176](https://github.com/richlander/markout/pull/176), which also
+> enforces it at pack time, and the `system-text-json` and `system-commandline` shelves followed in
+> dotnet-package-skills#51. The one holdout is `examples/markout/`, a superseded copy of the 0.30.0
+> shelf that needs re-syncing rather than renaming. Note that a rename re-hashes a shelf's datasets,
+> and that a skill's name is part of what an agent sees when deciding whether to pull it — so figures
+> either side of a rename are not strictly comparable.*
 
 ## 1. Record only what the model is proven to need
 
@@ -270,7 +274,7 @@ The re-measurement lands at +0.0 for both, so the conclusions in the last column
 magnitudes, and the apparent *negative*, that were artifacts. The SCL and M.E.AI rows come from
 different suites and were never affected.
 
-### Evidence: System.CommandLine unit
+### Evidence: System.CommandLine unit, rebuilt suite
 
 Same protocol, on the rebuilt 24-scenario SCL suite against `3.0.0-preview.6.26359.118`. Whole suite:
 **11.7% → 65.0%, +53.3 pts** — the largest effect measured anywhere in this repo, and the cleanest
