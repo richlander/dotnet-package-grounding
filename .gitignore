@@ -6,6 +6,13 @@ obj/
 .skill-validator-results/
 .tools/
 
+# Agent scratch. The harness runs the agent with its cwd inside this repo, so
+# the agent's own session artifacts get written here and under examples/<unit>/
+# on every eval run. Regenerated each time and never part of the shelf.
+session-state/
+/files/
+/plan.md
+
 # OS / editor
 .DS_Store
 *.swp
