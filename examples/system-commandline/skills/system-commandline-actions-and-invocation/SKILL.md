@@ -2,11 +2,11 @@
 name: system-commandline-actions-and-invocation
 version: 2.0.0
 description: >-
-  Use when wiring behavior and running a System.CommandLine app — SetAction (sync and async
-  signatures), reading values with parseResult.GetValue, Parse(args) then Invoke/InvokeAsync, exit
-  codes, and inspecting ParseResult.Errors after parsing. SetHandler and positional binding are gone.
-  Declaring the inputs themselves, and raising validation errors while parsing them, are separate
-  topics.
+  Use when the action itself is the hard part — returning Task<int> from an async action, choosing
+  the process exit code from what the action returns, and splitting Parse(args) from
+  Invoke/InvokeAsync so the ParseResult can be inspected in between. SetHandler and positional
+  binding are gone. Wiring a plain action and reading values are core shapes; declaring inputs and
+  rejecting bad ones are separate topics.
 ---
 
 # System.CommandLine: actions & invocation
