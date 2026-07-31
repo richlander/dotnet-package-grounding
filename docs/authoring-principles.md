@@ -190,6 +190,39 @@ decision the skill owns — choosing the process exit code from what an action r
 State what is distinctive about the skill, and let the base skill keep the shapes common to the whole
 package.
 
+Confirmed by re-running the suite after rewriting that one description to drop the base skill's
+claims. Nothing else about the skill changed, and the baseline arm was reused rather than re-run, so
+the control is identical:
+
+| | Before | After |
+| --- | --- | --- |
+| `actions-and-invocation` scenarios pulled into | 13 / 24 | **4 / 24** |
+| `options-and-arguments` scenarios pulled into | 11 / 24 | 14 / 24 |
+
+The over-attraction collapsed, and the pulls moved to the skill that owned the material.
+
+### A worked example beats a correct mention
+
+An API that appears in a skill can still be unreachable. Two scenarios in the same family failed for
+this reason, both while the agent was demonstrably reading the skill that documented the API.
+
+`C16` needs a rule spanning two options. The skill showed a validator on a single option under the
+comment "Cross-cutting/range validation" — accurate about the API, wrong about the shape, and an
+option-level validator cannot see another option's value. `C11` needs an option supplied twice. The
+skill said `Option<T[]>` / `Option<List<T>>` "collect multiple values" at the tail of a bullet about
+`Arity`, with no example and no command line.
+
+Replacing each with a worked example — the declaration, plus the command line it accepts:
+
+| Scenario | Before | After |
+| --- | --- | --- |
+| C16 cross-cutting validator | 0 / 5 (twice) | **4 / 5** |
+| C11 option supplied twice | 2 / 5 | 3 / 5 |
+
+C16 had failed every run across two earlier attempts, both of which misread it as a retrieval problem
+because the skill did mention validators. Coverage was never the deficit; a usable example was. Write
+the example with the input it accepts, not the API name.
+
 ## 4. Keep claims first-party and package-local
 
 A package skill set may speak with authority only about its own surface: overload choices, version
@@ -330,8 +363,20 @@ the same rigour; the difference in outcome is a property of **the libraries**, n
 mainstream BCL type the model has seen a decade of examples of yields +9.2; a preview API that
 postdates training yields +53.3. Content quality is not the variable that separates them.
 
-`options-and-arguments` is the outlier and the open question: grounded still only reaches 20%, so the
-shelf is not yet carrying that family. It is the first place to look for content work.
+`options-and-arguments` was the outlier: grounded reached only 20%, so the shelf was not carrying that
+family. Four changes to that one family — two to descriptions, two replacing a mention with a worked
+example — took it to **36%**, and the suite to **6.7% → 64.2%, +57.5 pts**, the largest uplift recorded
+here. The baseline arm was reused across the last two runs rather than re-measured, so that movement is
+attributable to the shelf and not to run-to-run drift.
+
+Worth recording how that was found, because two of the three diagnoses were wrong. The family was
+first read as a retrieval problem, since the failing scenarios were not opening the skill that held
+the answer. Fixing retrieval did move the scenarios that were genuinely mis-routed, but the worst
+scenario kept failing every run — and once it was demonstrably reading the right skill, the remaining
+explanation was that the skill did not answer it. It did not: the API was named but never shown in the
+shape the task needed. **A skill that mentions the right API looks like a content-complete skill, and
+a retrieval metric cannot tell you otherwise.** Check whether the failing runs read the skill before
+concluding anything about why they failed.
 
 ### Evidence: Microsoft.Extensions.AI unit
 
