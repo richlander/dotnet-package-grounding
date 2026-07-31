@@ -65,8 +65,29 @@ var count = new Option<int>("--count", "-c")     // ... or as extra ctor strings
   **alias**, silently dropping your help text. Put text in `{ Description = ... }`; extra ctor strings
   are always aliases.
 - `Required` makes an option mandatory. Optional options should set a `DefaultValueFactory`.
-- `Arity` (`ArgumentArity.Zero/ZeroOrOne/ExactlyOne/ZeroOrMore/OneOrMore`) controls token counts;
-  `Option<T[]>` / `Option<List<T>>` collect multiple values.
+- `Arity` (`ArgumentArity.Zero/ZeroOrOne/ExactlyOne/ZeroOrMore/OneOrMore`) controls token counts.
+
+### Collecting multiple values
+
+A collection-typed option accumulates **repeated occurrences** on its own — no extra setting:
+
+```csharp
+var tag = new Option<string[]>("--tag");                       // or Option<List<string>>
+
+// tool --tag a --tag b  =>  ["a", "b"]
+```
+
+Accepting **several values after one token** (`--tag a b`) is a different behavior and is off by
+default; that form is rejected until you opt in:
+
+```csharp
+var tag = new Option<string[]>("--tag") { AllowMultipleArgumentsPerToken = true };
+
+// tool --tag a b  =>  ["a", "b"]
+```
+
+Decide which command lines you mean to accept: repeating the option needs nothing, and only the
+one-token-many-values form needs the flag.
 
 ## Declaring arguments (positional)
 
