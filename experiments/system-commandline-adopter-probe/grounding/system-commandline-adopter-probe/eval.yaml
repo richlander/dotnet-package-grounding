@@ -66,7 +66,6 @@ scenarios:
     assertions:
       - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
       - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin Option< .', expected_exit_code: 0, command_timeout: 30 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin ArgumentArity.ZeroOrMore .', expected_exit_code: 0, command_timeout: 30 }
       - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin AllowMultipleArgumentsPerToken .', expected_exit_code: 0, command_timeout: 30 }
       - { type: file_not_contains, path: "Program.cs", value: "args[" }
       - type: run_command_and_assert
@@ -82,7 +81,7 @@ scenarios:
         expected_std_output_matches: 'paths=src,tests'
         command_timeout: 120
     rubric:
-      - "Uses a collection-typed option with ZeroOrMore arity"
+      - "Uses a collection-typed option whose arity supports both required forms"
       - "Opts into multiple arguments per token so the one-token-many-values form is accepted"
       - "Reads the collection from ParseResult by option identity instead of parsing argv"
     timeout: 900
@@ -108,12 +107,12 @@ scenarios:
     reject_tools: [web_search, web_fetch]
     assertions:
       - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin DefaultValueFactory .', expected_exit_code: 0, command_timeout: 30 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin HelpName .', expected_exit_code: 0, command_timeout: 30 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin CompletionSources.Add .', expected_exit_code: 0, command_timeout: 30 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin Validators.Add .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin CompletionSources.Add|AcceptOnlyFromAmong .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin Validators.Add|CustomParser|AcceptOnlyFromAmong .', expected_exit_code: 0, command_timeout: 30 }
       - { type: file_not_contains, path: "Program.cs", value: "HelpOption" }
       - { type: file_not_contains, path: "Program.cs", value: "args[" }
+      - { type: file_not_contains, path: "Program.cs", value: "args.Any(" }
+      - { type: file_not_contains, path: "Program.cs", value: "args.Contains(" }
       - type: run_command_and_assert
         command_to_run: "dotnet"
         command_arguments: "run --no-build --"
@@ -128,6 +127,12 @@ scenarios:
         command_timeout: 120
       - type: run_command_and_assert
         command_to_run: "dotnet"
+        command_arguments: "run --no-build -- --format YAML"
+        expected_exit_code: 0
+        expected_std_output_matches: 'format=yaml'
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
         command_arguments: "run --no-build -- --help"
         expected_exit_code: 0
         expected_std_output_matches: '--format <json\|yaml>'
@@ -136,7 +141,7 @@ scenarios:
         command_to_run: "dotnet"
         command_arguments: "run --no-build -- --format xml"
         expected_exit_code: 1
-        expected_std_error_matches: '(?i)json.*yaml'
+        expected_std_error_matches: '(?is)json.*yaml'
         command_timeout: 120
     rubric:
       - "Implements the default, alias, help placeholder, completion candidates, and validation as one coherent option contract"
@@ -171,6 +176,8 @@ scenarios:
       - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin GetResult .', expected_exit_code: 0, command_timeout: 30 }
       - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin Tokens .', expected_exit_code: 0, command_timeout: 30 }
       - { type: file_not_contains, path: "Program.cs", value: "args[" }
+      - { type: file_not_contains, path: "Program.cs", value: "args.Any(" }
+      - { type: file_not_contains, path: "Program.cs", value: "args.Contains(" }
       - type: run_command_and_assert
         command_to_run: "dotnet"
         command_arguments: "run --no-build --"
