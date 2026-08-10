@@ -1,0 +1,5 @@
+name: system-commandline-adopter-probe
+package: System.CommandLine
+description: >-
+  Adopter-derived screening tasks for stable System.CommandLine 2.0.10. This is
+  an experimental baseline probe, not a shipping skill shelf.

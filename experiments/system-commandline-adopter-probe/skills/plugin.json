@@ -1,0 +1,8 @@
+{
+  "name": "system-commandline-adopter-probe",
+  "version": "2.0.0",
+  "description": "Experimental copy of the current System.CommandLine shelf, used only to screen adopter-derived tasks against stable 2.0.10.",
+  "skills": [
+    "."
+  ]
+}
