@@ -34,6 +34,7 @@ scenarios:
       - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin override.*InvokeAsync .', expected_exit_code: 0, command_timeout: 30 }
       - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin SetAction .', expected_exit_code: 1, command_timeout: 30 }
       - { type: file_not_contains, path: "Program.cs", value: "args[" }
+      - { type: file_not_contains, path: "Program.cs", value: "args." }
       - type: run_command_and_assert
         command_to_run: "dotnet"
         command_arguments: "run --no-build -- --input demo"
@@ -68,6 +69,7 @@ scenarios:
       - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin Option< .', expected_exit_code: 0, command_timeout: 30 }
       - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin AllowMultipleArgumentsPerToken .', expected_exit_code: 0, command_timeout: 30 }
       - { type: file_not_contains, path: "Program.cs", value: "args[" }
+      - { type: file_not_contains, path: "Program.cs", value: "args." }
       - type: run_command_and_assert
         command_to_run: "dotnet"
         command_arguments: "run --no-build -- --path src tests docs"
@@ -111,8 +113,7 @@ scenarios:
       - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin Validators.Add|CustomParser|AcceptOnlyFromAmong .', expected_exit_code: 0, command_timeout: 30 }
       - { type: file_not_contains, path: "Program.cs", value: "HelpOption" }
       - { type: file_not_contains, path: "Program.cs", value: "args[" }
-      - { type: file_not_contains, path: "Program.cs", value: "args.Any(" }
-      - { type: file_not_contains, path: "Program.cs", value: "args.Contains(" }
+      - { type: file_not_contains, path: "Program.cs", value: "args." }
       - type: run_command_and_assert
         command_to_run: "dotnet"
         command_arguments: "run --no-build --"
@@ -176,8 +177,7 @@ scenarios:
       - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin GetResult .', expected_exit_code: 0, command_timeout: 30 }
       - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin Tokens .', expected_exit_code: 0, command_timeout: 30 }
       - { type: file_not_contains, path: "Program.cs", value: "args[" }
-      - { type: file_not_contains, path: "Program.cs", value: "args.Any(" }
-      - { type: file_not_contains, path: "Program.cs", value: "args.Contains(" }
+      - { type: file_not_contains, path: "Program.cs", value: "args." }
       - type: run_command_and_assert
         command_to_run: "dotnet"
         command_arguments: "run --no-build --"
@@ -194,13 +194,13 @@ scenarios:
         command_to_run: "dotnet"
         command_arguments: "run --no-build -- --auth-type pat"
         expected_exit_code: 1
-        expected_std_error_matches: '(?i)both.*neither'
+        expected_std_error_matches: '(?i)both.*(neither|omitted)'
         command_timeout: 120
       - type: run_command_and_assert
         command_to_run: "dotnet"
         command_arguments: "run --no-build -- --auth-id abc"
         expected_exit_code: 1
-        expected_std_error_matches: '(?i)both.*neither'
+        expected_std_error_matches: '(?i)both.*(neither|omitted)'
         command_timeout: 120
     rubric:
       - "Attaches an all-or-none validator to the command, not to either individual option or the action"
@@ -229,6 +229,7 @@ scenarios:
       - { type: file_not_contains, path: "Program.cs", value: '"--output", "-o", "destination"' }
       - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin Description .', expected_exit_code: 0, command_timeout: 30 }
       - { type: file_not_contains, path: "Program.cs", value: "args[" }
+      - { type: file_not_contains, path: "Program.cs", value: "args." }
       - type: run_command_and_assert
         command_to_run: "dotnet"
         command_arguments: "run --no-build -- --output dist"
