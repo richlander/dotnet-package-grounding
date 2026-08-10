@@ -11,9 +11,10 @@ scenarios:
   - name: "A01: dedicated asynchronous command action"
     expected_skill: system-commandline-adopter-probe
     prompt: |
-      This console project contains an asynchronous Processor service. Build a
-      command-line tool around it that accepts a required `--input` value and prints
-      `handled=<value>`.
+      Modify this provided .NET project's Program.cs. It already references
+      System.CommandLine 2.0.10; do not create another project or use another command-line
+      parser. The project contains an asynchronous Processor service. Build a command-line
+      tool around it that accepts a required `--input` value and prints `handled=<value>`.
 
       Keep command construction and execution separate: Program.cs should build and
       wire the command, while a dedicated action class owns execution, receives the
@@ -47,8 +48,10 @@ scenarios:
   - name: "A02: several values after one option token"
     expected_skill: system-commandline-adopter-probe
     prompt: |
-      Build a tool with a `--path` setting that accepts several paths after a single
-      occurrence, so `tool --path src tests docs` prints
+      Modify this provided .NET project's Program.cs. It already references
+      System.CommandLine 2.0.10; do not create another project or use another command-line
+      parser. Build a tool with a `--path` setting that accepts several paths after a
+      single occurrence, so `tool --path src tests docs` prints
       `paths=src,tests,docs`. Repeating the setting must also work:
       `tool --path src --path tests` prints `paths=src,tests`.
 
@@ -86,7 +89,9 @@ scenarios:
   - name: "A03: complete user-facing option contract"
     expected_skill: system-commandline-adopter-probe
     prompt: |
-      Build a tool with an optional `--format` setting and short form `-f`.
+      Modify this provided .NET project's Program.cs. It already references
+      System.CommandLine 2.0.10; do not create another project or use another command-line
+      parser. Build a tool with an optional `--format` setting and short form `-f`.
       Omitting it prints `format=json`; passing `-f yaml` prints `format=yaml`.
 
       Only `json` and `yaml` are valid, case-insensitively. Other values must be
@@ -138,10 +143,12 @@ scenarios:
   - name: "A04: all-or-none authentication settings"
     expected_skill: system-commandline-adopter-probe
     prompt: |
-      Build a tool with optional `--auth-type` and `--auth-id` settings. Authentication
-      is enabled only when the user explicitly supplies both. Supplying neither prints
-      `auth=anonymous`; supplying `--auth-type pat --auth-id abc` prints
-      `auth=pat:abc`.
+      Modify this provided .NET project's Program.cs. It already references
+      System.CommandLine 2.0.10; do not create another project or use another command-line
+      parser. Build a tool with optional `--auth-type` and `--auth-id` settings.
+      Authentication is enabled only when the user explicitly supplies both. Supplying
+      neither prints `auth=anonymous`; supplying
+      `--auth-type pat --auth-id abc` prints `auth=pat:abc`.
 
       Supplying either setting alone must be rejected before the action runs, with a
       non-zero exit and an error saying both settings or neither are required.
@@ -192,9 +199,11 @@ scenarios:
   - name: "A05: compile-clean alias and description regression"
     expected_skill: system-commandline-adopter-probe
     prompt: |
-      This tool still builds after its command-line dependency update, but its output
-      setting regressed. Restore the intended contract: `--output dist` and `-o dist`
-      both print `out=dist`, and `--help` explains the setting as `destination`.
+      Modify this provided .NET project's Program.cs. It references System.CommandLine
+      2.0.10; do not create another project or use another command-line parser. The tool
+      still builds after its dependency update, but its output setting regressed. Restore
+      the intended contract: `--output dist` and `-o dist` both print `out=dist`, and
+      `--help` explains the setting as `destination`.
 
       Do not replace the command-line library or hand-write help text. Build and run
       the long form, short form, and help to confirm the fix.
