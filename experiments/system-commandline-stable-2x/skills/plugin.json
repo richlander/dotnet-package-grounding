@@ -1,0 +1,8 @@
+{
+  "name": "system-commandline-stable-2x",
+  "version": "2.0.0",
+  "description": "Frozen copy of the current shipping System.CommandLine shelf (current-shelf control), used to run the 18-task adopter-derived suite against stable 2.0.10. One base skill, system-commandline-stable-2x; five workflow-specific skills, system-commandline-beta-to-ga-migration, system-commandline-options-and-arguments, system-commandline-actions-and-invocation, system-commandline-subcommands-and-help, system-commandline-net-3x-additions. Domain skills are unchanged from the shipping shelf.",
+  "skills": [
+    "."
+  ]
+}

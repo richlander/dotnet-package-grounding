@@ -1,0 +1,1005 @@
+config:
+  max_parallel_scenarios: 1
+
+# =============================================================================
+# System.CommandLine — clean-slate stable 2.0.10 adopter-derived suite
+# (net10.0). This unit intentionally deviates from the CT-24 default
+# methodology: instead of one task per public-API-surface concept ordered by
+# doc-TOC depth, every scenario here is sourced from real usage in two
+# independent production adopters and screened for survival before being kept.
+# Adopters and pinned commits:
+#   - richlander/dotnet-inspect@233c7a5f0a1b910eb63754fb0a281d65a915be37
+#   - microsoft/kiota@44926c3b3b3e6cae3e3081f88596682bd5efdcf5
+#
+# Screening note (from the prior system-commandline-adopter-probe run):
+# A01/A03/A04 survived the screen as real discriminators and are folded into
+# this ladder (S01, S08, S15). A02 (collection option arity/token-per-value)
+# and A05 (constructor-vs-Description regression) are MODEL-RESIDENT — both
+# arms already got them right, so they buy nothing as standalone graded tasks.
+# They still appear here only as INCIDENTAL CARRIER IDIOMS inside compound
+# scenarios (e.g. AllowMultipleArgumentsPerToken inside S09/S12's collection
+# options, Description/alias placement inside S07/S10), never as a scenario's
+# own graded discriminator.
+#
+# Every prompt below states user-visible behavior and architecture in prose —
+# never a member, type, or method name — and instructs the agent to modify the
+# PROVIDED project's Program.cs, which already references System.CommandLine
+# 2.0.10, to create no other project or parser, and to build + run every path
+# named in the prompt. web_search / web_fetch are blocked per scenario so the
+# eval reads model + skill knowledge, not archaeology. No scenario requires a
+# 3.x-preview-only member (CaptureRemainingTokens, RootCommand.HelpName, or the
+# AcceptOnlyFromAmong(StringComparer, ...) overload) — all were confirmed
+# unavailable / unnecessary against 2.0.10 while drafting these tasks. Every
+# reference solution below was built and run end-to-end against
+# System.CommandLine 2.0.10 / net10.0 before this file was written; see
+# check-scl-stable-suite.py in the session workspace for the harness that
+# reproduces that verification against both the references and the negative
+# controls.
+# =============================================================================
+
+scenarios:
+  - name: "S01: dedicated asynchronous command action"
+    expected_skill: system-commandline-stable-2x
+    prompt: |
+      Modify this provided .NET project's Program.cs. It already references
+      System.CommandLine 2.0.10; do not create another project or use another
+      command-line parser. The project contains an asynchronous Processor
+      service. Build a command-line tool around it that accepts a required
+      `--input` value and prints `handled=<value>`.
+
+      Keep command construction and execution separate: Program.cs should
+      build and wire the command, while a dedicated action class owns
+      execution, receives the existing Processor and the input definition, and
+      passes cancellation through to the service. Do not move the processing
+      logic into an inline delegate. Build and run with `--input demo` to
+      confirm the result.
+    setup:
+      files:
+        - { path: App.csproj, source: fixtures/shared/App.csproj }
+        - { path: Program.cs, source: fixtures/s01-action-class/Program.cs }
+        - { path: Processor.cs, source: fixtures/s01-action-class/Processor.cs }
+    reject_tools: [web_search, web_fetch]
+    assertions:
+      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin :[[:space:]]*AsynchronousCommandLineAction .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin .Action .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin override.*InvokeAsync .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin SetAction .', expected_exit_code: 1, command_timeout: 30 }
+      - { type: file_not_contains, path: "Program.cs", value: "args[" }
+      - { type: file_not_contains, path: "Program.cs", value: "args." }
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- --input demo"
+        expected_exit_code: 0
+        expected_std_output_matches: 'handled=demo'
+        command_timeout: 120
+    rubric:
+      - "Uses a dedicated AsynchronousCommandLineAction assigned through Command.Action, rather than an inline SetAction delegate"
+      - "Carries the exact Option<string> instance into the action and reads it from ParseResult by identity"
+      - "Passes the InvokeAsync cancellation token through to Processor.HandleAsync"
+    timeout: 900
+
+  - name: "S02: RPC-style direct command action"
+    expected_skill: system-commandline-stable-2x
+    prompt: |
+      Modify this provided .NET project's Program.cs. It already references
+      System.CommandLine 2.0.10; do not create another project or use another
+      command-line parser. Build an RPC-style tool with a `--mode` setting
+      (values `Stdio` or `NamedPipe`, defaulting to `Stdio`) and a `--pipe-name`
+      setting defaulting to `rpc`. Running the tool prints
+      `mode=<mode>;pipe=<pipe-name>` using whichever values were supplied or
+      defaulted.
+
+      Keep command construction and execution separate: Program.cs should
+      build and wire the command, while a dedicated asynchronous action class
+      owns execution and reads both settings from the parse result by
+      identity. Do not use an inline delegate for the action. Build and run
+      both the all-omitted path and an explicit
+      `--mode NamedPipe --pipe-name custom` path to confirm both.
+    setup:
+      files:
+        - { path: App.csproj, source: fixtures/shared/App.csproj }
+        - { path: Program.cs, source: fixtures/s02-rpc-action/Program.cs }
+    reject_tools: [web_search, web_fetch]
+    assertions:
+      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin :[[:space:]]*AsynchronousCommandLineAction .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin SetAction .', expected_exit_code: 1, command_timeout: 30 }
+      - { type: file_not_contains, path: "Program.cs", value: "args[" }
+      - { type: file_not_contains, path: "Program.cs", value: "args." }
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build --"
+        expected_exit_code: 0
+        expected_std_output_matches: 'mode=Stdio;pipe=rpc'
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- --mode NamedPipe --pipe-name custom"
+        expected_exit_code: 0
+        expected_std_output_matches: 'mode=NamedPipe;pipe=custom'
+        command_timeout: 120
+    rubric:
+      - "Uses a dedicated AsynchronousCommandLineAction rather than an inline SetAction delegate"
+      - "Reads both --mode and --pipe-name from ParseResult by identity, respecting the enum default and the string default"
+      - "Both the omitted and fully-explicit invocation paths produce the exact reported line"
+    timeout: 900
+
+  - name: "S03: shared abstract asynchronous action base"
+    expected_skill: system-commandline-stable-2x
+    prompt: |
+      Modify this provided .NET project's Program.cs. It already references
+      System.CommandLine 2.0.10; do not create another project or use another
+      command-line parser. The project has a LoggingService with a Describe
+      method. Build a job runner with a `--log-level` setting (default `info`)
+      and a required `--job` setting. Running it prints the logging
+      service's description of the log level followed by `;job=<job>`, e.g.
+      `log=info;job=build` when `--job build` is given with no log level, or
+      `log=debug;job=deploy` for `--log-level debug --job deploy`.
+
+      Put the log-level option and the LoggingService dependency on a common
+      abstract asynchronous action base class; a leaf action derived from that
+      base owns the `--job` option and the actual execution. Program.cs
+      builds and wires the command and assigns the leaf action as the
+      command's action. Do not use an inline delegate. Build and run both the
+      default-log-level and explicit-log-level paths to confirm the output
+      proves both the shared base's contribution and the leaf's.
+    setup:
+      files:
+        - { path: App.csproj, source: fixtures/shared/App.csproj }
+        - { path: Program.cs, source: fixtures/s03-shared-base/Program.cs }
+        - { path: LoggingService.cs, source: fixtures/s03-shared-base/LoggingService.cs }
+    reject_tools: [web_search, web_fetch]
+    assertions:
+      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin :[[:space:]]*AsynchronousCommandLineAction .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin abstract[[:space:]]+class .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin SetAction .', expected_exit_code: 1, command_timeout: 30 }
+      - { type: file_not_contains, path: "Program.cs", value: "args[" }
+      - { type: file_not_contains, path: "Program.cs", value: "args." }
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- --job build"
+        expected_exit_code: 0
+        expected_std_output_matches: 'log=info;job=build'
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- --log-level debug --job deploy"
+        expected_exit_code: 0
+        expected_std_output_matches: 'log=debug;job=deploy'
+        command_timeout: 120
+    rubric:
+      - "Declares an abstract asynchronous command action base carrying --log-level and the LoggingService dependency"
+      - "A leaf action derived from that base owns --job and is assigned as the command's action"
+      - "Both the default and explicit log-level paths prove the base's contribution alongside the leaf's own option"
+    timeout: 900
+
+  - name: "S04: action carries a positional argument and an option by identity"
+    expected_skill: system-commandline-stable-2x
+    prompt: |
+      Modify this provided .NET project's Program.cs. It already references
+      System.CommandLine 2.0.10; do not create another project or use another
+      command-line parser. Build an `export` subcommand that takes a required
+      `<source>` value directly after the command name and an optional
+      `--format` setting defaulting to `json`, so `export data.csv --format
+      json` prints `source=data.csv;format=json`.
+
+      The project contains an ExportService. A dedicated asynchronous action
+      class for the export command must read both the exact positional
+      argument instance and the exact option instance from the parse result,
+      then pass their values and the invocation's cancellation token to that
+      service. Do not use an inline delegate. Build and run the command to
+      confirm the output.
+    setup:
+      files:
+        - { path: App.csproj, source: fixtures/shared/App.csproj }
+        - { path: Program.cs, source: fixtures/s04-export-action/Program.cs }
+        - { path: ExportService.cs, source: fixtures/s04-export-action/ExportService.cs }
+    reject_tools: [web_search, web_fetch]
+    assertions:
+      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin :[[:space:]]*AsynchronousCommandLineAction .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin Argument< .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin ExportAsync .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin cancellationToken .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin SetAction .', expected_exit_code: 1, command_timeout: 30 }
+      - { type: file_not_contains, path: "Program.cs", value: "args[" }
+      - { type: file_not_contains, path: "Program.cs", value: "args." }
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- export data.csv --format json"
+        expected_exit_code: 0
+        expected_std_output_matches: 'source=data.csv;format=json'
+        command_timeout: 120
+    rubric:
+      - "Uses a dedicated AsynchronousCommandLineAction for the export command, not an inline SetAction delegate"
+      - "Reads both the exact Argument<string> and Option<string> instances from ParseResult by identity"
+      - "Passes InvokeAsync's cancellation token through to ExportService.ExportAsync rather than discarding it"
+    timeout: 900
+
+  - name: "S05: nested three-level leaf action"
+    expected_skill: system-commandline-stable-2x
+    prompt: |
+      Modify this provided .NET project's Program.cs. It already references
+      System.CommandLine 2.0.10; do not create another project or use another
+      command-line parser. Build a three-level command tree: `login` contains
+      a `github` subcommand, which contains a `pat` subcommand with a required
+      `--token` value. Running `login github pat --token abc` prints
+      `login=github;auth=pat;token=abc`. The two routing parent commands
+      (`login` and `github`) do no work of their own — they only route to
+      their child.
+
+      Only the leaf `pat` command has a dedicated asynchronous action class
+      that reads `--token` and prints the result; do not use an inline
+      delegate for it. Build and run the full command, and confirm that
+      omitting `--token` is rejected before any output is produced.
+    setup:
+      files:
+        - { path: App.csproj, source: fixtures/shared/App.csproj }
+        - { path: Program.cs, source: fixtures/s05-nested-login/Program.cs }
+    reject_tools: [web_search, web_fetch]
+    assertions:
+      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin :[[:space:]]*AsynchronousCommandLineAction .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin SetAction .', expected_exit_code: 1, command_timeout: 30 }
+      - { type: file_not_contains, path: "Program.cs", value: "args[" }
+      - { type: file_not_contains, path: "Program.cs", value: "args." }
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- login github pat --token abc"
+        expected_exit_code: 0
+        expected_std_output_matches: 'login=github;auth=pat;token=abc'
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- login github pat"
+        expected_exit_code: 1
+        command_timeout: 120
+    rubric:
+      - "Builds a three-level command tree where login and github route without their own actions"
+      - "Only the pat leaf has a dedicated AsynchronousCommandLineAction, not an inline SetAction"
+      - "Missing --token is rejected by the parser before any action runs"
+    timeout: 900
+
+  - name: "S06: sibling add/edit commands with separate option instances"
+    expected_skill: system-commandline-stable-2x
+    prompt: |
+      Modify this provided .NET project's Program.cs. It already references
+      System.CommandLine 2.0.10; do not create another project or use another
+      command-line parser. Build a `client` command with two subcommands:
+      `add`, which requires a `--language` value and prints
+      `add;language=<value>`, and `edit`, whose `--language` value is
+      optional — if omitted, print `edit;language=unchanged`, otherwise print
+      `edit;language=<value>`.
+
+      Give `add` and `edit` their own separate `--language` option instance
+      and their own dedicated asynchronous action class for each; do not use
+      inline action delegates or attach the same option instance to both
+      commands. Build and run `client add --language
+      csharp`, `client edit` (with no language), and `client edit --language
+      python` to confirm all three, plus confirm that omitting `--language`
+      on `add` is rejected.
+    setup:
+      files:
+        - { path: App.csproj, source: fixtures/shared/App.csproj }
+        - { path: Program.cs, source: fixtures/s06-client-add-edit/Program.cs }
+    reject_tools: [web_search, web_fetch]
+    assertions:
+      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin :[[:space:]]*AsynchronousCommandLineAction .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin SetAction .', expected_exit_code: 1, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin Option<string?> .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_not_contains, path: "Program.cs", value: "args[" }
+      - { type: file_not_contains, path: "Program.cs", value: "args." }
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- client add --language csharp"
+        expected_exit_code: 0
+        expected_std_output_matches: 'add;language=csharp'
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- client edit"
+        expected_exit_code: 0
+        expected_std_output_matches: 'edit;language=unchanged'
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- client edit --language python"
+        expected_exit_code: 0
+        expected_std_output_matches: 'edit;language=python'
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- client add"
+        expected_exit_code: 1
+        command_timeout: 120
+    rubric:
+      - "add's --language is required and edit's --language is an independent, optional, nullable instance"
+      - "The same Option instance is never attached to both add and edit"
+      - "Each subcommand has its own asynchronous action class producing the exact reported line"
+    timeout: 900
+
+  - name: "S07: output option help placeholder and default"
+    expected_skill: system-commandline-stable-2x
+    prompt: |
+      Modify this provided .NET project's Program.cs. It already references
+      System.CommandLine 2.0.10; do not create another project or use another
+      command-line parser. Build a generator tool with an `--output` setting
+      and short form `-o`, defaulting to `./generated`. Both `--output dist`
+      and `-o dist` should print `output=dist`, and omitting it should print
+      `output=./generated`.
+
+      Use the parser's own generated help; do not print help yourself. Help
+      must render the option's placeholder as `<path>`. Build and run the
+      default, long-form, short-form, and help paths to confirm all four.
+    setup:
+      files:
+        - { path: App.csproj, source: fixtures/shared/App.csproj }
+        - { path: Program.cs, source: fixtures/s07-output-option/Program.cs }
+    reject_tools: [web_search, web_fetch]
+    assertions:
+      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: file_not_contains, path: "Program.cs", value: "HelpOption" }
+      - { type: file_not_contains, path: "Program.cs", value: "args[" }
+      - { type: file_not_contains, path: "Program.cs", value: "args." }
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build --"
+        expected_exit_code: 0
+        expected_std_output_matches: 'output=\./generated'
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- --output dist"
+        expected_exit_code: 0
+        expected_std_output_matches: 'output=dist'
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- -o dist"
+        expected_exit_code: 0
+        expected_std_output_matches: 'output=dist'
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- --help"
+        expected_exit_code: 0
+        expected_std_output_matches: '--output <path>'
+        command_timeout: 120
+    rubric:
+      - "The option renders its parser-generated help placeholder as <path>, not the property or option name"
+      - "Both -o and --output resolve to the same option identity with the same default"
+      - "Help is entirely parser-generated, not hand-written"
+    timeout: 900
+
+  - name: "S08: case-insensitive known-value option contract"
+    expected_skill: system-commandline-stable-2x
+    prompt: |
+      Modify this provided .NET project's Program.cs. It already references
+      System.CommandLine 2.0.10; do not create another project or use another
+      command-line parser. Build a tool with an optional `--format` setting
+      and short form `-f`. Omitting it prints `format=json`; passing `-f
+      yaml` prints `format=yaml`.
+
+      Only `json` and `yaml` are valid, case-insensitively. Other values must
+      be rejected before the tool's action runs, with an error that names the
+      valid values. Help must render the option as `--format <json|yaml>`,
+      and shell completion must offer both values. Use the parser-generated
+      help; do not replace its help action or print help yourself. Build and
+      run the default, alias, help, and invalid-value paths.
+    setup:
+      files:
+        - { path: App.csproj, source: fixtures/shared/App.csproj }
+        - { path: Program.cs, source: fixtures/s08-format-contract/Program.cs }
+    reject_tools: [web_search, web_fetch]
+    assertions:
+      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin CompletionSources.Add|AcceptOnlyFromAmong .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin Validators.Add|CustomParser|AcceptOnlyFromAmong .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_not_contains, path: "Program.cs", value: "HelpOption" }
+      - { type: file_not_contains, path: "Program.cs", value: "args[" }
+      - { type: file_not_contains, path: "Program.cs", value: "args." }
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build --"
+        expected_exit_code: 0
+        expected_std_output_matches: 'format=json'
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- -f yaml"
+        expected_exit_code: 0
+        expected_std_output_matches: 'format=yaml'
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- --format YAML"
+        expected_exit_code: 0
+        expected_std_output_matches: 'format=yaml'
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- --help"
+        expected_exit_code: 0
+        expected_std_output_matches: '--format <json\|yaml>'
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- --format xml"
+        expected_exit_code: 1
+        expected_std_error_matches: '(?is)json.*yaml'
+        command_timeout: 120
+    rubric:
+      - "Implements the default, alias, help placeholder, completion candidates, and validation as one coherent option contract"
+      - "Validation is case-insensitive and runs before the command action"
+      - "Does not hand-parse args or print its own help"
+    timeout: 900
+
+  - name: "S09: required typed list with completion and validation"
+    expected_skill: system-commandline-stable-2x
+    prompt: |
+      Modify this provided .NET project's Program.cs. It already references
+      System.CommandLine 2.0.10; do not create another project or use another
+      command-line parser. Build a tool with a required `--type` setting and
+      short form `-t` that accepts one or more values in a single invocation.
+      Only `security`, `style`, and `performance` are valid names,
+      case-insensitively. Passing `--type security style` prints
+      `types=security,style`; `-t performance` alone prints
+      `types=performance`.
+
+      An unknown name must be rejected before the tool's action runs, naming
+      the supported values. Shell completion must offer the three names.
+      Build and run a two-value invocation and an invalid-value invocation to
+      confirm both.
+    setup:
+      files:
+        - { path: App.csproj, source: fixtures/shared/App.csproj }
+        - { path: Program.cs, source: fixtures/s09-type-list/Program.cs }
+    reject_tools: [web_search, web_fetch]
+    assertions:
+      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin CompletionSources.Add|AcceptOnlyFromAmong .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin Validators.Add|CustomParser|AcceptOnlyFromAmong .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin AllowMultipleArgumentsPerToken .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_not_contains, path: "Program.cs", value: "args[" }
+      - { type: file_not_contains, path: "Program.cs", value: "args." }
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- --type security style"
+        expected_exit_code: 0
+        expected_std_output_matches: 'types=security,style'
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- -t performance"
+        expected_exit_code: 0
+        expected_std_output_matches: 'types=performance'
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- --type bogus"
+        expected_exit_code: 1
+        expected_std_error_matches: '(?is)security.*style.*performance'
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build --"
+        expected_exit_code: 1
+        command_timeout: 120
+    rubric:
+      - "The option is required, requires one or more values, and accepts several values after a single token"
+      - "Validation is case-insensitive, names the supported values, and runs before the action"
+      - "Completion candidates are the three supported values"
+    timeout: 900
+
+  - name: "S10: regex-validated namespace option (add form)"
+    expected_skill: system-commandline-stable-2x
+    prompt: |
+      Modify this provided .NET project's Program.cs. It already references
+      System.CommandLine 2.0.10; do not create another project or use another
+      command-line parser. Build a scaffold tool with a `--namespace` setting
+      and short form `-n`, defaulting to `Generated`. The value must be a
+      valid dotted C# namespace (letters/underscore/digits in each segment,
+      segments separated by dots, no segment starting with a digit).
+
+      Help must render the option's placeholder as `<name>`. An explicit
+      value that isn't a valid dotted namespace must be rejected before the
+      tool's action runs. Build and run the default path, an explicitly
+      invalid value, and an explicit valid dotted value to confirm all three.
+    setup:
+      files:
+        - { path: App.csproj, source: fixtures/shared/App.csproj }
+        - { path: Program.cs, source: fixtures/s10-namespace-add/Program.cs }
+    reject_tools: [web_search, web_fetch]
+    assertions:
+      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin Validators.Add|CustomParser .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_not_contains, path: "Program.cs", value: "args[" }
+      - { type: file_not_contains, path: "Program.cs", value: "args." }
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build --"
+        expected_exit_code: 0
+        expected_std_output_matches: 'namespace=Generated'
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- --help"
+        expected_exit_code: 0
+        expected_std_output_matches: '--namespace <name>'
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- -n 1Bad"
+        expected_exit_code: 1
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- -n My.App.Models"
+        expected_exit_code: 0
+        expected_std_output_matches: 'namespace=My\.App\.Models'
+        command_timeout: 120
+    rubric:
+      - "Default is Generated and the help placeholder is <name>"
+      - "A dotted-namespace validator rejects a malformed value before the action runs"
+      - "A valid dotted namespace is accepted and printed unchanged"
+    timeout: 900
+
+  - name: "S11: regex-validated namespace option (edit form, omission means unchanged)"
+    expected_skill: system-commandline-stable-2x
+    prompt: |
+      Modify this provided .NET project's Program.cs. It already references
+      System.CommandLine 2.0.10; do not create another project or use another
+      command-line parser. Build an edit tool with an optional `--namespace`
+      setting and short form `-n`. There is no nonempty default: omitting the
+      setting means "leave the namespace unchanged", and the tool should
+      print `namespace=unchanged` in that case. When a value is supplied, it
+      must be a valid dotted C# namespace or it is rejected before the tool's
+      action runs; a valid supplied value is printed as `namespace=<value>`.
+
+      Do not apply the same nonempty-default rule this task's `add` sibling
+      would use — omission here is a legitimate, valid input meaning
+      unchanged, not a value to validate. Build and run the omitted path, an
+      explicitly invalid value, and an explicit valid dotted value to confirm
+      all three.
+    setup:
+      files:
+        - { path: App.csproj, source: fixtures/shared/App.csproj }
+        - { path: Program.cs, source: fixtures/s11-namespace-edit/Program.cs }
+    reject_tools: [web_search, web_fetch]
+    assertions:
+      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin Validators.Add|CustomParser .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_not_contains, path: "Program.cs", value: "args[" }
+      - { type: file_not_contains, path: "Program.cs", value: "args." }
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build --"
+        expected_exit_code: 0
+        expected_std_output_matches: 'namespace=unchanged'
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- -n 9Bad"
+        expected_exit_code: 1
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- -n My.New.Ns"
+        expected_exit_code: 0
+        expected_std_output_matches: 'namespace=My\.New\.Ns'
+        command_timeout: 120
+    rubric:
+      - "Omission is accepted as meaning unchanged, not routed through the nonempty add-form validation rule"
+      - "An explicitly supplied invalid dotted namespace is still rejected before the action runs"
+      - "An explicitly supplied valid dotted namespace is accepted and printed"
+    timeout: 900
+
+  - name: "S12: comma-separated repeated option with dynamic help"
+    expected_skill: system-commandline-stable-2x
+    prompt: |
+      Modify this provided .NET project's Program.cs. It already references
+      System.CommandLine 2.0.10; do not create another project or use another
+      command-line parser. Build a tool with a `--disable-rule` setting
+      (also accepted as `--dvr`) that accepts one or more rule IDs. It must
+      accept the IDs both as repeated occurrences (`--disable-rule CA001
+      --disable-rule CA002`) and as a single comma-separated token
+      (`--disable-rule CA001,CA002`); both forms print
+      `disabled=CA001,CA002`. Only `CA001`, `CA002`, and `CA003` are known IDs,
+      case-insensitively; an unknown fragment in either form must be rejected
+      before the tool's action runs.
+
+      Shell completion must offer the three known IDs, and the generated
+      help must show the same three IDs in the option's placeholder (derived
+      from the same list used for completion and validation, not hand-typed
+      twice). Build and run both accepted forms and one invalid-fragment
+      invocation to confirm all three.
+    setup:
+      files:
+        - { path: App.csproj, source: fixtures/shared/App.csproj }
+        - { path: Program.cs, source: fixtures/s12-disable-rule/Program.cs }
+    reject_tools: [web_search, web_fetch]
+    assertions:
+      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin CompletionSources.Add|AcceptOnlyFromAmong .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin Validators.Add|CustomParser .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_not_contains, path: "Program.cs", value: "args[" }
+      - { type: file_not_contains, path: "Program.cs", value: "args." }
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- --disable-rule CA001,CA002"
+        expected_exit_code: 0
+        expected_std_output_matches: 'disabled=CA001,CA002'
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- --disable-rule CA001 --disable-rule CA002"
+        expected_exit_code: 0
+        expected_std_output_matches: 'disabled=CA001,CA002'
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- --help"
+        expected_exit_code: 0
+        expected_std_output_matches: 'CA001.*CA002.*CA003'
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- --disable-rule CA999"
+        expected_exit_code: 1
+        command_timeout: 120
+    rubric:
+      - "Accepts both a comma-separated single token and repeated occurrences of the option"
+      - "Completion and the generated help placeholder both come from the same known-values list as validation"
+      - "An unknown fragment in either form is rejected before the action runs"
+    timeout: 900
+
+  - name: "S13: hidden legacy option name compatible with the current name"
+    expected_skill: system-commandline-stable-2x
+    prompt: |
+      Modify this provided .NET project's Program.cs. It already references
+      System.CommandLine 2.0.10; do not create another project or use another
+      command-line parser. Build a search tool whose current setting is
+      `--scope`, defaulting to `all`. For backward compatibility, the tool
+      must also accept the older spelling `--within` with identical behavior
+      — either one alone prints `scope=<value>`. However, `--within` must not
+      appear in the generated help output; only `--scope` should be visible
+      there. Use the parser's own generated help; do not hand-write it.
+
+      Build and run `--scope solution`, `--within solution`, and `--help` to
+      confirm the legacy spelling still works but is absent from help.
+    setup:
+      files:
+        - { path: App.csproj, source: fixtures/shared/App.csproj }
+        - { path: Program.cs, source: fixtures/s13-scope-compat/Program.cs }
+    reject_tools: [web_search, web_fetch]
+    assertions:
+      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin -- --within .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_not_contains, path: "Program.cs", value: "args[" }
+      - { type: file_not_contains, path: "Program.cs", value: "args." }
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- --scope solution"
+        expected_exit_code: 0
+        expected_std_output_matches: 'scope=solution'
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- --within solution"
+        expected_exit_code: 0
+        expected_std_output_matches: 'scope=solution'
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "bash"
+        command_arguments: "-c \"dotnet run --no-build -- --help > help.out\""
+        expected_exit_code: 0
+        command_timeout: 120
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-qF -- --scope help.out", expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_not_contains, path: "help.out", value: "--within" }
+    rubric:
+      - "Both --scope and --within resolve to identical behavior"
+      - "The generated help output includes --scope but never --within"
+      - "Help remains parser-generated, not hand-written"
+    timeout: 900
+
+  - name: "S14: optional positional target argument"
+    expected_skill: system-commandline-stable-2x
+    prompt: |
+      Modify this provided .NET project's Program.cs. It already references
+      System.CommandLine 2.0.10; do not create another project or use another
+      command-line parser. Build an inspector tool that takes at most one
+      positional `target` value. If it's omitted, print guidance text telling
+      the user to specify a target (any wording is fine, as long as it
+      clearly explains what to do). If exactly one target is given, e.g.
+      `widget`, print `target=widget`. If a second positional value is given,
+      it must be rejected before the tool's action runs.
+
+      Use the parser's own arity support for this — do not read `args` or
+      count values yourself. Build and run the omitted, one-target, and
+      two-target paths to confirm all three.
+    setup:
+      files:
+        - { path: App.csproj, source: fixtures/shared/App.csproj }
+        - { path: Program.cs, source: fixtures/s14-optional-target/Program.cs }
+    reject_tools: [web_search, web_fetch]
+    assertions:
+      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin ZeroOrOne .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_not_contains, path: "Program.cs", value: "args[" }
+      - { type: file_not_contains, path: "Program.cs", value: "args." }
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build --"
+        expected_exit_code: 0
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- widget"
+        expected_exit_code: 0
+        expected_std_output_matches: 'target=widget'
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- widget gadget"
+        expected_exit_code: 1
+        command_timeout: 120
+    rubric:
+      - "The positional argument's arity is zero-or-one, not read from raw args"
+      - "Omission prints guidance while a single target prints the exact reported line"
+      - "A second positional value is rejected by the parser before the action runs"
+    timeout: 900
+
+  - name: "S15: all-or-none authentication settings with a default that must not masquerade as explicit"
+    expected_skill: system-commandline-stable-2x
+    prompt: |
+      Modify this provided .NET project's Program.cs. It already references
+      System.CommandLine 2.0.10; do not create another project or use another
+      command-line parser. Build a tool with optional `--auth-type` and
+      `--auth-id` settings. Authentication is enabled only when the user
+      explicitly supplies both. Supplying neither prints `auth=anonymous`;
+      supplying `--auth-type pat --auth-id abc` prints `auth=pat:abc`.
+
+      Supplying either setting alone must be rejected before the action
+      runs, with a non-zero exit and an error saying both settings or
+      neither are required. `--auth-type` has a parser default of `device`,
+      but that default must not make an explicitly supplied `--auth-id`
+      count as a complete pair. Build and run all four paths.
+    setup:
+      files:
+        - { path: App.csproj, source: fixtures/shared/App.csproj }
+        - { path: Program.cs, source: fixtures/s15-auth-all-or-none/Program.cs }
+    reject_tools: [web_search, web_fetch]
+    assertions:
+      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin DefaultValueFactory .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin Validators.Add .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin GetResult .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_not_contains, path: "Program.cs", value: "args[" }
+      - { type: file_not_contains, path: "Program.cs", value: "args." }
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build --"
+        expected_exit_code: 0
+        expected_std_output_matches: 'auth=anonymous'
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- --auth-type pat --auth-id abc"
+        expected_exit_code: 0
+        expected_std_output_matches: 'auth=pat:abc'
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- --auth-type pat"
+        expected_exit_code: 1
+        expected_std_error_matches: '(?i)both.*(neither|omitted)'
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- --auth-id abc"
+        expected_exit_code: 1
+        expected_std_error_matches: '(?i)both.*(neither|omitted)'
+        command_timeout: 120
+    rubric:
+      - "Attaches an all-or-none validator to the command, not to either individual option or the action"
+      - "Uses explicit token presence from CommandResult.GetResult rather than parsed values, so the default does not masquerade as user input"
+      - "The invalid pair is rejected before action invocation"
+    timeout: 900
+
+  - name: "S16: mutually exclusive report modes"
+    expected_skill: system-commandline-stable-2x
+    prompt: |
+      Modify this provided .NET project's Program.cs. It already references
+      System.CommandLine 2.0.10; do not create another project or use another
+      command-line parser. Build a report tool with two switches, `--summary`
+      and `--details`, either of which may be used alone (`--summary` prints
+      `mode=summary`; `--details` prints `mode=details`); using neither prints
+      `mode=default`. Using both together must be rejected before the tool's
+      action runs — the action must not print anything in that case — with a
+      consistent, clear error explaining only one may be used at a time.
+
+      Attach this rule to the command itself rather than either switch
+      individually. Build and run all four combinations to confirm them,
+      including that the invalid combination produces no `mode=` output at
+      all.
+    setup:
+      files:
+        - { path: App.csproj, source: fixtures/shared/App.csproj }
+        - { path: Program.cs, source: fixtures/s16-summary-details/Program.cs }
+    reject_tools: [web_search, web_fetch]
+    assertions:
+      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin Validators.Add .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_not_contains, path: "Program.cs", value: "args[" }
+      - { type: file_not_contains, path: "Program.cs", value: "args." }
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- --summary"
+        expected_exit_code: 0
+        expected_std_output_matches: 'mode=summary'
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- --details"
+        expected_exit_code: 0
+        expected_std_output_matches: 'mode=details'
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build --"
+        expected_exit_code: 0
+        expected_std_output_matches: 'mode=default'
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- --summary --details"
+        expected_exit_code: 1
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "bash"
+        command_arguments: "-c \"dotnet run --no-build -- --summary --details > invalid.out 2>invalid.err\""
+        expected_exit_code: 1
+        command_timeout: 120
+      - { type: file_not_contains, path: "invalid.out", value: "mode=" }
+    rubric:
+      - "The exclusivity rule lives on the command, not on either switch"
+      - "Explicit presence of a bool switch is checked correctly (a default/implicit result must not read as explicit)"
+      - "The invalid combination is rejected before the action runs, producing no mode= output"
+    timeout: 900
+
+  - name: "S17: explicit value equal to the default is distinguishable from omission"
+    expected_skill: system-commandline-stable-2x
+    prompt: |
+      Modify this provided .NET project's Program.cs. It already references
+      System.CommandLine 2.0.10; do not create another project or use another
+      command-line parser. Build a telemetry tool with a `--log-level`
+      setting defaulting to `Warning`. When the setting is omitted, print
+      `source=default;level=Warning`. When the user explicitly passes
+      `--log-level Warning` — the same value as the default — print
+      `source=user;level=Warning` instead, proving the tool can tell
+      omission apart from an explicit value that happens to match the
+      default.
+
+      Determine this from the parse result's own record of whether the
+      option was explicitly supplied; do not read raw args to make this
+      determination. Build and run both the omitted and explicit-same-value
+      paths to confirm the distinction.
+    setup:
+      files:
+        - { path: App.csproj, source: fixtures/shared/App.csproj }
+        - { path: Program.cs, source: fixtures/s17-log-level-default/Program.cs }
+    reject_tools: [web_search, web_fetch]
+    assertions:
+      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin GetResult .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_not_contains, path: "Program.cs", value: "args[" }
+      - { type: file_not_contains, path: "Program.cs", value: "args." }
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build --"
+        expected_exit_code: 0
+        expected_std_output_matches: 'source=default;level=Warning'
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- --log-level Warning"
+        expected_exit_code: 0
+        expected_std_output_matches: 'source=user;level=Warning'
+        command_timeout: 120
+    rubric:
+      - "Distinguishes omission from an explicit value equal to the default using the parse result's presence tracking"
+      - "Does not use raw argv inspection to make the distinction"
+      - "Both paths report the correct source= alongside the same level=Warning"
+    timeout: 900
+
+  - name: "S18: capstone plugin add/edit subtree"
+    expected_skill: system-commandline-stable-2x
+    prompt: |
+      Modify this provided .NET project's Program.cs. It already references
+      System.CommandLine 2.0.10; do not create another project or use another
+      command-line parser. Build a `plugin` command with `add` and `edit`
+      subcommands, each with its own dedicated asynchronous action class (not
+      an inline delegate).
+
+      `plugin add` requires a `--type` setting that accepts one or more
+      values in a single invocation; only `openai`, `azure`, and `ollama` are
+      valid, case-insensitively, with completion offering all three, and an
+      unknown value rejected before the action runs. `plugin edit`'s `--type`
+      is optional, with the same known-values validation and completion when
+      a value is supplied. Both subcommands also accept optional
+      `--auth-type` (defaulting to `device`) and `--auth-id` settings, where
+      authentication is enabled only when the user explicitly supplies both;
+      supplying either alone is rejected before the action runs (attach this
+      rule per-subcommand, based on explicit token presence, not the parsed
+      default). `plugin add --type openai --auth-type pat --auth-id abc`
+      prints `add;type=openai;auth=pat:abc`; `plugin add --type OpenAI`
+      (no auth) prints `add;type=openai;auth=anonymous`; `plugin edit
+      --type ollama` prints `edit;type=ollama;auth=anonymous`; `plugin edit`
+      with no type prints `edit;type=unchanged;auth=anonymous`.
+
+      Build and run: a valid `add` with full auth, an `add` with an
+      uppercase type and no auth, an invalid auth pair on `add`, a missing
+      `--type` on `add`, a valid `edit` with only a type, and an invalid auth
+      pair on `edit`.
+    setup:
+      files:
+        - { path: App.csproj, source: fixtures/shared/App.csproj }
+        - { path: Program.cs, source: fixtures/s18-plugin-add-edit/Program.cs }
+    reject_tools: [web_search, web_fetch]
+    assertions:
+      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin :[[:space:]]*AsynchronousCommandLineAction .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin SetAction .', expected_exit_code: 1, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin CompletionSources.Add|AcceptOnlyFromAmong .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin Validators.Add .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_not_contains, path: "Program.cs", value: "args[" }
+      - { type: file_not_contains, path: "Program.cs", value: "args." }
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- plugin add --type openai --auth-type pat --auth-id abc"
+        expected_exit_code: 0
+        expected_std_output_matches: 'add;type=openai;auth=pat:abc'
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- plugin add --type OpenAI"
+        expected_exit_code: 0
+        expected_std_output_matches: 'add;type=openai;auth=anonymous'
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- plugin add --type openai --auth-type pat"
+        expected_exit_code: 1
+        expected_std_error_matches: '(?i)both.*(neither|omitted)'
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- plugin add"
+        expected_exit_code: 1
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- plugin edit --type ollama"
+        expected_exit_code: 0
+        expected_std_output_matches: 'edit;type=ollama;auth=anonymous'
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- plugin edit"
+        expected_exit_code: 0
+        expected_std_output_matches: 'edit;type=unchanged;auth=anonymous'
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- plugin edit --auth-id abc"
+        expected_exit_code: 1
+        expected_std_error_matches: '(?i)both.*(neither|omitted)'
+        command_timeout: 120
+    rubric:
+      - "add and edit each have a dedicated asynchronous action, not an inline SetAction delegate"
+      - "add's --type is required and case-insensitively validated/completed; edit's --type is optional with the same contract"
+      - "Each subcommand enforces its own auth all-or-none rule from explicit token presence, and the add/edit route is identifiable from output"
+    timeout: 900
