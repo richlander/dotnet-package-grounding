@@ -30,9 +30,10 @@ scenarios:
     assertions:
       - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
       - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin AsynchronousCommandLineAction .', expected_exit_code: 0, command_timeout: 30 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin "\\.Action\\s*=" .', expected_exit_code: 0, command_timeout: 30 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin "override\\s+(async\\s+)?Task<int>\\s+InvokeAsync" .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin .Action .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin override.*InvokeAsync .', expected_exit_code: 0, command_timeout: 30 }
       - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin SetAction .', expected_exit_code: 1, command_timeout: 30 }
+      - { type: file_not_contains, path: "Program.cs", value: "args[" }
       - type: run_command_and_assert
         command_to_run: "dotnet"
         command_arguments: "run --no-build -- --input demo"
@@ -64,10 +65,10 @@ scenarios:
     reject_tools: [web_search, web_fetch]
     assertions:
       - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin "Option<(string\\[\\]|List<string>)>" .', expected_exit_code: 0, command_timeout: 30 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin "Arity\\s*=\\s*ArgumentArity\\.ZeroOrMore" .', expected_exit_code: 0, command_timeout: 30 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin "AllowMultipleArgumentsPerToken\\s*=\\s*true" .', expected_exit_code: 0, command_timeout: 30 }
-      - { type: file_not_contains, path: "Program.cs", value: "args[0]" }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin Option< .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin ArgumentArity.ZeroOrMore .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin AllowMultipleArgumentsPerToken .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_not_contains, path: "Program.cs", value: "args[" }
       - type: run_command_and_assert
         command_to_run: "dotnet"
         command_arguments: "run --no-build -- --path src tests docs"
@@ -97,8 +98,9 @@ scenarios:
       Only `json` and `yaml` are valid, case-insensitively. Other values must be
       rejected before the tool's action runs, with an error that names the valid
       values. Help must render the option as `--format <json|yaml>`, and shell
-      completion must offer both values. Build and run the default, alias, help, and
-      invalid-value paths.
+      completion must offer both values. Use the parser-generated help; do not replace
+      its help action or print help yourself. Build and run the default, alias, help,
+      and invalid-value paths.
     setup:
       files:
         - { path: App.csproj, source: fixtures/shared/App.csproj }
@@ -110,6 +112,8 @@ scenarios:
       - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin HelpName .', expected_exit_code: 0, command_timeout: 30 }
       - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin CompletionSources.Add .', expected_exit_code: 0, command_timeout: 30 }
       - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin Validators.Add .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_not_contains, path: "Program.cs", value: "HelpOption" }
+      - { type: file_not_contains, path: "Program.cs", value: "args[" }
       - type: run_command_and_assert
         command_to_run: "dotnet"
         command_arguments: "run --no-build --"
@@ -166,6 +170,7 @@ scenarios:
       - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin Validators.Add .', expected_exit_code: 0, command_timeout: 30 }
       - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin GetResult .', expected_exit_code: 0, command_timeout: 30 }
       - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin Tokens .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_not_contains, path: "Program.cs", value: "args[" }
       - type: run_command_and_assert
         command_to_run: "dotnet"
         command_arguments: "run --no-build --"
@@ -216,7 +221,7 @@ scenarios:
       - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
       - { type: file_not_contains, path: "Program.cs", value: '"--output", "-o", "destination"' }
       - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin Description .', expected_exit_code: 0, command_timeout: 30 }
-      - { type: file_not_contains, path: "Program.cs", value: "args[0]" }
+      - { type: file_not_contains, path: "Program.cs", value: "args[" }
       - type: run_command_and_assert
         command_to_run: "dotnet"
         command_arguments: "run --no-build -- --output dist"
