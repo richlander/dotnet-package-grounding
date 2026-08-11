@@ -502,7 +502,8 @@ scenarios:
       command-line parser. Build a scaffold tool with a `--namespace` setting
       and short form `-n`, defaulting to `Generated`. The value must be a
       valid dotted C# namespace (letters/underscore/digits in each segment,
-      segments separated by dots, no segment starting with a digit).
+      segments separated by dots, no segment starting with a digit). A
+      successful invocation prints `namespace=<value>`.
 
       Help must render the option's placeholder as `<name>`. An explicit
       value that isn't a valid dotted namespace must be rejected before the
@@ -558,6 +559,8 @@ scenarios:
       print `namespace=unchanged` in that case. When a value is supplied, it
       must be a valid dotted C# namespace or it is rejected before the tool's
       action runs; a valid supplied value is printed as `namespace=<value>`.
+      These settings belong directly to the root command; do not add an
+      `edit` subcommand or require an unrelated positional argument.
 
       Do not apply the same nonempty-default rule this task's `add` sibling
       would use — omission here is a legitimate, valid input meaning
@@ -894,7 +897,7 @@ scenarios:
     reject_tools: [web_search, web_fetch]
     assertions:
       - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin GetResult .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin GetResult|parseResult\.Tokens .', expected_exit_code: 0, command_timeout: 30 }
       - { type: file_not_contains, path: "Program.cs", value: "args[" }
       - { type: file_not_contains, path: "Program.cs", value: "args." }
       - type: run_command_and_assert
