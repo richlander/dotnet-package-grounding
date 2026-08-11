@@ -1,0 +1,8 @@
+name: system-commandline-stable-2x
+package: System.CommandLine
+description: >-
+  Clean-slate, adopter-derived screening suite for stable System.CommandLine
+  2.0.10 (net10.0). Uses the frozen, current shipping skill shelf as a
+  current-shelf control — this is not the future rewrite. An 18-task ladder
+  (S01-S18) sourced from two independent production adopters, screened for
+  survival rather than API-surface coverage.
