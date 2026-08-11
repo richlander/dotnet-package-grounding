@@ -58,6 +58,8 @@ grounding run <unit> --root <target-repo> --source skill --eval-mode holistic --
 - **`--source skill`** selects the grounded arm. The baseline arm (no grounding) always runs alongside;
   there are no live document-comparison arms.
 - **`--eval-mode holistic`** grades the whole self-selecting skill set, which is the CT-24 lens.
+- **`--scenarios S10 S18`** stages a focused run containing only scenario names that start with or
+  contain those tokens. Focused datasets get a distinct tag and do not overwrite the full suite.
 
 If the target repo's bundle includes `run.sh` / `run.ps1`, those should wrap the same flow — run them
 from the package repo.

@@ -172,11 +172,12 @@ var freshOpt = new Option<bool>("--fresh") { Description = "Regenerate even when
 var evalModeOpt = new Option<string>("--eval-mode") { Description = "Evaluation lens: 'per-skill' (grade min(isolated, plugin) — one skill's standalone value) or 'holistic' (skip the isolated arm; grade the self-selecting plugin arm — the whole-shelf CT-24 benchmark).", DefaultValueFactory = _ => "per-skill" };
 evalModeOpt.AcceptOnlyFromAmong("per-skill", "holistic");
 var excludeSkillOpt = new Option<string[]>("--exclude-skill") { Description = "Leave-one-out ablation: omit the named skill from the plugin arm's shelf (forwarded to skill-validator). Repeatable. Datasets are tagged '<unit>-skill-minus-<X>' so shelf-minus-X sits beside the full-shelf dataset for marginal comparison.", AllowMultipleArgumentsPerToken = true };
+var scenariosOpt = new Option<string[]>("--scenarios") { Description = "Restrict the run to scenarios whose name starts with or contains these tokens (for example, S10 S18).", AllowMultipleArgumentsPerToken = true };
 
 var run = new Command("run", "Run a grounding unit through skill-validator with a chosen source.")
 {
     unitArg, sourceOpt, deliveryOpt, modelOpt, runsOpt, judgeOpt, noJudgeOpt,
-    testsDirOpt, outOpt, readmeFileOpt, dryRunOpt, emitSkillOpt, rootOpt, baselineOutOpt, baselineFromOpt, freshOpt, evalModeOpt, excludeSkillOpt,
+    testsDirOpt, outOpt, readmeFileOpt, dryRunOpt, emitSkillOpt, rootOpt, baselineOutOpt, baselineFromOpt, freshOpt, evalModeOpt, excludeSkillOpt, scenariosOpt,
 };
 run.SetAction(parse =>
 {
@@ -204,6 +205,7 @@ run.SetAction(parse =>
         Fresh = parse.GetValue(freshOpt),
         EvalMode = parse.GetValue(evalModeOpt)!,
         ExcludeSkills = (parse.GetValue(excludeSkillOpt) ?? Array.Empty<string>()).ToList(),
+        Scenarios = (parse.GetValue(scenariosOpt) ?? Array.Empty<string>()).ToList(),
     };
     return Runner.Run(opts);
 });
