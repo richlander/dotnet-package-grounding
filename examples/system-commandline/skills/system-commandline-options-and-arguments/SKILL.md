@@ -3,10 +3,10 @@ name: system-commandline-options-and-arguments
 version: 2.0.0
 description: >-
   Use when declaring or configuring System.CommandLine inputs — Option<T> and Argument<T>: names vs
-  aliases, Description, Required, DefaultValueFactory, Arity, restricting a value to a fixed set with
-  AcceptOnlyFromAmong, requiring that a file or directory path already exists, rejecting bad or
-  out-of-range input, and checking one option against another. This is where CustomParser,
-  Validators.Add and result.AddError belong. Covers the constructor-alias gotcha in depth.
+  aliases, Description, HelpName, completion, Required, DefaultValueFactory, Arity, stable-2.x
+  case-insensitive known values, collection parsing, existing file/directory requirements, rejecting
+  bad input, and checking explicit option presence across a command. This is where CompletionSources,
+  CustomParser, Validators.Add, GetResult, and result.AddError belong.
 ---
 
 # System.CommandLine: options & arguments
@@ -58,6 +58,7 @@ var count = new Option<int>("--count", "-c")     // ... or as extra ctor strings
 {
     DefaultValueFactory = _ => 1,                // NOT getDefaultValue: / SetDefaultValue
     Arity = ArgumentArity.ExactlyOne,
+    HelpName = "number",                          // renders as <number>; do NOT include < >
 };
 ```
 
@@ -89,6 +90,9 @@ var tag = new Option<string[]>("--tag") { AllowMultipleArgumentsPerToken = true 
 Decide which command lines you mean to accept: repeating the option needs nothing, and only the
 one-token-many-values form needs the flag.
 
+Give sibling commands separate option instances. For example, `add --language` may be required while
+`edit --language` is optional; one `Option<T>` object cannot represent both contracts.
+
 ## Declaring arguments (positional)
 
 ```csharp
@@ -100,12 +104,53 @@ var path = new Argument<FileInfo>("path")
 path.AcceptExistingOnly();                        // NOT ExistingOnly(); also on Argument<DirectoryInfo>
 ```
 
-## Constrained values
+## Known values, completion, and stable 2.x case-insensitivity
 
 ```csharp
-var level = new Option<string>("--level");
-level.AcceptOnlyFromAmong("debug", "info", "warn");                       // 2.x+ (case-sensitive)
-level.AcceptOnlyFromAmong(StringComparer.OrdinalIgnoreCase, "debug", "info", "warn"); // 3.x comparer overload
+string[] knownFormats = ["json", "yaml"];
+
+var format = new Option<string>("--format", "-f")
+{
+    DefaultValueFactory = _ => "json",
+    HelpName = string.Join("|", knownFormats), // generated help: <json|yaml>
+};
+format.CompletionSources.Add(knownFormats);
+format.Validators.Add(result =>
+{
+    string value = result.GetValue(format)!;
+    if (!knownFormats.Any(known => known.Equals(value, StringComparison.OrdinalIgnoreCase)))
+    {
+        result.AddError($"Unknown format '{value}'. Supported values: {string.Join(", ", knownFormats)}.");
+    }
+});
+```
+
+Derive `HelpName`, completion, and validation from one list so they cannot drift. `HelpName` is the
+text *inside* generated angle brackets: use `"json|yaml"`, not `"<json|yaml>"`.
+
+`AcceptOnlyFromAmong("json", "yaml")` is concise but **case-sensitive on stable 2.0.x**. The
+`AcceptOnlyFromAmong(StringComparer, ...)` overload is 3.x-only. On 2.0.x, use a custom parser or
+validator with `StringComparison.OrdinalIgnoreCase`; never normalize by rewriting raw `args`.
+
+For a required collection that accepts several values after one token, combine the pieces:
+
+```csharp
+string[] knownTypes = ["security", "style", "performance"];
+var type = new Option<string[]>("--type", "-t")
+{
+    Required = true,
+    Arity = ArgumentArity.OneOrMore,
+    AllowMultipleArgumentsPerToken = true,
+};
+type.CompletionSources.Add(knownTypes);
+type.Validators.Add(result =>
+{
+    foreach (string value in result.GetValueOrDefault<string[]>() ?? [])
+    {
+        if (!knownTypes.Any(known => known.Equals(value, StringComparison.OrdinalIgnoreCase)))
+            result.AddError($"Unknown type '{value}'. Supported values: {string.Join(", ", knownTypes)}.");
+    }
+});
 ```
 
 ## Custom parsing & validation
@@ -128,16 +173,21 @@ port.Validators.Add(result =>
     if (result.GetValue(port) == 0) result.AddError("--port is required and must be valid");
 });
 
-// A rule spanning TWO inputs cannot live on either one. Put it on the COMMAND,
-// and read both values off the CommandResult:
-var min = new Option<int>("--min");
-var max = new Option<int>("--max");
-var root = new RootCommand("range") { min, max };
-
-root.Validators.Add(result =>
+// A rule spanning TWO inputs belongs on their command.
+var authType = new Option<string>("--auth-type")
 {
-    if (result.GetValue(max) <= result.GetValue(min))
-        result.AddError("max must be greater than min");
+    DefaultValueFactory = _ => "device",
+};
+var authId = new Option<string?>("--auth-id");
+var command = new Command("connect") { authType, authId };
+
+command.Validators.Add(result =>
+{
+    // Inspect explicit presence, not parsed values: authType has a parser default.
+    bool hasAuthType = result.GetResult(authType)?.Implicit == false;
+    bool hasAuthId = result.GetResult(authId)?.Implicit == false;
+    if (hasAuthType != hasAuthId)
+        result.AddError("Supply both authentication settings or neither.");
 });
 ```
 
@@ -146,6 +196,10 @@ root.Validators.Add(result =>
   for a cross-input rule is the common mistake; it cannot see the other value.
 - Do the check in a validator, **not** inside the action. A validator runs before invocation, so the
   action never has to cope with a combination the parser should have refused.
+- For presence-sensitive rules, `GetValue` is insufficient: a parser default can look like user
+  input. Use `result.GetResult(option)?.Implicit == false` (or inspect `IdentifierToken`). Do not use
+  argument-token count as a general presence test: an explicitly supplied zero-arity flag can have
+  no argument tokens.
 - Report bad input with `result.AddError(...)` — do **not** throw for user-input errors; errors surface
   through `ParseResult.Errors` and set a non-zero exit code automatically.
 

@@ -6,10 +6,10 @@ description: >-
   Command, Option<T>, Argument<T>) on the current GA / 2.x–3.x API. This library had a large breaking
   redesign at 2.0 GA, so training data and web snippets are FULL of the removed beta stack
   (SetHandler, AddOption, BinderBase, IConsole). The #1 silent trap: the Option/Argument constructor's
-  2nd positional argument is an ALIAS, not a description. Covers the core shapes: declaring inputs,
-  building the command tree, SetAction, and reading values by identity. beta-to-GA migration,
-  options/arguments in depth, actions/invocation, subcommands/help, and 3.x additions are covered
-  separately. Don't web-search this API — the current idioms are in the System.CommandLine skills.
+  2nd positional argument is an ALIAS, not a description. Covers the small core shape. Pull
+  actions/invocation for dedicated Command.Action classes or cancellation; options/arguments for
+  HelpName, completion, stable case-insensitivity, custom parsing, or cross-option validators;
+  beta migration, subcommands/help, and 3.x additions are separate. Don't web-search this API.
 ---
 
 # System.CommandLine — parse & dispatch a .NET CLI (current API)
@@ -24,6 +24,81 @@ snippets do not compile. Pin the current shapes below.
 > These skills are the current, authoritative API. This skill covers the core pattern; beta→GA
 > migration, options/arguments in depth, actions/invocation, subcommands/help, and 3.x additions are
 > covered separately.
+
+If the task asks for a **dedicated action class**, do not substitute an inline `SetAction` delegate:
+use the actions/invocation skill for `SynchronousCommandLineAction`,
+`AsynchronousCommandLineAction`, and `command.Action`. If the task coordinates defaults,
+completion, allowed values, or explicit presence across options, use the options/arguments skill;
+those rules must run before the action.
+
+## Composite commands: finish the input contract before assigning the action
+
+A dedicated action does not replace parser configuration. For each command, finish its option
+contract first:
+
+```csharp
+using System.CommandLine;
+using System.CommandLine.Invocation;
+
+string[] knownTypes = ["openai", "azure", "ollama"];
+var type = new Option<string[]>("--type")
+{
+    Required = true,
+    Arity = ArgumentArity.OneOrMore,
+    HelpName = string.Join("|", knownTypes),
+    AllowMultipleArgumentsPerToken = true,
+};
+type.CompletionSources.Add(knownTypes); // 2.0.10 takes the strings directly
+type.Validators.Add(result =>
+{
+    foreach (string value in result.GetValueOrDefault<string[]>() ?? [])
+        if (!knownTypes.Any(k => k.Equals(value, StringComparison.OrdinalIgnoreCase)))
+            result.AddError($"Unknown type '{value}'.");
+});
+
+var authType = new Option<string>("--auth-type") { DefaultValueFactory = _ => "device" };
+var authId = new Option<string?>("--auth-id");
+var command = new Command("add") { type, authType, authId };
+command.Validators.Add(result =>
+{
+    bool hasType = result.GetResult(authType)?.Implicit == false;
+    bool hasId = result.GetResult(authId)?.Implicit == false;
+    if (hasType != hasId) result.AddError("Supply both authentication settings or neither.");
+});
+
+command.Action = new AddAction(type, authType, authId);
+
+internal sealed class AddAction(
+    Option<string[]> type,
+    Option<string> authType,
+    Option<string?> authId) : AsynchronousCommandLineAction
+{
+    public override Task<int> InvokeAsync(
+        ParseResult parseResult,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        string[] types = parseResult.GetValue(type) ?? [];
+        string selectedAuthType = parseResult.GetValue(authType)!;
+        string? id = parseResult.GetValue(authId);
+        string auth = id is null ? "anonymous" : $"{selectedAuthType}:{id}";
+        Console.WriteLine($"type={string.Join(",", types)};auth={auth}");
+        return Task.FromResult(0);
+    }
+}
+```
+
+On stable 2.0.x, `AcceptOnlyFromAmong` is case-sensitive and its comparer overload is not available.
+Use a case-insensitive validator as above; never normalize by rewriting raw `args`. A rule spanning
+options belongs on `command.Validators`, not inside the action, so invalid input prevents invocation.
+Give sibling commands separate option and action instances when their required/default/arity
+contracts differ. If the requirement says asynchronous action, inherit
+`AsynchronousCommandLineAction` even when the initial body has no naturally asynchronous operation.
+
+For 2.0.10 completion, copy `option.CompletionSources.Add(knownValues)` exactly. The collection takes
+the strings directly; do **not** invent a `CompletionSource.ForValues(...)` wrapper and then remove
+completion when that obsolete shape fails. Likewise, do not remove an option's parser default to make
+an all-or-none check easier: keep the contract and use `GetResult(...).Implicit` for explicit presence.
 
 ## The core pattern (current API)
 
