@@ -44,6 +44,7 @@ internal sealed class LoadedArm
     public required string SkillName;
     public string? SkillPath;
     public required Dictionary<string, ArmAgg> Agg;
+    public required string GroundArm;
     public required bool IsReadme;
     public required bool IsSkill;
     public bool IsPush;

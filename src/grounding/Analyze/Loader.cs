@@ -292,6 +292,42 @@ internal static class Loader
                ?? new ResultsFile();
     }
 
+    public static string GroundedArmOf(ResultsFile d)
+    {
+        var v = d.Verdicts is { Count: > 0 } ? d.Verdicts[0] : new Verdict();
+        return GroundedArmOf(v);
+    }
+
+    public static string GroundedArmOf(Verdict v)
+    {
+        if (Environment.GetEnvironmentVariable("GROUNDING_CARD_ARM") is { Length: > 0 } forced)
+            return forced;
+
+        if (string.Equals(v.EvalMode, "holistic", StringComparison.OrdinalIgnoreCase))
+            return "skilledPlugin";
+        if (string.Equals(v.EvalMode, "per-skill", StringComparison.OrdinalIgnoreCase))
+            return "skilledIsolated";
+
+        // Legacy datasets predate evalMode. Infer only when the isolated arm is an empty
+        // placeholder and the plugin arm carries the measured run.
+        var scenarios = v.Scenarios ?? new();
+        var isolatedHasData = scenarios.Any(sc => HasMeasuredData(sc.SkilledIsolated));
+        var pluginHasData = scenarios.Any(sc => HasMeasuredData(sc.SkilledPlugin));
+        return !isolatedHasData && pluginHasData ? "skilledPlugin" : "skilledIsolated";
+    }
+
+    private static bool HasMeasuredData(Arm? arm)
+    {
+        if (arm?.Metrics is not { } m) return false;
+        return m.PerRun is { Count: > 0 }
+            || m.InputTokens > 0
+            || m.OutputTokens > 0
+            || m.CacheReadTokens > 0
+            || m.WallTimeMs > 0
+            || (m.TurnCount ?? 0) > 0
+            || (m.AssertionResults?.Any(a => (a.Assertion?.Type ?? -1) != 11) ?? false);
+    }
+
     public static LoadedArm LoadArm(string path) => BuildLoadedArm(Parse(path), path);
 
     // Route by extension: a sessions.db goes through the LLM-free deterministic reader (no judge,
@@ -351,6 +387,7 @@ internal static class Loader
             SkillName = sn,
             SkillPath = v.SkillPath,
             Agg = agg,
+            GroundArm = GroundedArmOf(v),
             // Source of the grounding content fed into the SKILL.md the run loaded (the run
             // tag encodes it: `<unit>-readme.*` / `<unit>-skill.*`; bare `<unit>.*` = agents).
             IsReadme = file.Contains("readme"),
