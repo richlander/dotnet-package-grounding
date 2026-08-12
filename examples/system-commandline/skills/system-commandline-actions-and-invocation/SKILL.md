@@ -2,18 +2,19 @@
 name: system-commandline-actions-and-invocation
 version: 2.0.0
 description: >-
-  Use when the action itself is the hard part — returning Task<int> from an async action, choosing
-  the process exit code from what the action returns, and splitting Parse(args) from
-  Invoke/InvokeAsync so the ParseResult can be inspected in between. SetHandler and positional
-  binding are gone. Wiring a plain action and reading values are core shapes; declaring inputs and
-  rejecting bad ones are separate topics.
+  Use when the action itself is the hard part — especially a dedicated synchronous/asynchronous
+  action class, Command.Action assignment, shared action bases, dependency-carrying actions,
+  cancellation, Task<int>, exit codes, or splitting Parse(args) from Invoke/InvokeAsync.
+  SetHandler and positional binding are gone. Declaring inputs and rejecting bad ones are separate
+  topics.
 ---
 
 # System.CommandLine: actions & invocation
 
-Behavior attaches to a command with `SetAction`. You run the app by `Parse`-ing args into a
-`ParseResult`, then `Invoke`/`InvokeAsync`. `SetHandler`, delegate parameter binding, and `IConsole`
-were removed at GA — do not use them.
+Behavior attaches either as a small inline delegate with `SetAction`, or as a reusable
+`SynchronousCommandLineAction` / `AsynchronousCommandLineAction` assigned to `Command.Action`.
+You run the app by `Parse`-ing args into a `ParseResult`, then `Invoke`/`InvokeAsync`.
+`SetHandler`, delegate parameter binding, and `IConsole` were removed at GA — do not use them.
 
 > Do NOT `web_search` / `web_fetch` — nearly all samples show `SetHandler(...)` with
 > positionally-bound parameters, which no longer exists.
@@ -23,31 +24,74 @@ were removed at GA — do not use them.
 `System.CommandLine` is **not** in the shared framework — add the package
 (`dotnet package add <proj> System.CommandLine`), then `using System.CommandLine;`.
 
-An action reads its inputs from the `ParseResult` **by option/argument instance**, so the instances
-have to be in scope and added to the command. Nothing is injected into the delegate:
+Every action reads inputs from the `ParseResult` **by option/argument instance**, so keep the exact
+instances added to the command. Nothing is bound by parameter name or position.
+
+## Dedicated action classes
+
+Use a class when the command asks for a dedicated action, carries services/state, shares an action
+base, or should keep command construction separate from execution. These action types live in
+`System.CommandLine.Invocation`.
 
 ```csharp
 using System.CommandLine;
+using System.CommandLine.Invocation;
 
-var nameOption = new Option<string>("--name") { Description = "Who to greet" };
+var input = new Argument<FileInfo>("input");
+var format = new Option<string>("--format") { DefaultValueFactory = _ => "json" };
+var export = new Command("export") { input, format };
 
-var root = new RootCommand("Greeter");
-root.Options.Add(nameOption);                            // must be added, or it is never parsed
-root.SetAction(parseResult =>
-{
-    string name = parseResult.GetValue(nameOption)!;     // by identity, not by name or position
-    Console.WriteLine($"Hello, {name}!");
-    return 0;
-});
+// Pass the SAME symbol instances to the action, then assign the action object.
+export.Action = new ExportAction(input, format, new ExportService());
+var root = new RootCommand("Data tool") { export };
 return await root.Parse(args).InvokeAsync();
+
+internal sealed class ExportAction(
+    Argument<FileInfo> input,
+    Option<string> format,
+    ExportService service) : AsynchronousCommandLineAction
+{
+    public override async Task<int> InvokeAsync(
+        ParseResult parseResult,
+        CancellationToken cancellationToken = default)
+    {
+        FileInfo file = parseResult.GetValue(input)!;
+        string selectedFormat = parseResult.GetValue(format)!;
+        await service.ExportAsync(file, selectedFormat, cancellationToken);
+        return 0;
+    }
+}
 ```
 
-`command`, `root` and `nameOption` in the examples below refer to instances set up this way.
+- Override `int Invoke(ParseResult)` on `SynchronousCommandLineAction`.
+- Override `Task<int> InvokeAsync(ParseResult, CancellationToken)` on
+  `AsynchronousCommandLineAction`; pass that cancellation token through to cancellable work.
+- If the requirement says **asynchronous action class**, inherit `AsynchronousCommandLineAction`
+  even when today's body has no naturally asynchronous call. Do not silently substitute
+  `SynchronousCommandLineAction` merely because the first implementation only prints output.
+- Assign the object through `command.Action`. If the requirement is a dedicated action class, do
+  **not** also wire the command with `SetAction`.
+- Carry the exact `Option<T>` / `Argument<T>` objects into the action constructor and read them with
+  `parseResult.GetValue(symbol)`. A same-named replacement object does not identify the parsed input.
+- Give sibling commands their own symbol and action instances. An `add` option that is required and
+  an `edit` option that is optional are different contracts even when both are named `--format`.
 
-## SetAction signatures
+An abstract action base can carry inputs and dependencies shared by several leaf actions:
 
 ```csharp
-// Sync — return int is the exit code (void overload exists too; implies 0):
+internal abstract class ServiceActionBase(
+    Option<string> logLevel,
+    LoggingService logging) : AsynchronousCommandLineAction
+{
+    protected LoggingService Logging { get; } = logging;
+    protected string LogLevel(ParseResult result) => result.GetValue(logLevel)!;
+}
+```
+
+## Small inline actions
+
+```csharp
+// Sync: int is the process exit code (a void overload exists and implies 0).
 command.SetAction(parseResult =>
 {
     var name = parseResult.GetValue(nameOption)!;   // read by identity
@@ -55,7 +99,7 @@ command.SetAction(parseResult =>
     return 0;
 });
 
-// Async — receives a CancellationToken; return Task<int> (or Task):
+// Async: return Task<int> (or Task) and propagate cancellation.
 command.SetAction(async (parseResult, cancellationToken) =>
 {
     var url = parseResult.GetValue(urlOption)!;
@@ -64,9 +108,8 @@ command.SetAction(async (parseResult, cancellationToken) =>
 });
 ```
 
-- Read every input from the `ParseResult` by the option/argument instance:
-  `parseResult.GetValue(theOption)`. No parameters are injected.
-- The `int` return value is the process exit code. Use the async overload whenever you `await`.
+Use `SetAction` for genuinely local behavior. Do not expand a dedicated-action requirement into an
+inline delegate merely because both forms can produce the same output.
 
 ## Parsing and running
 
@@ -94,5 +137,5 @@ return await result.InvokeAsync();
 - **User-input errors:** report with `result.AddError("...")` from a `CustomParser` or a validator on
   the option/argument. They land in `ParseResult.Errors`, are printed by the invoker, and produce a
   non-zero exit code automatically. Do not `throw` for bad input.
-- **Action outcome:** return the exit code you want from `SetAction`.
+- **Action outcome:** return the exit code you want from `SetAction` or the action override.
 - `ParseResult.Errors` is the list to check when you parse-then-decide manually.
