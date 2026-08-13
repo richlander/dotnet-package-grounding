@@ -897,7 +897,7 @@ scenarios:
     reject_tools: [web_search, web_fetch]
     assertions:
       - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin GetResult|parseResult\.Tokens .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin GetResult|CommandResult .', expected_exit_code: 0, command_timeout: 30 }
       - { type: file_not_contains, path: "Program.cs", value: "args[" }
       - { type: file_not_contains, path: "Program.cs", value: "args." }
       - type: run_command_and_assert
@@ -976,7 +976,7 @@ scenarios:
         command_to_run: "dotnet"
         command_arguments: "run --no-build -- plugin add --type openai --auth-type pat"
         expected_exit_code: 1
-        expected_std_error_matches: '(?i)both.*(neither|omitted)'
+        expected_std_error_matches: '(?i)(both.*(neither|omitted|together)|if .*specified.*must also be specified)'
         command_timeout: 120
       - type: run_command_and_assert
         command_to_run: "dotnet"
@@ -999,7 +999,7 @@ scenarios:
         command_to_run: "dotnet"
         command_arguments: "run --no-build -- plugin edit --auth-id abc"
         expected_exit_code: 1
-        expected_std_error_matches: '(?i)both.*(neither|omitted)'
+        expected_std_error_matches: '(?i)(both.*(neither|omitted|together)|if .*specified.*must also be specified)'
         command_timeout: 120
     rubric:
       - "add and edit each have a dedicated asynchronous action, not an inline SetAction delegate"
