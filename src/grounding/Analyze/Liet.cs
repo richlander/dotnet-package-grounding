@@ -42,7 +42,9 @@ internal sealed class Liet
         public double? Ceiling;  // competitor envelope for SKILL.md (min IET of other passing arms)
         public string Region = "";
         public List<string> Skills = new();  // skills the grounded arm pulled for this rung (plugin self-select)
-        public string? Expected;             // methodology prior: the ONE target skill for this rung (eval.yaml)
+        public List<string> Expected = new(); // methodology prior: complete stable skill set for this rung
+        public bool ExactExpected;           // true for expected_skills; false for legacy expected_skill
+        public List<List<string>> SkillSetsPerRun = new(); // run-ordered pull sets for consistency analysis
     }
 
     // The LIET-family scalars the SVG Metrics block reports (floor-anchored IET-per-correct, the
@@ -117,7 +119,7 @@ internal sealed class Liet
                     foreach (var s0 in Loader.DetectedSkillsOf(sc0, groundArm0)) allSkills.Add(s0);
                     // Include the methodology target so an expected-but-never-pulled skill (an
                     // under-fire gap) still gets a stable global id and shows in the legend.
-                    if (!string.IsNullOrWhiteSpace(sc0.ExpectedSkill)) allSkills.Add(sc0.ExpectedSkill.Trim());
+                    foreach (var expected in ExpectedSkillsOf(sc0)) allSkills.Add(expected);
                 }
             }
         var skillIds = BuildGlobalIds(allSkills, baseSkill);
@@ -204,7 +206,11 @@ internal sealed class Liet
             };
             if (readmeMap is not null && readmeMap.TryGetValue(r.Name, out var rm)) r.Readme = rm;
             r.Skills = Loader.DetectedSkillsOf(sc, groundArm).Distinct().ToList();
-            r.Expected = string.IsNullOrWhiteSpace(sc.ExpectedSkill) ? null : sc.ExpectedSkill.Trim();
+            r.Expected = ExpectedSkillsOf(sc);
+            r.ExactExpected = sc.ExpectedSkills is { Count: > 0 } && string.IsNullOrWhiteSpace(sc.ExpectedSkill);
+            r.SkillSetsPerRun = SkillActivationsPerRunOf(sc, groundArm)
+                .Select(a => (a.DetectedSkills ?? []).Distinct(StringComparer.Ordinal).OrderBy(s => s, StringComparer.Ordinal).ToList())
+                .ToList();
             // Competitor envelope for SKILL.md = min IET of baseline + oracle that passed. README is
             // PLOTTED as a reference series but kept OUT of the ceiling: where README≈SKILL (common),
             // per-rung README-vs-SKILL differences are n=1 noise and would flip win/harm spuriously.
@@ -267,10 +273,11 @@ internal sealed class Liet
                 + $"`exp` = tasks that target the skill; `pull` = tasks that actually pulled it. "
                 + $"exp ×0 & pull ≤1 ⇒ deletion candidate; exp high & pull low ⇒ under-fire (discovery gap, keep)._");
         }
+        EmitPullConsistency(rungs, ids);
         var scr = Score(rungs);
         var fm = FloorMetric(rungs);
         var th = TargetHit(rungs);
-        var hit = th.total > 0 ? $" · target-skill hit {th.hits}/{th.total}" : "";
+        var hit = th.total > 0 ? $" · target-set hit {th.hits}/{th.total}" : "";
         _o.WriteLine($"\n**Score:** correct {scr.baseCorrect}→{scr.agCorrect}/{scr.total} · "
             + $"IET per baseline-correct answer (over floor {K(fm.floor)}, shared baseline-correct set) "
             + $"{K(fm.basePerCorrect)}→{K(fm.agPerCorrect)} (Δ {SignedK(fm.agPerCorrect - fm.basePerCorrect)}/answer) · "
@@ -345,7 +352,7 @@ internal sealed class Liet
         {
             foreach (var s in r.Skills)
                 pulled[s] = pulled.TryGetValue(s, out var c) ? c + 1 : 1;
-            if (r.Expected is { Length: > 0 } e)
+            foreach (var e in r.Expected)
                 expected[e] = expected.TryGetValue(e, out var ec) ? ec + 1 : 1;
         }
         var keys = new HashSet<string>(pulled.Keys, StringComparer.Ordinal);
@@ -365,17 +372,94 @@ internal sealed class Liet
         : expected > 0 ? $"exp \u00d7{expected} \u00b7 pull \u00d7{pulled}"
         : $"pull \u00d7{pulled}";
 
-    // Target-skill hit rate: rungs whose ONE expected skill was among the pulled set. Basics target
-    // the base skill (M). Returns (hits, tasksWithAPrior); empty when no prior is plumbed.
+    // Target-set hit rate. Legacy expected_skill means membership in the aggregate pull union.
+    // expected_skills is an exact stable-set prior: every captured run must equal the set; old
+    // datasets without run capture fall back to aggregate set equality.
     private static (int hits, int total) TargetHit(List<Rung> rungs)
     {
         int hits = 0, total = 0;
-        foreach (var r in rungs.Where(r => r.Expected is { Length: > 0 }))
+        foreach (var r in rungs.Where(r => r.Expected.Count > 0))
         {
+            if (r.ExactExpected && r.SkillSetsPerRun.Count < 5)
+                continue;
             total++;
-            if (r.Skills.Contains(r.Expected!, StringComparer.Ordinal)) hits++;
+            var hit = r.ExactExpected
+                ? r.SkillSetsPerRun.Count > 0
+                    ? r.SkillSetsPerRun.All(set => SameSkillSet(set, r.Expected))
+                    : SameSkillSet(r.Skills, r.Expected)
+                : r.Expected.All(e => r.Skills.Contains(e, StringComparer.Ordinal));
+            if (hit) hits++;
         }
         return (hits, total);
+    }
+
+    private static List<string> ExpectedSkillsOf(Scenario scenario)
+    {
+        if (scenario.ExpectedSkills is { Count: > 0 })
+            return scenario.ExpectedSkills
+                .Where(s => !string.IsNullOrWhiteSpace(s))
+                .Select(s => s.Trim())
+                .Distinct(StringComparer.Ordinal)
+                .ToList();
+        return string.IsNullOrWhiteSpace(scenario.ExpectedSkill)
+            ? []
+            : [scenario.ExpectedSkill.Trim()];
+    }
+
+    private static IReadOnlyList<SkillActivation> SkillActivationsPerRunOf(Scenario scenario, string arm) =>
+        arm switch
+        {
+            "skilledPlugin" => scenario.SkillActivationPluginPerRun ?? [],
+            "skilledIsolated" => scenario.SkillActivationIsolatedPerRun ?? [],
+            _ => [],
+        };
+
+    private void EmitPullConsistency(List<Rung> rungs, Dictionary<string, string> ids)
+    {
+        var rows = rungs.Where(r => r.Expected.Count > 1).ToList();
+        if (rows.Count == 0) return;
+
+        _o.WriteLine("\n**Intentional composition — pull consistency:**");
+        _o.WriteLine("\n| rung | expected set | observed per run | classification |");
+        _o.WriteLine("| --- | --- | --- | --- |");
+        foreach (var r in rows)
+        {
+            var expected = SkillIds(r.Expected, ids);
+            if (r.SkillSetsPerRun.Count == 0)
+            {
+                _o.WriteLine($"| {r.Name} | {expected} | — | not captured |");
+                continue;
+            }
+
+            var observedSets = r.SkillSetsPerRun
+                .Select(set => SkillIds(set, ids))
+                .ToList();
+            if (r.SkillSetsPerRun.Count < 5)
+            {
+                _o.WriteLine($"| {r.Name} | {expected} | {string.Join(", ", observedSets)} "
+                    + $"| insufficient n ({r.SkillSetsPerRun.Count}/5) |");
+                continue;
+            }
+            var distinct = observedSets.Distinct(StringComparer.Ordinal).ToList();
+            var exact = r.SkillSetsPerRun.All(set => SameSkillSet(set, r.Expected));
+            var classification = distinct.Count == 1
+                ? $"consistent-same-{r.SkillSetsPerRun[0].Count}" + (exact ? " ✓ expected" : " ✗ expected")
+                : "variable ✗ expected";
+            _o.WriteLine($"| {r.Name} | {expected} | {string.Join(", ", observedSets)} | {classification} |");
+        }
+    }
+
+    private static bool SameSkillSet(IReadOnlyList<string> left, IReadOnlyList<string> right) =>
+        left.Count == right.Count
+        && new HashSet<string>(left, StringComparer.Ordinal).SetEquals(right);
+
+    private static string SkillIds(IEnumerable<string> skills, Dictionary<string, string> ids)
+    {
+        var tokens = skills
+            .Select(s => ids.TryGetValue(s, out var id) ? id : "?")
+            .OrderBy(id => id == "M" ? "" : id, StringComparer.Ordinal)
+            .ToList();
+        return tokens.Count == 0 ? "—" : string.Join(" ", tokens);
     }
 
     // Rung's pulled skills as id tokens (M first, then numeric), e.g. "M 3" or "—" if none pulled.
@@ -650,7 +734,7 @@ internal sealed class Liet
             $"Levelized duration: {Secs(dm.basePerCorrect)}\u2192{Secs(dm.agPerCorrect)} (\u0394 {SignedSecs(dm.agPerCorrect - dm.basePerCorrect)})",
             $"Archaeology operations: {N(sc.baseArch)}\u2192{N(sc.agArch)} ({PctStr(sc.baseArch, sc.agArch)})",
         };
-        if (th.total > 0) metrics.Add($"Expected skill pulled: {th.hits}/{th.total}");
+        if (th.total > 0) metrics.Add($"Expected skill set pulled: {th.hits}/{th.total}");
         sb.Append($"  <text x=\"{L + 12}\" y=\"{metricsY}\" font-size=\"9.5\" font-weight=\"700\" fill=\"#334155\">Metrics:</text>\n");
         sb.Append("  <g font-size=\"9.5\" fill=\"#334155\">\n");
         for (int i = 0; i < metrics.Count; i++)

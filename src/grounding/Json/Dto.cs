@@ -26,6 +26,7 @@ public sealed class Scenario
     [JsonPropertyName("scenarioName")] public string? ScenarioName { get; set; }
     [JsonPropertyName("name")] public string? Name { get; set; }
     [JsonPropertyName("expectedSkill")] public string? ExpectedSkill { get; set; }
+    [JsonPropertyName("expectedSkills")] public List<string>? ExpectedSkills { get; set; }
     [JsonPropertyName("improvementScore")] public double? ImprovementScore { get; set; }
     [JsonPropertyName("perRunScores")] public List<double>? PerRunScores { get; set; }
     [JsonPropertyName("baseline")] public Arm? Baseline { get; set; }
@@ -33,6 +34,8 @@ public sealed class Scenario
     [JsonPropertyName("skilledPlugin")] public Arm? SkilledPlugin { get; set; }
     [JsonPropertyName("skillActivationIsolated")] public SkillActivation? SkillActivationIsolated { get; set; }
     [JsonPropertyName("skillActivationPlugin")] public SkillActivation? SkillActivationPlugin { get; set; }
+    [JsonPropertyName("skillActivationIsolatedPerRun")] public List<SkillActivation>? SkillActivationIsolatedPerRun { get; set; }
+    [JsonPropertyName("skillActivationPluginPerRun")] public List<SkillActivation>? SkillActivationPluginPerRun { get; set; }
 }
 
 public sealed class SkillActivation
