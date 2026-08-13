@@ -30,6 +30,8 @@ internal sealed class RunOptions
     // --exclude-skill). Encoded into the dataset tag so shelf-minus-X datasets sit beside
     // the full-shelf one for marginal comparison.
     public List<string> ExcludeSkills = new();
+    // Focused recovery/debugging: stage an eval containing only matching scenario names.
+    public List<string> Scenarios = new();
     // Smell test: unjudged "finger in the wind" run. Forces --no-judge + holistic; renders the
     // compact single-arm SmellCard (IET/turns/archaeology/skill-pulls) instead of the per-run Table.
     public bool Smell;
@@ -83,6 +85,25 @@ internal static class Runner
         // else the classic split layout ("tests").
         if (o.TestsDir is null)
             o.TestsDir = File.Exists(Path.Combine(unitDir, "eval.yaml")) ? "grounding" : "tests";
+
+        StagedEval? stagedEval = null;
+        if (o.Scenarios.Count > 0)
+        {
+            var testsRoot = Path.IsPathRooted(o.TestsDir)
+                ? o.TestsDir
+                : Path.Combine(root, o.TestsDir);
+            stagedEval = EvalScenarioFilter.Stage(
+                Path.Combine(testsRoot, o.Unit), o.Unit, o.Scenarios, "run-tests",
+                out var filterError);
+            if (stagedEval is null)
+            {
+                Console.Error.WriteLine($"grounding: {filterError}");
+                return 1;
+            }
+            o.TestsDir = stagedEval.Root;
+            Console.WriteLine($"grounding: staged {stagedEval.Kept} scenario(s) -> {Path.Combine(stagedEval.Root, o.Unit)}");
+        }
+        using var stagedEvalLease = stagedEval;
 
         var doc = SkillDoc.FromMeta(metaPath, o.Unit);
         string skillText;
@@ -195,12 +216,15 @@ internal static class Runner
                 var abl = o.ExcludeSkills.Count > 0
                     ? "-minus-" + string.Join("-", o.ExcludeSkills.OrderBy(s => s, StringComparer.Ordinal))
                     : "";
+                var scenarios = o.Scenarios.Count > 0
+                    ? ScenarioSelectionTag(o.Scenarios)
+                    : "";
                 var tag = o.Source switch
                 {
-                    "skill" => $"{o.Unit}-skill{dv}{abl}.{ms}",
-                    "readme" => $"{o.Unit}-readme{dv}{abl}.{ms}",
-                    "none" => $"{o.Unit}-none{dv}{abl}.{ms}",
-                    _ => $"{o.Unit}{dv}{abl}.{ms}",
+                    "skill" => $"{o.Unit}-skill{dv}{abl}{scenarios}.{ms}",
+                    "readme" => $"{o.Unit}-readme{dv}{abl}{scenarios}.{ms}",
+                    "none" => $"{o.Unit}-none{dv}{abl}{scenarios}.{ms}",
+                    _ => $"{o.Unit}{dv}{abl}{scenarios}.{ms}",
                 };
                 var resultsDir = DataCache.ResultsDir(o.Unit, tag);
                 var cmd = BuildCommand(bin ?? "<skill-validator>", o, model, resultsDir, groundingArg);
@@ -402,6 +426,27 @@ internal static class Runner
         m.Contains("opus") ? "opus" :
         m.Contains("haiku") ? "haiku" :
         m.Contains("sonnet") ? "sonnet" : m;
+
+    private static string ScenarioTag(string value)
+    {
+        var chars = value.Select(c => char.IsLetterOrDigit(c) ? char.ToLowerInvariant(c) : '-').ToArray();
+        return new string(chars).Trim('-');
+    }
+
+    private static string ScenarioSelectionTag(IEnumerable<string> values)
+    {
+        var selected = values
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        var readable = string.Join("-", selected.Select(ScenarioTag));
+        var identity = string.Join("\n", selected.Select(value => value.ToUpperInvariant()));
+        var hash = Convert.ToHexString(
+            System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(identity)))
+            [..8].ToLowerInvariant();
+        return $"-scenarios-{readable}-{hash}";
+    }
 
     // Rewrite the YAML frontmatter `name:` to `unit`. Used only for the push artifact so
     // skill-validator's agent-eval discovery (keyed on the agent name) resolves the unit's

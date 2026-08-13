@@ -54,13 +54,13 @@ internal static class Ablate
         // Optionally stage a scenario-filtered eval so a "clean" subset runs cheaply. The staged
         // tree copies meta.yaml + fixtures verbatim and keeps only the requested scenario blocks.
         string? testsDirArg = o.TestsDir;
-        string? staged = null;
+        StagedEval? staged = null;
         if (o.Scenarios is { Count: > 0 })
         {
-            staged = StageFilteredTests(o, out var keptCount);
+            staged = StageFilteredTests(o);
             if (staged is null) return 1;
-            testsDirArg = staged;
-            Console.WriteLine($"ablate: staged {keptCount} scenario(s) -> {Path.Combine(staged, o.Unit)}");
+            testsDirArg = staged.Root;
+            Console.WriteLine($"ablate: staged {staged.Kept} scenario(s) -> {Path.Combine(staged.Root, o.Unit)}");
         }
 
         // Reuse ONE baseline across all cells. If the caller supplied a baseline, use it
@@ -136,8 +136,7 @@ internal static class Ablate
         }
         finally
         {
-            if (staged is not null)
-                try { Directory.Delete(staged, recursive: true); } catch { /* best effort */ }
+            staged?.Dispose();
             if (persistBaseline)
                 foreach (var bf in new[] { sharedBaseline, sharedBaseline + ".arms.json", sharedBaseline + ".prov.json" })
                     try { if (File.Exists(bf)) File.Delete(bf); } catch { /* best effort */ }
@@ -307,92 +306,20 @@ internal static class Ablate
     // ---- staging + helpers --------------------------------------------------
 
     // Copy grounding/<unit> to a temp tree keeping only the requested scenario blocks in eval.yaml.
-    private static string? StageFilteredTests(AblateOptions o, out int kept)
+    private static StagedEval? StageFilteredTests(AblateOptions o)
     {
-        kept = 0;
         var root = o.Root ?? Directory.GetCurrentDirectory();
         var testsDir = o.TestsDir ?? "grounding";
         var srcUnitDir = Path.IsPathRooted(testsDir)
             ? Path.Combine(testsDir, o.Unit)
             : Path.Combine(root, testsDir, o.Unit);
-        var evalPath = Path.Combine(srcUnitDir, "eval.yaml");
-        if (!File.Exists(evalPath))
+        var staged = EvalScenarioFilter.Stage(
+            srcUnitDir, o.Unit, o.Scenarios!, "abl-tests", out var error);
+        if (staged is null)
         {
-            Console.Error.WriteLine($"ablate: eval.yaml not found at {evalPath}.");
-            return null;
+            Console.Error.WriteLine($"ablate: {error}");
         }
-
-        var stagedRoot = Path.Combine(Path.GetTempPath(), $"abl-tests-{Guid.NewGuid():N}");
-        var stagedUnit = Path.Combine(stagedRoot, o.Unit);
-        Directory.CreateDirectory(stagedUnit);
-
-        // Copy everything except eval.yaml verbatim (meta.yaml, fixtures/, …).
-        foreach (var file in Directory.EnumerateFiles(srcUnitDir))
-            if (!Path.GetFileName(file).Equals("eval.yaml", StringComparison.OrdinalIgnoreCase))
-                File.Copy(file, Path.Combine(stagedUnit, Path.GetFileName(file)));
-        foreach (var dir in Directory.EnumerateDirectories(srcUnitDir))
-            CopyDir(dir, Path.Combine(stagedUnit, Path.GetFileName(dir)));
-
-        var filtered = FilterEvalScenarios(File.ReadAllLines(evalPath), o.Scenarios!, out kept);
-        if (kept == 0)
-        {
-            Console.Error.WriteLine($"ablate: --scenarios matched no scenarios in {evalPath}.");
-            try { Directory.Delete(stagedRoot, recursive: true); } catch { }
-            return null;
-        }
-        File.WriteAllText(Path.Combine(stagedUnit, "eval.yaml"), filtered);
-        return stagedRoot;
-    }
-
-    // Line-based scenario filter. Scenarios are top-level list items (`  - name: ...`) under a
-    // `scenarios:` key; a block runs from its `- name:` line to the next `- name:` at the same
-    // indent (or EOF). Header lines before the first scenario are preserved verbatim.
-    private static string FilterEvalScenarios(string[] lines, List<string> keepTokens, out int kept)
-    {
-        kept = 0;
-        var header = new List<string>();
-        var blocks = new List<(string name, List<string> body)>();
-        List<string>? current = null;
-        string? currentName = null;
-        int itemIndent = -1;
-
-        static bool IsItem(string line, out string name, out int indent)
-        {
-            name = ""; indent = 0;
-            var trimmed = line.TrimStart();
-            indent = line.Length - trimmed.Length;
-            if (!trimmed.StartsWith("- ")) return false;
-            var afterDash = trimmed.Substring(2).TrimStart();
-            if (!afterDash.StartsWith("name:")) return false;
-            name = afterDash.Substring("name:".Length).Trim().Trim('"', '\'');
-            return true;
-        }
-
-        foreach (var line in lines)
-        {
-            if (IsItem(line, out var nm, out var ind) && (itemIndent < 0 || ind == itemIndent))
-            {
-                itemIndent = ind;
-                if (current is not null) blocks.Add((currentName!, current));
-                current = new List<string> { line };
-                currentName = nm;
-            }
-            else if (current is null) header.Add(line);
-            else current.Add(line);
-        }
-        if (current is not null) blocks.Add((currentName!, current));
-
-        var sb = new System.Text.StringBuilder();
-        foreach (var h in header) sb.AppendLine(h);
-        foreach (var (name, body) in blocks)
-        {
-            if (!keepTokens.Any(tok => name.StartsWith(tok, StringComparison.OrdinalIgnoreCase)
-                                    || name.Contains(tok, StringComparison.OrdinalIgnoreCase)))
-                continue;
-            kept++;
-            foreach (var b in body) sb.AppendLine(b);
-        }
-        return sb.ToString();
+        return staged;
     }
 
     private static string? LatestSessionsDb(string unit, string tag)
@@ -404,15 +331,6 @@ internal static class Ablate
             .Where(File.Exists)
             .OrderByDescending(f => File.GetLastWriteTimeUtc(f))
             .FirstOrDefault();
-    }
-
-    private static void CopyDir(string src, string dst)
-    {
-        Directory.CreateDirectory(dst);
-        foreach (var f in Directory.EnumerateFiles(src))
-            File.Copy(f, Path.Combine(dst, Path.GetFileName(f)));
-        foreach (var d in Directory.EnumerateDirectories(src))
-            CopyDir(d, Path.Combine(dst, Path.GetFileName(d)));
     }
 
     private static string Short(string scenarioName)
