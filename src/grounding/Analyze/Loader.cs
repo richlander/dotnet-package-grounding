@@ -26,12 +26,12 @@ internal sealed class ArmRow
     public IReadOnlyList<RunLadder>? PerRun;
 }
 
-// One run's ladder outcome, derived from the harness RunOutcome. Satisfies/Delivers are the
-// analyzer-owned ladder tiers (Delivers == Satisfies until the delivers-tier assertions land).
-// Iet is recomputed per run from token fields exactly as for the averaged arm.
+// One run's ladder outcome, derived from the harness RunOutcome. Iet is recomputed per run from
+// token fields exactly as for the averaged arm.
 internal readonly record struct RunLadder(
     bool Satisfies,
     bool Delivers,
+    bool DeliveryObserved,
     long Iet,
     int Turns,
     long Secs,
@@ -70,14 +70,14 @@ internal static class Loader
         var iet = (long)System.Math.Round(model.Iet(m));
 
         // Per-run ladder outcomes, when the dataset carries per-run capture. IET is recomputed per
-        // run from the same token fields as the averaged arm. Delivers == Satisfies (Stage-1 proxy)
-        // until the delivers-tier assertions land.
+        // run from the same token fields as the averaged arm.
         IReadOnlyList<RunLadder>? perRun = null;
         if (m.PerRun is { Count: > 0 } pr)
         {
             perRun = pr.Select(o => new RunLadder(
                 Satisfies: o.Satisfies,
-                Delivers: o.Satisfies,
+                Delivers: o.Delivers,
+                DeliveryObserved: o.DeliveryObserved,
                 Iet: (long)System.Math.Round(model.Iet(o.InputTokens, o.CacheReadTokens, o.OutputTokens)),
                 Turns: o.TurnCount,
                 Secs: (long)Math.Round(o.WallTimeMs / 1000.0, MidpointRounding.ToEven),

@@ -33,6 +33,13 @@ delivered or harm incurred:
 
 A headline like "grounding is cheaper and at least as correct" may rest **only** on these metrics.
 
+The two return tiers are executable. Assertions may carry a closed-contract pair:
+`tier: satisfies|delivers` plus `mini_prompt`, a restatement of the prompt clause the test gates.
+Satisfies-tier tests establish that the output works. Delivers-tier tests establish that it worked
+through the prompt-required API or approach; the analyzer only awards Delivers when Satisfies also
+passes. Untagged historical assertions remain accepted and use the documented
+`Delivers ≡ Satisfies` compatibility proxy.
+
 **Informative signals** are everything about *how* the agent behaved: total tool calls, **reasoning
 turns** (`turnCount` — iterations of the think→act loop, the cleanest measure of flailing),
 `web_fetch`/`web_search`, `dotnet-inspect` invocations, NuGet-MCP calls, NuGet-cache rummaging, and bash
@@ -196,8 +203,9 @@ The pin tracks the **`holistic-harness` branch of
 `dotnet/skills` main. That branch carries protocol changes this study depends on and that
 were never upstreamed: the `expected_skill` / `expected_skills` scenario priors, run-ordered skill
 activation sets for pull-consistency analysis, holistic eval mode with the isolated-arm skip, and
-per-run outcomes persisted before averaging, including preservation of that lens through rejudge
-and reporting. Upstream **accepts `--eval-mode` and ignores
+per-run outcomes persisted before averaging, including tier-specific `satisfies` / `delivers`
+assertion counts and preservation of that lens through rejudge and reporting. Upstream **accepts
+`--eval-mode` and ignores
 it**, so a pin at `dotnet/skills` main silently downgrades every run to legacy pairwise with a live
 isolated arm, producing numbers that are not comparable to any published card and no warning that
 anything changed. Both [`eng/run-evals.sh`](../eng/run-evals.sh) and the bump workflow now refuse a

@@ -29,27 +29,36 @@ scenarios:
       files:
         - { path: Report.csproj, source: fixtures/mc01/Report.csproj }
         - { path: Program.cs, source: fixtures/mc01/Program.cs }
+        - { path: .eval/via/ViaVerifier.csproj, source: fixtures/via/ViaVerifier.csproj }
+        - { path: .eval/via/Verifier.txt, source: fixtures/via/Verifier.txt }
     reject_tools: [web_search, web_fetch]
     assertions:
-      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin -- ShowWhenProperty .", expected_exit_code: 0, command_timeout: 30 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin -- MarkoutTableMode.Jsonl .", expected_exit_code: 0, command_timeout: 30 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin -- JsonTypedValues .", expected_exit_code: 0, command_timeout: 30 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin -- JsonSerializer .", expected_exit_code: 1, command_timeout: 30 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin -- StringBuilder .", expected_exit_code: 1, command_timeout: 30 }
+      - { type: run_command_and_assert, tier: satisfies, mini_prompt: "Build the project.", command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, tier: delivers, mini_prompt: "Route every output mode through the serializer.", command_to_run: "dotnet", command_arguments: "run --project .eval/via/ViaVerifier.csproj -- bin/Debug/net10.0/Report.dll", expected_exit_code: 0, expected_std_output_contains: "Verified", command_timeout: 120 }
+      - { type: run_command_and_assert, tier: delivers, mini_prompt: "Declaratively hide the Failures section when the list is empty.", command_to_run: "grep", command_arguments: "-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin -- ShowWhenProperty .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, tier: delivers, mini_prompt: "Render the component rows as JSON Lines through the serializer.", command_to_run: "grep", command_arguments: "-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin -- MarkoutTableMode.Jsonl .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, tier: delivers, mini_prompt: "Render typed JSON Lines records.", command_to_run: "grep", command_arguments: "-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin -- JsonTypedValues .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, tier: delivers, mini_prompt: "Do not hand-write JSON.", command_to_run: "grep", command_arguments: "-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin -- JsonSerializer .", expected_exit_code: 1, command_timeout: 30 }
+      - { type: run_command_and_assert, tier: delivers, mini_prompt: "Do not hand-write Markdown.", command_to_run: "grep", command_arguments: "-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin -- StringBuilder .", expected_exit_code: 1, command_timeout: 30 }
       - type: run_command_and_assert
+        tier: satisfies
+        mini_prompt: "With no arguments, render Markdown containing the title and Components table while hiding Failures."
         command_to_run: "dotnet"
         command_arguments: "run --no-build"
         expected_exit_code: 0
         expected_std_output_matches: "(?=[\\s\\S]*# Build 42)(?=[\\s\\S]*## Components)(?=[\\s\\S]*\\| api \\| 120 \\|)(?![\\s\\S]*## Failures)"
         command_timeout: 120
       - type: run_command_and_assert
+        tier: satisfies
+        mini_prompt: "With failure, render the same Markdown report with a visible Failures section."
         command_to_run: "dotnet"
         command_arguments: "run --no-build -- failure"
         expected_exit_code: 0
         expected_std_output_matches: "(?=[\\s\\S]*# Build 42)(?=[\\s\\S]*## Failures)(?=[\\s\\S]*worker)(?=[\\s\\S]*timeout)"
         command_timeout: 120
       - type: run_command_and_assert
+        tier: satisfies
+        mini_prompt: "With jsonl, render the component rows as typed JSON Lines records."
         command_to_run: "dotnet"
         command_arguments: "run --no-build -- jsonl"
         expected_exit_code: 0
@@ -78,20 +87,27 @@ scenarios:
       files:
         - { path: Report.csproj, source: fixtures/mc02/Report.csproj }
         - { path: Program.cs, source: fixtures/mc02/Program.cs }
+        - { path: .eval/via/ViaVerifier.csproj, source: fixtures/via/ViaVerifier.csproj }
+        - { path: .eval/via/Verifier.txt, source: fixtures/via/Verifier.txt }
     reject_tools: [web_search, web_fetch]
     assertions:
-      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin -- TreeNode .", expected_exit_code: 0, command_timeout: 30 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin -- MarkoutIgnoreInTable .", expected_exit_code: 0, command_timeout: 30 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin -- PlainTextFormatter .", expected_exit_code: 0, command_timeout: 30 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin -- StringBuilder .", expected_exit_code: 1, command_timeout: 30 }
+      - { type: run_command_and_assert, tier: satisfies, mini_prompt: "Build the project.", command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, tier: delivers, mini_prompt: "Route both output modes through the serializer.", command_to_run: "dotnet", command_arguments: "run --project .eval/via/ViaVerifier.csproj -- bin/Debug/net10.0/Report.dll", expected_exit_code: 0, expected_std_output_contains: "Verified", command_timeout: 120 }
+      - { type: run_command_and_assert, tier: delivers, mini_prompt: "Represent the hierarchy with the serializer's built-in tree shape.", command_to_run: "grep", command_arguments: "-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin -- TreeNode .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, tier: delivers, mini_prompt: "Keep the built-in tree shape out of tabular rendering.", command_to_run: "grep", command_arguments: "-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin -- MarkoutIgnoreInTable .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, tier: delivers, mini_prompt: "With text, render the same model through the plain-text formatter.", command_to_run: "grep", command_arguments: "-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin -- PlainTextFormatter .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, tier: delivers, mini_prompt: "Do not hand-draw indentation.", command_to_run: "grep", command_arguments: "-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin -- StringBuilder .", expected_exit_code: 1, command_timeout: 30 }
       - type: run_command_and_assert
+        tier: satisfies
+        mini_prompt: "With no arguments, render Markdown containing the complete hierarchy."
         command_to_run: "dotnet"
         command_arguments: "run --no-build"
         expected_exit_code: 0
         expected_std_output_matches: "(?=[\\s\\S]*# Service Map)(?=[\\s\\S]*\\u2514\\u2500 gateway)(?=[\\s\\S]*\\u251c\\u2500 orders)(?=[\\s\\S]*\\u2514\\u2500 postgres)"
         command_timeout: 120
       - type: run_command_and_assert
+        tier: satisfies
+        mini_prompt: "With text, render plain text containing the complete hierarchy."
         command_to_run: "dotnet"
         command_arguments: "run --no-build -- text"
         expected_exit_code: 0
@@ -126,22 +142,29 @@ scenarios:
       files:
         - { path: Report.csproj, source: fixtures/mc03/Report.csproj }
         - { path: Program.cs, source: fixtures/mc03/Program.cs }
+        - { path: .eval/via/ViaVerifier.csproj, source: fixtures/via/ViaVerifier.csproj }
+        - { path: .eval/via/Verifier.txt, source: fixtures/via/Verifier.txt }
     reject_tools: [web_search, web_fetch]
     assertions:
-      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin -- Breakdown .", expected_exit_code: 0, command_timeout: 30 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin -- TreeNode .", expected_exit_code: 0, command_timeout: 30 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin -- ShowWhenProperty .", expected_exit_code: 0, command_timeout: 30 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin -- IncludeDependencies .", expected_exit_code: 0, command_timeout: 30 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin -- MarkoutIgnoreInTable .", expected_exit_code: 0, command_timeout: 30 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin -- StringBuilder .", expected_exit_code: 1, command_timeout: 30 }
+      - { type: run_command_and_assert, tier: satisfies, mini_prompt: "Build the project.", command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, tier: delivers, mini_prompt: "Render both modes through one serializer call path.", command_to_run: "dotnet", command_arguments: "run --project .eval/via/ViaVerifier.csproj -- bin/Debug/net10.0/Report.dll", expected_exit_code: 0, expected_std_output_contains: "Verified", command_timeout: 120 }
+      - { type: run_command_and_assert, tier: delivers, mini_prompt: "Render severity counts with the serializer's proportional-breakdown shape.", command_to_run: "grep", command_arguments: "-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin -- Breakdown .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, tier: delivers, mini_prompt: "Model the dependency hierarchy with the serializer's built-in tree shape.", command_to_run: "grep", command_arguments: "-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin -- TreeNode .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, tier: delivers, mini_prompt: "Declaratively hide the entire Dependencies section from the supplied flag.", command_to_run: "grep", command_arguments: "-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin -- ShowWhenProperty .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, tier: delivers, mini_prompt: "Set a bool property on the report from the supplied includeDependencies flag.", command_to_run: "grep", command_arguments: "-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin -- IncludeDependencies .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, tier: delivers, mini_prompt: "Keep the built-in visual shapes out of tabular rendering.", command_to_run: "grep", command_arguments: "-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin -- MarkoutIgnoreInTable .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, tier: delivers, mini_prompt: "Do not hand-build either visual.", command_to_run: "grep", command_arguments: "-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin -- StringBuilder .", expected_exit_code: 1, command_timeout: 30 }
       - type: run_command_and_assert
+        tier: satisfies
+        mini_prompt: "With no arguments, render severity counts while hiding the Dependencies section."
         command_to_run: "dotnet"
         command_arguments: "run --no-build"
         expected_exit_code: 0
         expected_std_output_matches: "(?=[\\s\\S]*# Security Scan)(?=[\\s\\S]*\\| Category \\| Count \\| % \\|)(?=[\\s\\S]*\\| Critical \\| 2 \\|)(?=[\\s\\S]*\\| High \\| 5 \\|)(?![\\s\\S]*## Dependencies)(?![\\s\\S]*postgres)"
         command_timeout: 120
       - type: run_command_and_assert
+        tier: satisfies
+        mini_prompt: "With dependencies, render severity counts and the visible dependency hierarchy."
         command_to_run: "dotnet"
         command_arguments: "run --no-build -- dependencies"
         expected_exit_code: 0

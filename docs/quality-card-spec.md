@@ -6,11 +6,10 @@ The **row-level reference** for the quality card (`analyze --view card`): every 
 / pairing arguments, the deliberate exclusions). This doc only pins down what each row *is*.
 
 Example values are the markout CT-24 holistic run (`N = 24`, `claude-haiku-4.5`, `baseline → grounded`).
-Per-run yield capture (`Kᵢˣ / k` and per-run cost) has **landed** — the *(graded)* rows are now
-measured over the real `k = 5` batch, not a single last run. The **one** remaining proxy is the
-`Delivers` bit itself: until delivers-tier assertions are authored, `Delivers` is stood in by the
-**functional-satisfies** gate (assertions pass), so `Kᵢˣ` and every fidelity (C4) figure read as their
-functional-pass proxy, not a confirmed *did-it-as-asked* signal (see the model doc's *Capture* note).
+Per-run yield capture (`Kᵢˣ / k`, tier-specific assertion counts, and per-run cost) has **landed**.
+The historical CT-24 example values below still predate explicit delivers-tier assertions, so they
+retain the **functional-satisfies** proxy (`Delivers ≡ Satisfies`). Newly tiered and re-run scenarios
+measure `Delivers` directly from deterministic *did-it-as-asked* tests and make C4 estimable.
 
 ## Notation
 
@@ -41,11 +40,9 @@ functional-pass proxy, not a confirmed *did-it-as-asked* signal (see the model d
 
 ## ① Outcome — the coverage scoreboard
 
-*The `Delivers`/`Kᵢˣ` figures below are measured over the real `k = 5` batch, but `Delivers` is still
-stood in by the **functional-satisfies** gate (assertions pass) until delivers-tier assertions are
-authored — so `pᵢˣ` uses the graded `τ = 3/5` threshold on real per-run yield, while the `Delivers`
-vs. `Satisfies` distinction (did-it-as-asked) is not yet separable. Read every `Delivers`/`Kᵢˣ` figure
-as functionally-passed until that lands, not a confirmed fidelity signal.*
+*The historical CT-24 `Delivers`/`Kᵢˣ` example figures below use the functional-satisfies proxy
+because that dataset predates tiered assertions. For a current tiered dataset, read `Kᵢˣ` as true
+delivery yield and C4 as the directly observed split between working and working-as-asked runs.*
 
 | Label | Equation | Example (b→g) | Description |
 | --- | --- | --- | --- |

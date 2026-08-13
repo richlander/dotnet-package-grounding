@@ -11,7 +11,8 @@
 # needs protocol changes that were never upstreamed: expected_skill / expected_skills
 # priors, run-ordered skill activation sets, holistic eval mode (with the
 # isolated-arm skip), and per-run outcomes persisted before averaging, including
-# preservation through rejudge/reporting. Upstream silently ignores --eval-mode, so building
+# tier-specific satisfies/delivers counts and preservation through rejudge/reporting. Upstream
+# silently ignores --eval-mode, so building
 # from dotnet/skills produces legacy pairwise numbers that are NOT comparable to
 # any published card. Override with SKILL_VALIDATOR_REPO only if you have moved
 # those commits somewhere else.
