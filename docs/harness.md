@@ -193,9 +193,11 @@ validator from it.
 
 The pin tracks the **`holistic-harness` branch of
 [`richlander/skills`](https://github.com/richlander/skills/tree/holistic-harness)**, not
-`dotnet/skills` main. That branch carries three commits this study's protocol depends on and that
-were never upstreamed: the `expected_skill` scenario prior, holistic eval mode with the isolated-arm
-skip, and per-run outcomes persisted before averaging. Upstream **accepts `--eval-mode` and ignores
+`dotnet/skills` main. That branch carries protocol changes this study depends on and that
+were never upstreamed: the `expected_skill` / `expected_skills` scenario priors, run-ordered skill
+activation sets for pull-consistency analysis, holistic eval mode with the isolated-arm skip, and
+per-run outcomes persisted before averaging, including preservation of that lens through rejudge
+and reporting. Upstream **accepts `--eval-mode` and ignores
 it**, so a pin at `dotnet/skills` main silently downgrades every run to legacy pairwise with a live
 isolated arm, producing numbers that are not comparable to any published card and no warning that
 anything changed. Both [`eng/run-evals.sh`](../eng/run-evals.sh) and the bump workflow now refuse a

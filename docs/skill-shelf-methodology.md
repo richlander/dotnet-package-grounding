@@ -56,8 +56,11 @@ that scores the shelf plus the agent's discovery and selection, not any one skil
 - **Organic discovery.** Prompts **never name the skill** — the harness rejects any prompt
   containing the target skill's whole-word name — so the benchmark tests whether the agent
   *finds* the right skill from a functional description, not whether it can follow a signpost.
-- **Target-skill hit.** Because we backfill each task's `expected_skill`, we can score selection
-  directly: on the locked k=5 markout shelf the agent self-selected the intended skill on
+- **Target-set hit.** Ordinary tasks use `expected_skill`; intentional composition tasks use
+  `expected_skills` to pre-register the complete stable pull set. The former is a membership prior;
+  the latter requires exact set equality in every captured run. We can therefore score whether
+  every intended skill, and no substitute/extra skill, was selected: on the locked k=5 markout shelf the agent self-selected the
+  intended singleton on
   **opus 23/24, haiku 24/24**. This is a first-class metric of the *shelf*, unavailable to any
   per-skill test.
 - **k ≥ 5.** Per-scenario verdicts are invalid under high variance ([eval-protocol rule 2](./eval-protocol.md));
@@ -243,7 +246,9 @@ that is the exact opposite of the conflict the holistic arm was built to catch.
 
 Attribution is **on-demand**, triggered by the pull signal — not a mandatory arm on every run.
 
-1. **Classify by pull-consistency (n ≥ 5).** For each task, over the plugin runs:
+1. **Classify by pull-consistency (n ≥ 5).** For each task, over the run-ordered plugin activation
+   sets persisted in the dataset. Intentional composition tasks pre-register the exact set with
+   `expected_skills`:
    - **consistent-1** — the same single skill pulls every run → clean attribution, done.
    - **consistent-same-2** — the same pair pulls every run → collaboration *candidate*; go to step 2.
    - **variable** — the pulled set changes run to run → a description-overlap smell; tighten

@@ -8,9 +8,10 @@
 # eng/skill-validator.sha. "Updating the harness" = bump that SHA.
 #
 # The pin lives on a FORK of dotnet/skills, not upstream. This study's protocol
-# needs three commits that were never upstreamed: the expected_skill scenario
-# prior, holistic eval mode (with the isolated-arm skip), and per-run outcomes
-# persisted before averaging. Upstream silently ignores --eval-mode, so building
+# needs protocol changes that were never upstreamed: expected_skill / expected_skills
+# priors, run-ordered skill activation sets, holistic eval mode (with the
+# isolated-arm skip), and per-run outcomes persisted before averaging, including
+# preservation through rejudge/reporting. Upstream silently ignores --eval-mode, so building
 # from dotnet/skills produces legacy pairwise numbers that are NOT comparable to
 # any published card. Override with SKILL_VALIDATOR_REPO only if you have moved
 # those commits somewhere else.

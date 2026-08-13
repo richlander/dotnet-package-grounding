@@ -1,0 +1,154 @@
+# Intentional composition tasks for the whole Markout shelf.
+#
+# Each task requires the base serialization pattern plus TWO domain skills. `expected_skills`
+# is an exact pull-set prior: at k >= 5, the plugin arm should classify these as a stable
+# consistent-same-3 pull. A variable set is a discovery/description smell; the isolated arm is
+# intentionally insufficient and must not be used as the holistic verdict.
+
+config:
+  max_parallel_scenarios: 1
+
+scenarios:
+  - name: "MC01: conditional report with typed JSONL export"
+    prompt: |
+      This console project references a source-generated .NET serializer that projects annotated
+      objects into Markdown and structured tabular formats (see the package reference). Program.cs
+      contains one build report with component timings and an empty failure list.
+
+      Implement one annotated report model and one generated serializer context. With no arguments,
+      render Markdown containing the title and Components table, while declaratively hiding the
+      Failures section when the list is empty. With `failure`, add the provided known failure and
+      render the same Markdown report with a visible Failures section. With `jsonl`, render the
+      component rows as typed JSON Lines records. Route every mode through the serializer; do not
+      hand-write Markdown or JSON. Build and run all three modes.
+    expected_skills:
+      - markout
+      - conditional-composition
+      - output-formats
+    setup:
+      files:
+        - { path: Report.csproj, source: fixtures/mc01/Report.csproj }
+        - { path: Program.cs, source: fixtures/mc01/Program.cs }
+    reject_tools: [web_search, web_fetch]
+    assertions:
+      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin -- ShowWhenProperty .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin -- MarkoutTableMode.Jsonl .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin -- JsonTypedValues .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin -- JsonSerializer .", expected_exit_code: 1, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin -- StringBuilder .", expected_exit_code: 1, command_timeout: 30 }
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build"
+        expected_exit_code: 0
+        expected_std_output_matches: "(?=[\\s\\S]*# Build 42)(?=[\\s\\S]*## Components)(?=[\\s\\S]*\\| api \\| 120 \\|)(?![\\s\\S]*## Failures)"
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- failure"
+        expected_exit_code: 0
+        expected_std_output_matches: "(?=[\\s\\S]*# Build 42)(?=[\\s\\S]*## Failures)(?=[\\s\\S]*worker)(?=[\\s\\S]*timeout)"
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- jsonl"
+        expected_exit_code: 0
+        expected_std_output_matches: "(?=[\\s\\S]*\"name\":\"api\")(?=[\\s\\S]*\"duration_ms\":120)(?=[\\s\\S]*\"name\":\"worker\")"
+        command_timeout: 120
+    rubric:
+      - "Uses the generated serializer context for every output; no hand-written Markdown or JSON"
+      - "Uses one declarative ShowWhenProperty condition so the Failures section is absent when empty and visible when populated"
+      - "Uses TableFormatter with Jsonl mode and typed values for the same component rows"
+    timeout: 900
+
+  - name: "MC02: dependency tree with Markdown and plain-text modes"
+    prompt: |
+      This console project references a source-generated .NET serializer with built-in report
+      shapes and multiple formatters. Program.cs contains a service dependency hierarchy.
+
+      Implement one annotated report model and one generated serializer context. Represent the
+      hierarchy with the serializer's built-in tree shape, not hand-drawn indentation. With no
+      arguments render Markdown; with `text` render the same model through the plain-text formatter.
+      Both modes must contain the complete hierarchy. Build and run both modes.
+    expected_skills:
+      - markout
+      - built-in-shapes
+      - output-formats
+    setup:
+      files:
+        - { path: Report.csproj, source: fixtures/mc02/Report.csproj }
+        - { path: Program.cs, source: fixtures/mc02/Program.cs }
+    reject_tools: [web_search, web_fetch]
+    assertions:
+      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin -- TreeNode .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin -- MarkoutIgnoreInTable .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin -- PlainTextFormatter .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin -- StringBuilder .", expected_exit_code: 1, command_timeout: 30 }
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build"
+        expected_exit_code: 0
+        expected_std_output_matches: "(?=[\\s\\S]*# Service Map)(?=[\\s\\S]*\\u2514\\u2500 gateway)(?=[\\s\\S]*\\u251c\\u2500 orders)(?=[\\s\\S]*\\u2514\\u2500 postgres)"
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- text"
+        expected_exit_code: 0
+        expected_std_output_matches: "(?=[\\s\\S]*Service Map)(?=[\\s\\S]*\\u2514\\u2500 gateway)(?=[\\s\\S]*\\u251c\\u2500 orders)(?=[\\s\\S]*\\u2514\\u2500 postgres)(?![\\s\\S]*# Service Map)"
+        command_timeout: 120
+    rubric:
+      - "Models the dependency hierarchy with TreeNode values and marks the shape as non-tabular"
+      - "Routes one model through the default Markdown serializer and PlainTextFormatter"
+      - "Does not hand-draw tree glyphs or maintain separate output models"
+    timeout: 900
+
+  - name: "MC03: conditionally hidden dependency shape"
+    prompt: |
+      This console project references a source-generated .NET serializer with built-in visual
+      shapes and declarative conditional sections. Program.cs contains scan severity counts plus
+      a dependency hierarchy. Its includeDependencies flag is false with no arguments and true
+      when the `dependencies` argument is present.
+
+      Implement one annotated report model and one generated serializer context. Render the
+      severity counts with the serializer's proportional-breakdown shape. Model the dependency
+      hierarchy with its built-in tree shape, but declaratively hide the entire Dependencies
+      section when includeDependencies is false and show it when the flag is true. Set a bool
+      property on the report from that supplied flag and point the section condition at that
+      property. The dependency collection is intentionally non-empty in both modes; do not derive
+      visibility from collection contents. Do not branch around serialization or hand-build either
+      visual. Build and run both Markdown modes.
+    expected_skills:
+      - markout
+      - built-in-shapes
+      - conditional-composition
+    setup:
+      files:
+        - { path: Report.csproj, source: fixtures/mc03/Report.csproj }
+        - { path: Program.cs, source: fixtures/mc03/Program.cs }
+    reject_tools: [web_search, web_fetch]
+    assertions:
+      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin -- Breakdown .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin -- TreeNode .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin -- ShowWhenProperty .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin -- IncludeDependencies .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin -- MarkoutIgnoreInTable .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rqF --include=*.cs --exclude-dir=obj --exclude-dir=bin -- StringBuilder .", expected_exit_code: 1, command_timeout: 30 }
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build"
+        expected_exit_code: 0
+        expected_std_output_matches: "(?=[\\s\\S]*# Security Scan)(?=[\\s\\S]*\\| Category \\| Count \\| % \\|)(?=[\\s\\S]*\\| Critical \\| 2 \\|)(?=[\\s\\S]*\\| High \\| 5 \\|)(?![\\s\\S]*## Dependencies)(?![\\s\\S]*postgres)"
+        command_timeout: 120
+      - type: run_command_and_assert
+        command_to_run: "dotnet"
+        command_arguments: "run --no-build -- dependencies"
+        expected_exit_code: 0
+        expected_std_output_matches: "(?=[\\s\\S]*\\| Category \\| Count \\| % \\|)(?=[\\s\\S]*## Dependencies)(?=[\\s\\S]*\\u2514\\u2500 api)(?=[\\s\\S]*postgres)(?=[\\s\\S]*redis)"
+        command_timeout: 120
+    rubric:
+      - "Uses Breakdown/Slice for the severity visualization and TreeNode for dependencies"
+      - "Copies the supplied includeDependencies flag to the model and uses that property as the ShowWhenProperty condition in both flag states"
+      - "Serializes one declarative model without imperative output branching"
+    timeout: 900
