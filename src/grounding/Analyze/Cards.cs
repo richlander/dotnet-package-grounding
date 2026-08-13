@@ -13,13 +13,6 @@ internal sealed partial class Cards
     private readonly TextWriter _o = Console.Out;
     public bool NoTitle;
 
-    // The content arm to grade. The clean content measure is skilledIsolated (ONLY the
-    // target skill loaded). skilledPlugin loads every skill on the shelf, so for units
-    // that share the grounding dir (e.g. markout alongside broadskill + prefer-dotnet-
-    // inspect) it is CONTAMINATED and flatters the result. Override via GROUNDING_CARD_ARM.
-    private static readonly string Arm =
-        Environment.GetEnvironmentVariable("GROUNDING_CARD_ARM") is { Length: > 0 } v ? v : "skilledIsolated";
-
     // ---- shared headline-metric spec (Python _METRICS) -------------------
 
     private static string RawSuccess(ArmAgg a) => $"{a.Succ}/{a.N}";
@@ -163,7 +156,7 @@ internal sealed partial class Cards
     {
         var a = Loader.LoadArm(path);
         var b = a.Agg["baseline"];
-        var g = a.Agg[Arm];
+        var g = a.Agg[a.GroundArm];
         var gtok = Loader.GroundingTokens(a.SkillPath, a.SkillName);
         if (!NoTitle)
             _o.WriteLine($"### Grounding eval — {a.SkillName} | `{a.Model}`\n");
@@ -202,10 +195,10 @@ internal sealed partial class Cards
 
         // Per-arm LIET summary (floor-anchored IET/duration per correct answer + target-skill hit),
         // computed once and reused so the card and the SVG report the SAME numbers.
-        var ls = arms.ToDictionary(a => a, a => Liet.Summarize(a.Path, Arm));
+        var ls = arms.ToDictionary(a => a, a => Liet.Summarize(a.Path, a.GroundArm));
 
         // A grounded "base → grounded" cell built from an ArmAgg raw formatter.
-        string Pair(LoadedArm a, Func<ArmAgg, string> raw) => $"{raw(a.Agg["baseline"])} → {raw(a.Agg[Arm])}";
+        string Pair(LoadedArm a, Func<ArmAgg, string> raw) => $"{raw(a.Agg["baseline"])} → {raw(a.Agg[a.GroundArm])}";
 
         // Rows in NARRATIVE order — five acts, each cost act following the same total → decomposition
         // → levelized shape, grouped by currency (tokens / turns / wall-clock):
@@ -234,13 +227,13 @@ internal sealed partial class Cards
             ("↳ tool-call turns (% of total) (-)",         a => Pair(a, RawToolCallTurns)),
             // ④ WALL-CLOCK (duration) — mirrors the IET section: a raw Total with a decomposition, then
             //    a floor-anchored per-correct-answer hero with its efficiency detail + Floor.
-            ("Total duration (-)",                         a => $"{RawSessionSecs(a.Agg["baseline"])} → {RawSessionSecs(a.Agg[Arm])} ({SignedPct(Pct(a.Agg[Arm].Secs, a.Agg["baseline"].Secs))})"),
+            ("Total duration (-)",                         a => $"{RawSessionSecs(a.Agg["baseline"])} → {RawSessionSecs(a.Agg[a.GroundArm])} ({SignedPct(Pct(a.Agg[a.GroundArm].Secs, a.Agg["baseline"].Secs))})"),
             ("↳ tool-turn secs (% of turn time) (-)",      a => Pair(a, RawToolTurnSecs)),
             ("Duration per correct answer (-)",            a => ls[a].HasData ? ls[a].DurDelta : "—"),
             ("↳ efficiency: baseline-doable (-)",          a => ls[a].HasData ? $"{ls[a].BaseDur} → {ls[a].AgDur} (Δ {ls[a].DurDelta})" : "—"),
             ("↳ Floor (context)",                          a => ls[a].HasData ? ls[a].FloorDur : "—"),
             // ⑤ TOKEN COST (IET) — the punchline
-            ("Total IET (-)",                              a => $"{RawIet(a.Agg["baseline"])} → {RawIet(a.Agg[Arm])} ({SignedPct(Pct(a.Agg[Arm].Iet, a.Agg["baseline"].Iet))})"),
+            ("Total IET (-)",                              a => $"{RawIet(a.Agg["baseline"])} → {RawIet(a.Agg[a.GroundArm])} ({SignedPct(Pct(a.Agg[a.GroundArm].Iet, a.Agg["baseline"].Iet))})"),
             ("↳ Grounding IET (doc) (-)",                  a => Pair(a, RawGroundingIet)),
             ("↳ Work IET (agent) (-)",                     a => Pair(a, RawWorkIet)),
             ("↳ skill load (tok) (context)",               a => Pair(a, RawDoc)),
@@ -252,7 +245,7 @@ internal sealed partial class Cards
         };
         foreach (var (label, cell) in rows)
             _o.WriteLine($"| {label} | " + string.Join(" | ", arms.Select(cell)) + " |");
-        _o.WriteLine("| **verdict** | " + string.Join(" | ", arms.Select(a => $"**{GradeLabel(a.Agg["baseline"], a.Agg[Arm])}**")) + " |");
+        _o.WriteLine("| **verdict** | " + string.Join(" | ", arms.Select(a => $"**{GradeLabel(a.Agg["baseline"], a.Agg[a.GroundArm])}**")) + " |");
         _o.WriteLine("\n_Two axes. **Gate** (correctness): **PASS** = 100% of tier correct, **FAIL** = below the gate. "
             + "**Efficiency** (independent of the gate): **BETTER** = more tasks correct / archaeology→0 / work IET cut ≥20%; "
             + "**WORSE** = fewer tasks correct than baseline, or work IET / output inflated ≥20%; **NEUTRAL** = held. "
@@ -260,9 +253,9 @@ internal sealed partial class Cards
         _o.WriteLine("> Note: even ungrounded, the baseline self-grounds from the restored NuGet cache "
             + "(the README and docs are packed in the nupkg) and the open web — so its resourcefulness count is a "
             + "**lower bound** and grounding's advantage is understated.\n");
-        if (arms.Any(a => a.Agg[Arm].SkillCounts.Count > 0))
+        if (arms.Any(a => a.Agg[a.GroundArm].SkillCounts.Count > 0))
             _o.WriteLine("> **Skills pulled** (self-select from shelf, ×scenarios): "
-                + string.Join(" \u2014 ", arms.Select(a => $"`{a.Model}` {SkillBreakdown(a.Agg[Arm])}"))
+                + string.Join(" \u2014 ", arms.Select(a => $"`{a.Model}` {SkillBreakdown(a.Agg[a.GroundArm])}"))
                 + ". A shelf skill pulled ×0\u20131 earns no place (delete it).\n");
     }
 
@@ -283,10 +276,10 @@ internal sealed partial class Cards
         _o.WriteLine("| --- |" + string.Concat(Enumerable.Repeat(" ---: |", arms.Count)));
         foreach (var (label, _, diff) in Spec)
         {
-            var cells = arms.Select(a => diff(a.Agg[Arm], a.Agg["baseline"]));
+            var cells = arms.Select(a => diff(a.Agg[a.GroundArm], a.Agg["baseline"]));
             _o.WriteLine($"| {label} | " + string.Join(" | ", cells) + " |");
         }
-        var verdicts = arms.Select(a => $"**{GradeLabel(a.Agg["baseline"], a.Agg[Arm])}**");
+        var verdicts = arms.Select(a => $"**{GradeLabel(a.Agg["baseline"], a.Agg[a.GroundArm])}**");
         _o.WriteLine("| **verdict** | " + string.Join(" | ", verdicts) + " |");
     }
 
@@ -312,8 +305,8 @@ internal sealed partial class Cards
         _o.WriteLine("| Metric (goal) | " + string.Join(" | ", models.Select(m => $"`{m.Model}`")) + " |");
         _o.WriteLine("| --- |" + string.Concat(Enumerable.Repeat(" ---: |", models.Count)));
         foreach (var (label, _, diff) in Spec)
-            _o.WriteLine($"| {label} | " + string.Join(" | ", models.Select(m => diff(m.Skill!.Agg[Arm], m.Readme!.Agg[Arm]))) + " |");
-        _o.WriteLine("| **verdict** | " + string.Join(" | ", models.Select(m => $"**{GradeLabel(m.Readme!.Agg[Arm], m.Skill!.Agg[Arm])}**")) + " |");
+            _o.WriteLine($"| {label} | " + string.Join(" | ", models.Select(m => diff(m.Skill!.Agg[m.Skill.GroundArm], m.Readme!.Agg[m.Readme.GroundArm]))) + " |");
+        _o.WriteLine("| **verdict** | " + string.Join(" | ", models.Select(m => $"**{GradeLabel(m.Readme!.Agg[m.Readme.GroundArm], m.Skill!.Agg[m.Skill.GroundArm])}**")) + " |");
     }
 
     // ---- document H2H over the answerable space (the LIET insight) -------------------------
@@ -367,10 +360,12 @@ internal sealed partial class Cards
             }
             if (readme is not null)
                 EmitH2H("Does `SKILL.md` pay its way over the package's `README.md`", model, iet,
-                    ("baseline", skill, "baseline"), ("README.md", readme, Arm), ("SKILL.md", skill, Arm));
+                    ("baseline", skill, "baseline"),
+                    ("README.md", readme, Loader.GroundedArmOf(readme)),
+                    ("SKILL.md", skill, Loader.GroundedArmOf(skill)));
             else
                 EmitH2H("Grounded vs baseline", model, iet,
-                    ("baseline", skill, "baseline"), ("SKILL.md", skill, Arm));
+                    ("baseline", skill, "baseline"), ("SKILL.md", skill, Loader.GroundedArmOf(skill)));
         }
     }
 
@@ -482,7 +477,7 @@ internal sealed partial class Cards
         // Exactly one grounded arm (input may also include a README/SKILL dataset that sorts ahead of it).
         var a = arms[0];
         var b = a.Agg["baseline"];
-        var g = a.Agg[Arm];
+        var g = a.Agg[a.GroundArm];
         var card = QualityCard.Build(b, g, a.Iet, GradeLabel(b, g));
         var gtok = Loader.GroundingTokens(a.SkillPath, a.SkillName);
         var tokNote = gtok is { } t ? $" (~{t} tok, via grounding tool)" : "";
@@ -508,7 +503,7 @@ internal sealed partial class Cards
     private void DocCardMultiModel(IReadOnlyList<LoadedArm> arms, bool jsonl)
     {
         var models = arms
-            .Select(a => (a.Model, B: a.Agg["baseline"], G: a.Agg[Arm], Grade: GradeLabel(a.Agg["baseline"], a.Agg[Arm])))
+            .Select(a => (a.Model, B: a.Agg["baseline"], G: a.Agg[a.GroundArm], Grade: GradeLabel(a.Agg["baseline"], a.Agg[a.GroundArm])))
             .ToList();
         var card = MultiModelCard.Build(models);
 

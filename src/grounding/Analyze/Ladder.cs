@@ -26,11 +26,6 @@ internal sealed class Ladder
     private readonly TextWriter _o;
     public bool NoTitle;
 
-    // Grounded arm to grade against baseline. Holistic datasets carry the plugin arm; per-skill the
-    // isolated arm. Default prefers whichever actually carries per-run data; override with the env.
-    private static readonly string? ArmOverride =
-        Environment.GetEnvironmentVariable("GROUNDING_CARD_ARM") is { Length: > 0 } v ? v : null;
-
     public Ladder(TextWriter o) => _o = o;
 
     // One arm's outcome on one task: k runs, of which Sat satisfy and K deliver; per-run IET/cost.
@@ -65,7 +60,7 @@ internal sealed class Ladder
         var verdict = d.Verdicts is { Count: > 0 } ? d.Verdicts[0] : new Verdict();
         var scenarios = verdict.Scenarios ?? new();
 
-        var groundedKey = PickGroundedArm(scenarios);
+        var groundedKey = Loader.GroundedArmOf(d);
         var rows = new List<TaskRow>();
         foreach (var sc in scenarios)
         {
@@ -463,15 +458,6 @@ internal sealed class Ladder
         var oneSec = new List<long> { row.Secs };
         return new ArmTask(1, ok ? 1 : 0, ok ? 1 : 0, one, ok ? one : new List<long>(),
                            oneSec, ok ? oneSec : new List<long>());
-    }
-
-    private static string PickGroundedArm(List<Scenario> scenarios)
-    {
-        if (ArmOverride is { } o) return o;
-        // Prefer the arm that carries real per-run data (non-empty plugin in holistic runs).
-        bool pluginHasData = scenarios.Any(sc => sc.SkilledPlugin?.Metrics?.PerRun is { Count: > 0 })
-                             || scenarios.Any(sc => (sc.SkilledPlugin?.Metrics?.InputTokens ?? 0) > 0);
-        return pluginHasData ? "skilledPlugin" : "skilledIsolated";
     }
 
     // ---- helpers ------------------------------------------------------------

@@ -18,11 +18,9 @@ internal sealed class Liet
     private readonly TextWriter _o;
     public bool NoTitle;
     public bool OracleFromPlugin;   // opt-in: read skilledPlugin as the SKILL.md oracle
-    // The grounded arm to plot as the primary (blue) curve. Mirrors the card's GROUNDING_CARD_ARM so
-    // `--view liet` and `--view card` always describe the SAME arm. Default skilledIsolated (the clean
-    // single-skill content measure); set skilledPlugin for the realistic whole-shelf pull delivery.
-    public string GroundArm { get; init; } =
-        Environment.GetEnvironmentVariable("GROUNDING_CARD_ARM") is { Length: > 0 } v ? v : "skilledIsolated";
+    // Explicit override for the grounded arm. By default each dataset selects its declared
+    // evaluation lens: plugin for holistic runs, isolated for per-skill runs.
+    public string? GroundArm { get; init; }
     public Liet(TextWriter o) => _o = o;
 
     private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
@@ -61,12 +59,13 @@ internal sealed class Liet
     // Compute the LIET Metrics summary for ONE dataset file + grounded arm, reusing the exact rung
     // build + FloorMetric/TargetHit the SVG uses so the card and the chart never disagree. The rung
     // sort is irrelevant here (FloorMetric/TargetHit are order-independent), so it is skipped.
-    public static LietSummary Summarize(string path, string groundArm)
+    public static LietSummary Summarize(string path, string? groundArm = null)
     {
         ResultsFile d;
         try { d = Loader.Parse(path); } catch { return default; }
         var v = (d.Verdicts ?? new()).FirstOrDefault();
         if (v is null) return default;
+        groundArm ??= Loader.GroundedArmOf(d);
         var iet = IetModels.For(d.Model);
         var rungs = BuildRungs(v, iet, false, groundArm, null);
         if (rungs.Count == 0) return default;
@@ -111,10 +110,11 @@ internal sealed class Liet
         foreach (var (_, d0) in primary)
             foreach (var v0 in d0.Verdicts ?? new())
             {
+                var groundArm0 = GroundArm ?? Loader.GroundedArmOf(d0);
                 if (baseSkill.Length == 0) baseSkill = v0.SkillName ?? "";
                 foreach (var sc0 in v0.Scenarios ?? new())
                 {
-                    foreach (var s0 in Loader.DetectedSkillsOf(sc0, GroundArm)) allSkills.Add(s0);
+                    foreach (var s0 in Loader.DetectedSkillsOf(sc0, groundArm0)) allSkills.Add(s0);
                     // Include the methodology target so an expected-but-never-pulled skill (an
                     // under-fire gap) still gets a stable global id and shows in the legend.
                     if (!string.IsNullOrWhiteSpace(sc0.ExpectedSkill)) allSkills.Add(sc0.ExpectedSkill.Trim());
@@ -125,12 +125,13 @@ internal sealed class Liet
         foreach (var (f, d) in primary.OrderBy(x => x.path, StringComparer.Ordinal))
         {
             var iet = IetModels.For(d.Model);
+            var groundArm = GroundArm ?? Loader.GroundedArmOf(d);
             var rf = readmeFiles.FirstOrDefault(r => r.d.Model == d.Model);
             var readmeMap = rf.d is not null ? BuildReadmeMap(rf.d, iet) : null;
             int vi = 0;
             foreach (var v in d.Verdicts ?? new())
             {
-                var rungs = BuildRungs(v, iet, OracleFromPlugin, GroundArm, readmeMap);
+                var rungs = BuildRungs(v, iet, OracleFromPlugin, groundArm, readmeMap);
                 if (rungs.Count == 0) { vi++; continue; }
                 // Levelize: order rungs by MEASURED difficulty — the LCOE-faithful x-axis — not
                 // authored order. Baseline alone doesn't cover the whole range (it can't answer the
@@ -165,14 +166,15 @@ internal sealed class Liet
         }
     }
 
-    // README grounding = the readme dataset's `skilledIsolated` arm, keyed by rung name.
+    // README grounding keyed by rung name, using that dataset's own evaluation lens.
     private static Dictionary<string, Point> BuildReadmeMap(ResultsFile d, IetScheme iet)
     {
         var map = new Dictionary<string, Point>();
+        var groundArm = Loader.GroundedArmOf(d);
         foreach (var v in d.Verdicts ?? new())
             foreach (var sc in v.Scenarios ?? new())
             {
-                var a = Loader.Row(Loader.ArmOf(sc, "skilledIsolated"), iet);
+                var a = Loader.Row(Loader.ArmOf(sc, groundArm), iet);
                 map[(sc.ScenarioName ?? "").Split(':')[0].Trim()] =
                     new Point { Present = a is not null, Passed = Correct(a), Iet = a?.Iet ?? 0 };
             }
