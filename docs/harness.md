@@ -317,7 +317,7 @@ The CLI is in `src/grounding/` (`System.CommandLine`, net11.0). It is **not yet 
 build it from this repo. Pick the path that suits you:
 
 ```bash
-# A. Run without installing (dev inner loop) — build once, forward args:
+# A. Run without installing (dev inner loop) — incrementally build, forward args:
 eng/grounding --help                       # bash;  eng/grounding.ps1 for PowerShell
 # or run the built dll directly (any OS, no WSL):
 dotnet build src/grounding -c Release && dotnet src/grounding/bin/Release/net11.0/grounding.dll --help

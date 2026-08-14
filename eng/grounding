@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
 # Launcher for the C# `grounding` CLI. The Python/bash tooling has been ported to
-# src/grounding; this builds it once (Release) and forwards all arguments.
+# src/grounding; this incrementally builds it (Release) and forwards all arguments.
 set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 dll="$root/src/grounding/bin/Release/net11.0/grounding.dll"
-if [ ! -f "$dll" ]; then
-  dotnet build "$root/src/grounding" -c Release >/dev/null
-fi
+dotnet build "$root/src/grounding" -c Release --nologo --verbosity quiet >/dev/null
 exec dotnet "$dll" "$@"
