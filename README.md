@@ -53,25 +53,46 @@ measurements talked us out of it.
 
 ## What the methodology does
 
-A skill can buy two different things, and they age differently. **Efficacy** is the agent producing
-a correct result where it previously failed. **Efficiency** is reaching the same correct result for
-fewer tokens, fewer tool calls, and less wall-clock time. Efficacy erodes as models learn your
-package; efficiency usually survives, and it compounds, because one session has many turns and one
-company has many developers.
+A skill can buy two different things, and they age differently. **Return** is the agent producing
+work that passes the full `Fails < Satisfies < Delivers` ladder, including the requested API or
+approach rather than merely a workable substitute. **Efficiency** is delivering the same work for
+less token cost and less wall-clock time. Return gains erode as models learn your package;
+efficiency usually survives, and it compounds, because one session has many turns and one company
+has many developers.
 
-Every claim is a paired experiment. The same agent attempts each task once without the skill and
-once with it, five runs per arm, across a mini *and* a frontier model. The tasks come from a fixed
-per-package suite of 24 graded tasks we call **CT-24**, for *complete textbook*: the questions a
-library's documentation ought to be able to answer, ordered from what you need on day 1 to the
-niche corner you hit on day 100. They are derived from how the library is used in real applications
-rather than from its API surface, because invented tasks tend to exercise the library the way its
-own documentation already does, and both arms do well. Results are read with the
-[quality-card model](docs/quality-card-model.md): two axes, return and efficiency, behind two ship
-gates, do no harm plus a certified 20% economic win.
+Every claim is a paired experiment. The same agent attempts each task without the skill and with it,
+five runs per arm, across weaker and frontier models. The tasks come from a fixed per-package suite
+of 24 graded tasks we call **CT-24**, for *complete textbook*: the questions a library's
+documentation ought to be able to answer, ordered from what you need on day 1 to the niche corner
+you hit on day 100. They are derived from how the library is used in real applications rather than
+from its API surface, because invented tasks tend to exercise the library the way its own
+documentation already does, and both arms do well.
 
-We have tested the methodology on several packages, and have found uniformly that **grounding buys
-more as capability falls**. Where the frontier model already sits near the ceiling, the win is
-almost entirely efficiency: it was delivering the task anyway, so the skill only made the delivery
+The [quality-card model](docs/quality-card-model.md) reads those runs on two axes:
+
+- **Return:** graded yield plus reliability. A `4/5` or `6/7` result is evidence of a reliability
+  problem, not proof that the capability is absent.
+- **Efficiency, per dollar:** [Input Equivalent Tokens (IET)](docs/iet-model.md) prices cached input,
+  fresh input, and output in one machine-independent unit. The economic gate uses **Total IET on the
+  shared set**: one representative Delivered cost for every task both arms delivered, summed for
+  each arm. Its ratio answers the business question, *what did the same workload cost?*
+- **Efficiency, per day:** delivered wall-clock duration is reported beside cost. It answers *how
+  quickly did the same work arrive?* but does not gate because it depends on the host.
+- **Inference companion:** the levelized per-task IET geo-mean remains visible. It charges retry cost
+  and answers *what was the typical task multiplier?* The additive total and typical multiplier
+  answer different questions and are never summed into one score.
+
+A skill ships only when both gates clear:
+
+1. **Do no harm:** grounding must not create loss beyond the run-to-run noise expected under the
+   null.
+2. **Earn its keep:** the 95% interval upper bound of the Total-IET ratio must be `≤ ×0.80`, a
+   certified reduction of at least 20% on comparable delivered work. A real but small win does not
+   repay authoring and maintenance. A thin shared set cannot certify the gate.
+
+We have tested the methodology on several packages and found uniformly that **grounding buys more
+as capability falls**. Where the frontier model already sits near the ceiling, the win is almost
+entirely efficiency: it was delivering the task anyway, so the skill only made the delivery
 cheaper. The weaker tiers gain on both axes at once, delivering tasks they had been failing
 outright and doing the rest for far fewer tokens.
 
