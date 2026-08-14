@@ -14,10 +14,32 @@ internal sealed class StagedEval : IDisposable
 
 internal static class EvalScenarioFilter
 {
+    public static bool HasHeldOutScenarios(string sourceUnitDir)
+    {
+        var evalPath = Path.Combine(sourceUnitDir, "eval.yaml");
+        return File.Exists(evalPath) && File.ReadLines(evalPath).Any(IsHeldOutLine);
+    }
+
     public static StagedEval? Stage(
         string sourceUnitDir,
         string unit,
         IReadOnlyList<string> keepTokens,
+        string tempPrefix,
+        out string? error)
+        => StageCore(sourceUnitDir, unit, keepTokens, excludeHeldOut: false, tempPrefix, out error);
+
+    public static StagedEval? StageActive(
+        string sourceUnitDir,
+        string unit,
+        string tempPrefix,
+        out string? error)
+        => StageCore(sourceUnitDir, unit, keepTokens: null, excludeHeldOut: true, tempPrefix, out error);
+
+    private static StagedEval? StageCore(
+        string sourceUnitDir,
+        string unit,
+        IReadOnlyList<string>? keepTokens,
+        bool excludeHeldOut,
         string tempPrefix,
         out string? error)
     {
@@ -41,10 +63,12 @@ internal static class EvalScenarioFilter
         foreach (var dir in Directory.EnumerateDirectories(sourceUnitDir))
             CopyDir(dir, Path.Combine(stagedUnit, Path.GetFileName(dir)));
 
-        var filtered = Filter(File.ReadAllLines(evalPath), keepTokens, out var kept);
+        var filtered = Filter(File.ReadAllLines(evalPath), keepTokens, excludeHeldOut, out var kept);
         if (kept == 0)
         {
-            error = $"--scenarios matched no scenarios in {evalPath}.";
+            error = keepTokens is { Count: > 0 }
+                ? $"--scenarios matched no scenarios in {evalPath}."
+                : $"No active scenarios remain after excluding held-out scenarios in {evalPath}.";
             try { Directory.Delete(stagedRoot, recursive: true); } catch { }
             return null;
         }
@@ -55,7 +79,11 @@ internal static class EvalScenarioFilter
 
     // Scenario blocks are top-level `- name:` items under `scenarios:`. Preserve the header and
     // retain complete matching blocks so fixture paths and YAML structure remain unchanged.
-    private static string Filter(string[] lines, IReadOnlyList<string> keepTokens, out int kept)
+    private static string Filter(
+        string[] lines,
+        IReadOnlyList<string>? keepTokens,
+        bool excludeHeldOut,
+        out int kept)
     {
         kept = 0;
         var header = new List<string>();
@@ -100,7 +128,10 @@ internal static class EvalScenarioFilter
         foreach (var line in header) output.AppendLine(line);
         foreach (var (name, body) in blocks)
         {
-            if (!keepTokens.Any(token =>
+            if (excludeHeldOut && body.Any(IsHeldOutLine))
+                continue;
+
+            if (keepTokens is { Count: > 0 } && !keepTokens.Any(token =>
                     name.StartsWith(token, StringComparison.OrdinalIgnoreCase)
                     || name.Contains(token, StringComparison.OrdinalIgnoreCase)))
                 continue;
@@ -109,6 +140,14 @@ internal static class EvalScenarioFilter
             foreach (var line in body) output.AppendLine(line);
         }
         return output.ToString();
+    }
+
+    private static bool IsHeldOutLine(string line)
+    {
+        var trimmed = line.Trim();
+        if (!trimmed.StartsWith("held_out:", StringComparison.OrdinalIgnoreCase))
+            return false;
+        return bool.TryParse(trimmed["held_out:".Length..].Split('#')[0].Trim(), out var value) && value;
     }
 
     private static void CopyDir(string source, string destination)
