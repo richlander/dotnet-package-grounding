@@ -87,13 +87,14 @@ internal static class Runner
             o.TestsDir = File.Exists(Path.Combine(unitDir, "eval.yaml")) ? "grounding" : "tests";
 
         StagedEval? stagedEval = null;
+        var testsRoot = Path.IsPathRooted(o.TestsDir)
+            ? o.TestsDir
+            : Path.Combine(root, o.TestsDir);
+        var sourceUnitDir = Path.Combine(testsRoot, o.Unit);
         if (o.Scenarios.Count > 0)
         {
-            var testsRoot = Path.IsPathRooted(o.TestsDir)
-                ? o.TestsDir
-                : Path.Combine(root, o.TestsDir);
             stagedEval = EvalScenarioFilter.Stage(
-                Path.Combine(testsRoot, o.Unit), o.Unit, o.Scenarios, "run-tests",
+                sourceUnitDir, o.Unit, o.Scenarios, "run-tests",
                 out var filterError);
             if (stagedEval is null)
             {
@@ -102,6 +103,19 @@ internal static class Runner
             }
             o.TestsDir = stagedEval.Root;
             Console.WriteLine($"grounding: staged {stagedEval.Kept} scenario(s) -> {Path.Combine(stagedEval.Root, o.Unit)}");
+        }
+        else if (EvalScenarioFilter.HasHeldOutScenarios(sourceUnitDir))
+        {
+            stagedEval = EvalScenarioFilter.StageActive(
+                sourceUnitDir, o.Unit, "active-tests", out var filterError);
+            if (stagedEval is null)
+            {
+                Console.Error.WriteLine($"grounding: {filterError}");
+                return 1;
+            }
+            o.TestsDir = stagedEval.Root;
+            Console.WriteLine($"grounding: staged {stagedEval.Kept} active scenario(s), excluding held-outs -> " +
+                              Path.Combine(stagedEval.Root, o.Unit));
         }
         using var stagedEvalLease = stagedEval;
 
