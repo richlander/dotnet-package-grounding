@@ -32,7 +32,7 @@ evidential strength, never over-claimed as a certified band.
 | --- | --- | --- | --- |
 | **C1** | **Capability** — grounding unlocks work the baseline did not produce | Tasks the ungrounded agent did not produce this batch (`Kᵇ = 0`) become productive under grounding (`Kᵍ ≥ 1`) | **Axis 1**, grounded-only partition — a capability win with **no competitor** (no cost ratio); reported as descriptive evidence, not a margin-certified band |
 | **C2** | **Reliability** — grounding wins more *consistently* | Higher yield `pˣ = Kˣ/k`: flaky `2/5` wins become dependable `5/5` | **Axis 1**, `ΔP = Pᵍ − Pᵇ` judged against its risk band — **margin-certified** |
-| **C3** | **Efficiency** — a **Delivered** unit costs less to produce | Lower **levelized** cost per full-price unit — retry tax and entry fee included | **Axis 2**, geometric-mean cost ratio on the shared set `S` — **margin-certified** |
+| **C3** | **Efficiency** — the comparable delivered workload costs less to produce | Lower **Total IET on the shared set `S`** — additive median-Delivered cost, with the levelized per-task geo-mean retained as the clean-inference companion | **Axis 2**, Total-IET ratio on `S` — **margin-certified** |
 | **C4** | **Fidelity** — grounding uses the *taught* approach, not a hand-rolled equivalent | On the `Fails < Satisfies < Delivers` ladder, more working runs reach **Delivers** (did it as asked), not just **Satisfies** (workable but hand-rolled) | **Independently reported:** the **per-task** `Delivers`-among-working rate — `Kᵢᵈᵉˡ / #{Satisfies ∪ Delivers}ᵢ` — **averaged equal-weight over tasks with ≥ 1 working run** (a *run-pooled* rate mix-weights tasks by working-run count and breaks Invariant 1 — the same Simpson trap the cost axis avoids; the pooled figure is kept only as a memo). Isolates fidelity from function; `Delivers` is also the full-price gate feeding every yield. Not estimable for a task with zero working runs |
 | **C5** | **Predictability** — grounding makes cost *steadier*, not just lower | Lower run-to-run cost variance under grounding: `σ_g < σ_b` (arm-specific log-cost SD) | **Memo** read alongside Axis 2 — the variance ratio `σ_g/σ_b` with its band; a reported-not-gated signal (pooled `σ_within` sizes the margin; the *arm-specific* pair tests C5) |
 
@@ -94,11 +94,11 @@ trust it) and **cost** (understood at depth, per unit delivered). Neither alone 
 - **Axis 1 — Risk-adjusted return.** How much more does grounding *win*, and how much should I trust
   that given only `k` runs? ("You say n=5 — will I see this again?") — adjudicates **C1 capability**
   and **C2 reliability**.
-- **Axis 2 — Efficiency (cost *and* duration).** What does it cost to bring *one sellable win* to
-  market — retry tax and entry fee included — versus the alternative, measured in **two currencies**:
-  the **per-dollar** cost (IET — the gated headline) and the **per-day** wall-clock **duration** (a
-  co-headline, reported not gated)? — adjudicates **C3 efficiency** (with **C5 predictability** as a
-  memo alongside).
+- **Axis 2 — Efficiency (cost *and* duration).** What did the same delivered workload cost under each
+  arm, and what was the typical per-task multiplier? The **per-dollar Total IET on `S`** is the gated
+  additive business quantity; the **levelized geo-mean** retains retry tax and equal task weighting as
+  the clean-inference companion. **Per-day** wall-clock duration is a co-headline, reported not gated.
+  This axis adjudicates **C3 efficiency** (with **C5 predictability** as a memo alongside).
 
 (**C4 fidelity** is not a separate axis — it lives in the **unit definition**: the `Fails < Satisfies <
 Delivers` ladder gates yield on `Delivers` and reports the `Satisfies`-vs-`Delivers` split as the
@@ -317,11 +317,11 @@ materiality threshold** like every other margin. Erring toward disqualification 
 
 ## Axis 2 — Efficiency (cost and duration)
 
-Efficiency is priced in **two currencies on the same delivered unit**: **per-dollar** cost (IET) and
-**per-day** wall-clock duration. Cost is the **gated headline** (it carries the economic verdict);
-duration is a **co-headline** — reported with its own band, never a gate. Both are computed the same
-way — a per-task grounded/baseline ratio on the shared set, summarized as a geometric mean — so they
-read as one story in two units: *a delivered unit costs `×c` the dollars and takes `×d` the time.*
+Efficiency is priced in **two currencies on the same delivered workload**: **per-dollar** cost (IET)
+and **per-day** wall-clock duration. Cost is the **gated headline**; duration is a **co-headline**,
+never a gate. The cost story deliberately retains two summaries: **Total IET on `S`**, the additive
+business quantity that gates, and the **levelized per-task geo-mean**, the equal-weighted
+clean-inference companion. Duration remains a per-task geo-mean ratio.
 
 The cost currency is done like a **levelized cost of electricity (LCOE)** / manufacturing
 **cost-per-good-unit**: count the scrap from a *yielding* run as part of that unit's price, amortize
@@ -385,16 +385,15 @@ lets one extreme task swing the number (the SPEC-benchmark result, *Fleming & Wa
 **symmetric under reciprocal** (halving and doubling cancel), each task's arbitrary baseline cancels,
 and every task carries equal weight in log-ratio space — consistent with our equal-weighting of tasks.
 
-**Two questions, two means.** *What did the comparable work cost?* — costs share a unit (tokens), so
-they **add**: the **Total IET**, summed over the **shared set `S`** where both arms produced. To keep
-that total honest we take, per task/arm, the **median IET among that cell's Delivered runs** — one
-representative "what a full-price unit costs" number, robust to the run-to-run tail and to
-non-delivered cost (which the retry-tax `L` and Axis 1 already carry; we do not double-charge it here).
-*How much cheaper is a unit, typically?* — that asks for a typical multiplier, whose right summary is
-the **geometric mean** of the levelized ratios `rᵢ = Lᵢᵍ/Lᵢᵇ` (an arithmetic average answers a
-different question — and note `rᵢ` is the ratio of the *levelized* `Lᵢˣ = Σcost/Kᵢˣ`, not a ratio of
-the Total-IET median runs). Totals are arithmetic **sums of representative runs on `S`**; ratios are
-geometric.
+**Two questions, two means, one gate.** *What did the comparable work cost in aggregate?* Costs share
+a unit, so they **add**: **Total IET**, summed over the **shared set `S`** where both arms produced.
+Per task/arm we take the interpolated median IET among that cell's Delivered runs — one robust
+representative full-price unit. The ratio `Totalᵍ/Totalᵇ` is the **economic gate quantity**.
+*How much cheaper is a unit, typically, after charging retries?* That asks for a typical multiplier,
+whose right summary is the **geometric mean** of the levelized ratios
+`rᵢ = Lᵢᵍ/Lᵢᵇ`. It keeps retry tax and equal task weighting visible as the clean-inference companion,
+but it does not gate. The two can disagree because one is an additive workload total and the other is
+a typical proportional effect; disagreement is reported, not averaged away.
 
 **Total IET is partitioned, never a black box.** Median-of-**Delivered** makes the total truthful but
 only *comparable* where both arms produced, so Total IET is reported by productivity partition: the
@@ -409,17 +408,15 @@ quietly work against the efficiency claim). For the two central runs, average ea
 components** (Skill, Work, output, tool IET) so `Total = Skill + Work` is preserved exactly — do not
 recombine separately-averaged activation and turns.
 
-Axis 2 carries its **own** paired uncertainty band from the **same** nested bootstrap as Axis 1 (draw
-tasks, redraw each task's runs as joint `(delivered, cost)` draws, recompute `K*`, `L*`, and the shared
-set `S*` each iteration). The shared set is **recomputed per iteration**, not frozen on the observed
-`S`: a task that draws `K* = 0` for either arm simply leaves `S*` that iteration — its uncertainty
-surfaces as an Axis-1 capability gap, never an undefined `L`. If `S*` is empty in an iteration (no
-shared productive task), that iteration produces **no** Axis-2 ratio: exclude it from the ratio
-quantiles but count it toward an **estimability rate**; if the non-estimable fraction exceeds a
-predeclared threshold (e.g. 5% of iterations), report Axis 2 as **not estimable** rather than banding a
-biased subset. The Axis-2 band
-cannot borrow the Axis-1 band. *(Binning by difficulty tier would later summarize this gap as a
-difficulty→cost curve — deferred.)*
+Axis 2 carries paired uncertainty bands from the **same finite-suite nested bootstrap** as Axis 1.
+For each fixed task, draw posterior delivery rates and `K*`; recompute the shared set `S*` every
+iteration. For the Total-IET band, draw `K*` delivered costs from each task/arm's fitted delivered-IET
+model, take the interpolated median representative cost for that cell, sum those medians over `S*`,
+and record `Totalᵍ*/Totalᵇ*`. For the companion, redraw all-run cost and recompute `L*` and the
+levelized geo-mean over the same `S*`. A task with `K* = 0` for either arm leaves `S*`; if `S*` is
+empty, that iteration is non-estimable. If fewer than 95% of iterations are estimable, or observed
+`|S| < 8`, report Axis 2 as **not estimable** rather than banding a biased or under-powered subset.
+The Axis-2 bands cannot borrow the Axis-1 band.
 
 **Entry fee (the membership) — toll vs. membership regime.** Grounding's fixed skill-load cost is
 incurred inside each grounded run, so it is already in the numerator. **The regime must be stated:**
@@ -487,12 +484,12 @@ when it clears **both**:
    mass two *identically-skilled* arms would post from run-to-run luck alone), so ordinary noise
    cannot trip it. This is the substitute told *"we don't expect wonders — just don't lower our
    conversion replacing your colleague."*
-2. **Economic materiality (the value gate).** The per-dollar cost win must be **big enough to be worth
-   maintaining**: the **upper** bound of the per-dollar cost-ratio band must sit at or below **×0.80**
-   — a **certified ≥20% cost cut**, even in the worst credible case. Twenty percent is the minimum
-   premium that repays authoring the grounding plus keeping it current as models drift; a real-but-tiny
-   5% win clears *do-no-harm* yet fails here — correctly *"not worth the upkeep."* Duration
-   co-headlines the value story but does not gate.
+2. **Economic materiality (the value gate).** The comparable workload's per-dollar cost win must be
+   **big enough to be worth maintaining**: the **upper** bound of the
+   `Total IETᵍ(S*) / Total IETᵇ(S*)` band must sit at or below **×0.80** — a certified ≥20% aggregate
+   cost cut, even in the worst credible case. The levelized geo-mean remains beside it as the
+   clean-inference companion; duration co-headlines but neither quantity gates. A real-but-tiny 5%
+   Total-IET win clears *do-no-harm* yet fails here — correctly *"not worth the upkeep."*
 
 Beyond the gates the card reports a **graded** two-axis win, not a binary pass. The grade is a
 **tally of per-task classifications**, read straight off the coverage scoreboard. Each
@@ -665,7 +662,7 @@ The card derives from this chart; documenting it fixes the model's meaning in on
 | Entry fee + unit price vs alternatives | Costco: pay the membership, then compare per-item price to Safeway/QFC — amortizes only if you keep shopping there. |
 | Retries as yield loss | First-pass yield / scrap & rework; `1/p` ≈ Number Needed to Treat; geometric expected trials to a success. |
 | Capability win (baseline can't) | A store that doesn't stock the item this batch. |
-| **The whole card as one picture** | A **semiconductor earnings slide**: **wafer yield** (how many good dies per wafer = our success yield), **process capability / Cpk** (how *tightly* the line holds spec = our reliability, `ΔP` on shared work), **cost-per-good-die** (yield-adjusted unit cost = our gated per-dollar efficiency — the gross-margin lever a CEO speaks to), and **cycle time** (fab turnaround = our per-day duration co-headline). |
+| **The whole card as one picture** | A **semiconductor earnings slide**: **wafer yield** (how many good dies per wafer = our success yield), **process capability / Cpk** (how *tightly* the line holds spec = our reliability, `ΔP` on shared work), **total cost of the comparable production lot** (our gated Total IET), **cost-per-good-die** (the levelized typical-multiplier companion), and **cycle time** (our per-day duration co-headline). |
 | Per-dollar cost as gross margin | **Cost-per-good-die**: scrap is already priced in, so a lower number is a real margin gain — the one figure that shows up on the earnings call. |
 | Duration co-headline | **Cycle time / fab turnaround**: a second thing the shop tracks (how fast good units arrive), reported beside cost but not the number that gates the quarter. |
 | Reliability = tight process | **Process capability (Cpk)**: not "did one part pass" but "how reliably does every part land in spec" — a `5/5` line vs a `3/5` line at the same average. |

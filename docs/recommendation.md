@@ -31,13 +31,13 @@ The ratified eval is **grounded SKILL.md skill set vs baseline**: same agent, sa
 installed versus not installed. Suite = **CT-24**; repeats = `k = 5`; models =
 `claude-haiku-4.5`, `claude-sonnet-5`, and `claude-opus-4.8`.
 
-| Model | Mean yield | Reliability ΔP | Per-$ IET geomean | Per-day duration | Gates |
-| --- | ---: | ---: | ---: | ---: | --- |
-| Haiku | 0.533 → 0.942 | +0.263 | ×0.20 [0.18, 0.33] | ×0.28 | harm 0.000 vs null 3.2; econ upper ×0.33 |
-| Sonnet | 0.775 → 1.000 | +0.191 | ×0.26 [0.23, 0.35] | ×0.21 | harm 0.000 vs null 2.2; econ upper ×0.35 |
-| Opus | 0.883 → 1.000 | +0.117 ⚠ | ×0.40 [0.35, 0.52] | ×0.38 | harm 0.000 vs null 1.2; econ upper ×0.52 |
+| Model | Mean yield | Reliability ΔP | Total-IET gate | Levelized geo | Per-day duration | Gates |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| Haiku | 0.533 → 0.942 | +0.263 | ×0.25 [0.21, 0.35] | ×0.20 [0.18, 0.33] | ×0.28 | harm 0.000 vs null 3.2; econ upper ×0.35 |
+| Sonnet | 0.775 → 1.000 | +0.191 | ×0.36 [0.30, 0.40] | ×0.26 [0.23, 0.35] | ×0.21 | harm 0.000 vs null 2.2; econ upper ×0.40 |
+| Opus | 0.883 → 1.000 | +0.117 ⚠ | ×0.44 [0.39, 0.47] | ×0.40 [0.35, 0.52] | ×0.38 | harm 0.000 vs null 1.2; econ upper ×0.47 |
 
-All three clear the do-no-harm gate and the economic-materiality bar (`≤ ×0.80` per-dollar upper
+All three clear the do-no-harm gate and the economic-materiality bar (`≤ ×0.80` Total-IET upper
 bound). Opus reliability is prior-sensitive; treat that lift as supportive.
 
 ### Q1 — Should we author package grounding as SKILL.md skill sets? **Yes.**

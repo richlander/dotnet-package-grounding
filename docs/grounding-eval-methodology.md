@@ -123,7 +123,8 @@ RETURN measures whether grounding produces more usable work:
 
 EFFICIENCY measures what a delivered unit costs:
 
-- per-dollar IET over delivered runs as the gated headline;
+- Total IET on the shared set as the gated per-dollar headline;
+- the levelized per-task IET geo-mean as the clean-inference companion;
 - duration per day as a co-headline, reported but not gated;
 - variance and resourcefulness as explanatory signals.
 
@@ -132,8 +133,8 @@ EFFICIENCY measures what a delivered unit costs:
 A skill-set change ships only when both gates pass:
 
 1. **Do no harm** — loss mass must clear the null-95 baseline.
-2. **Economic materiality** — the per-dollar credible-interval upper bound must be `≤ ×0.80`, meaning a
-   credible cost cut of at least 20%.
+2. **Economic materiality** — the Total-IET-on-`S` ratio credible-interval upper bound must be
+   `≤ ×0.80`, meaning a credible aggregate cost cut of at least 20% on comparable delivered work.
 
 Do not replace these with a single aggregate score. Report the card rows that support the claim.
 

@@ -48,7 +48,8 @@ without measurable harm, under the quality-card model.
 
 | Row | Baseline | Grounded | Ratio / interval | Notes |
 | --- | ---: | ---: | ---: | --- |
-| Per-dollar IET over delivered runs | `<iet>` | `<iet>` | `<ratio, CI>` | Gated headline. |
+| Total IET on shared set | `<iet>` | `<iet>` | `<ratio, CI>` | Gated per-dollar headline. |
+| Levelized IET per unit | `<iet>` | `<iet>` | `<geo-ratio, CI>` | Clean-inference companion. |
 | Cost per delivered run | `<$>` | `<$>` | `<ratio, CI>` | Should agree with IET. |
 | Per-day duration | `<sec/day>` | `<sec/day>` | `<ratio, CI>` | Co-headline, not a gate. |
 | Output tokens | `<tok>` | `<tok>` | `<ratio>` | Expensive class; explanatory. |
@@ -59,7 +60,7 @@ without measurable harm, under the quality-card model.
 | Gate | Requirement | Result | Pass? |
 | --- | --- | --- | --- |
 | Do no harm | Loss mass clears the null-95 baseline | `<result>` | `<yes/no>` |
-| Economic materiality | Per-dollar CI upper bound `≤ ×0.80` | `<result>` | `<yes/no>` |
+| Economic materiality | Total-IET ratio CI upper bound `≤ ×0.80` | `<result>` | `<yes/no>` |
 
 ## Representative evidence
 
@@ -88,6 +89,6 @@ Optional, for mid-transition units that still use the legacy grounding-file budg
 - [ ] The PR states a grounded-vs-baseline claim.
 - [ ] The run uses CT-24, k=5, and all three model tiers or explains any omission.
 - [ ] RETURN rows include graded yield, reliability, and loss mass.
-- [ ] EFFICIENCY rows include per-dollar IET and duration.
+- [ ] EFFICIENCY rows include Total IET, the levelized geo-mean companion, and duration.
 - [ ] Both ship gates pass or the PR explicitly says the skill set should not ship.
 - [ ] The skill content is package-local, first-party, and tied to measured gaps.

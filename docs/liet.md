@@ -126,16 +126,27 @@ Two consequences make this the spine of the ship decision:
 
 This retires the survivorship problem cleanly, which is the tell that it is the right instrument: the hurdle depends only on the *observed* IET of arms that *succeeded* at the rung. Nothing unmeasured enters. The part of the chart you couldn't trust is deleted; the part you could is kept.
 
-## Total IET is a product, not a target
+## Total IET is a target only on like-for-like work
 
-"Low per-rung IET and low total IET" is a coherent joint goal **only within a like-for-like comparison** — same rungs answered. The moment two arms answer different numbers of rungs, total IET stops being a fair target, because the higher-capability arm legitimately spends more by doing more work. On the table above, minimizing total IET picks *baseline* (2200 vs 6400) — the weaker arm — the same inversion as the mean.
+"Low per-rung IET and low total IET" is a coherent joint goal **only within a like-for-like
+comparison** — the same rungs answered. The moment two arms answer different numbers of rungs, total
+IET stops being fair because the higher-capability arm legitimately spends more by doing more work.
+On the table above, minimizing each arm's own-set total picks *baseline* (2200 vs 6400) — the weaker
+arm — the same inversion as the mean.
 
-So treat total IET as the *product* of two independent objectives, not a third target:
+The quality card therefore gates **Total IET only on the shared set `S`**, where both arms delivered
+the same tasks: sum one median-Delivered representative cost per task/arm, bootstrap the
+`Totalᵍ(S*)/Totalᵇ(S*)` ratio with `S*` recomputed, and require its 95% upper bound to be `≤ ×0.80`.
+Off-`S` spend remains partitioned capability evidence and never enters that comparison.
+
+Outside that shared-set restriction, treat total IET as the *product* of two independent objectives:
 
 - **Capability** — how many rungs an arm stands on. Maximize across the ladder.
 - **Efficiency** — per-rung IET on the shared region. Minimize within like-for-like.
 
-Total IET is an output of those two. As a standalone target it rewards doing less.
+Total IET across unlike productive sets is an output of those two and rewards doing less. Total IET
+on `S` is the additive economic gate; the levelized per-rung or per-task ratio remains the
+clean-inference companion.
 
 ## What it answers in the spec
 
