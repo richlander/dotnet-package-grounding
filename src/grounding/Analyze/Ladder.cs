@@ -17,9 +17,8 @@ namespace Grounding.Analyze;
 //   Gates:             (1) do-no-harm — suite loss-mass Σ max(−Δpᵢ, 0) vs null-calibrated threshold;
 //                      (2) economic — certified ≥20% per-dollar reduction (geo-mean CrI upper ≤ ×0.80).
 //
-// Stage 1: Delivers == Satisfies (the model's proxy) until the delivers-tier assertions land, so
-// C4 is 1.0 by construction and is labelled as not-yet-measured. Bands (beta-binomial posterior +
-// nested bootstrap) are a deferred second pass; this cut reports point estimates only.
+// Legacy datasets without explicit delivers-tier assertions retain Delivers == Satisfies as a
+// compatibility proxy. Bands use a beta-binomial posterior + nested finite-suite bootstrap.
 internal sealed class Ladder
 {
     private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
@@ -30,7 +29,7 @@ internal sealed class Ladder
 
     // One arm's outcome on one task: k runs, of which Sat satisfy and K deliver; per-run IET/cost.
     private sealed record ArmTask(int k, int Sat, int Deliv, List<long> AllIet, List<long> DelivIet,
-                                  List<long> AllSecs, List<long> DelivSecs)
+                                  List<long> AllSecs, List<long> DelivSecs, bool DeliveryObserved)
     {
         public double P => k > 0 ? (double)Deliv / k : 0.0;                 // yield
         public bool Productive => Deliv >= 1;                                // K ≥ 1
@@ -77,9 +76,13 @@ internal sealed class Ladder
         if (rows.Count == 0) { _o.WriteLine("_no comparable tasks (no per-run data)._"); return; }
 
         var capture = rows.Any(r => r.B.k > 1 || r.G.k > 1);
+        var deliveryObserved = rows.All(r => r.B.DeliveryObserved && r.G.DeliveryObserved);
         if (!capture)
             _o.WriteLine("> ⚠ no per-run capture in this dataset — yields are a k=1 binary proxy " +
                          "(Satisfies from the averaged run). Re-run with the per-run-capture harness for graded K/k.\n");
+        if (!deliveryObserved)
+            _o.WriteLine("> ⚠ no explicit delivers-tier assertions in part or all of this dataset — " +
+                         "those tasks retain the legacy Delivers ≡ Satisfies proxy and C4 is not directly measured.\n");
 
         _o.WriteLine("_Goal column: ↑ higher is better · ↓ lower is better · · context (no direction)._\n");
 
@@ -90,7 +93,7 @@ internal sealed class Ladder
         Scoreboard(rows);
         Axis1(rows, bands);
         Axis2(rows, iet, bands);
-        Claims(rows);
+        Claims(rows, deliveryObserved);
         Gate(rows, bands);
         _o.WriteLine();
     }
@@ -194,11 +197,11 @@ internal sealed class Ladder
     }
 
     // ---- claims table -------------------------------------------------------
-    private void Claims(List<TaskRow> rows)
+    private void Claims(List<TaskRow> rows, bool deliveryObserved)
     {
-        var working = rows.Where(r => r.G.Sat >= 1 || r.G.Deliv >= 1).ToList();
+        var working = rows.Where(r => r.G.Sat >= 1).ToList();
         double c4 = working.Count > 0
-            ? working.Average(r => (r.G.Sat + r.G.Deliv) > 0 ? (double)r.G.Deliv / Math.Max(r.G.Sat, r.G.Deliv) : 0.0)
+            ? working.Average(r => (double)r.G.Deliv / r.G.Sat)
             : double.NaN;
 
         // C5: σ of log(IET) on Delivered runs only, pooled across tasks, per arm.
@@ -210,7 +213,8 @@ internal sealed class Ladder
         _o.WriteLine("### Claims (point estimates)\n");
         _o.WriteLine("| claim | goal | value | strength |");
         _o.WriteLine("|-------|------|-------|----------|");
-        _o.WriteLine($"| C4 fidelity (Delivers rate over working tasks) | ↑ | {(double.IsNaN(c4) ? "n/a" : c4.ToString("0.00", Inv))} | not-yet-measured (Stage 1: Delivers≡Satisfies) |");
+        _o.WriteLine($"| C4 fidelity (Delivers rate over working tasks) | ↑ | {(double.IsNaN(c4) ? "n/a" : c4.ToString("0.00", Inv))} | " +
+                     (deliveryObserved ? "measured (executable delivers-tier assertions)" : "proxy (Delivers≡Satisfies where untagged)") + " |");
         _o.WriteLine($"| C5 predictability (σ_g/σ_b, delivered log-IET) | ↓ | {(double.IsNaN(c5) ? "n/a" : c5.ToString("0.00", Inv))} | memo |");
         _o.WriteLine();
     }
@@ -450,14 +454,22 @@ internal sealed class Ladder
             var deliv = pr.Where(o => o.Delivers).Select(o => o.Iet).ToList();
             var allSecs = pr.Select(o => o.Secs).ToList();
             var delivSecs = pr.Where(o => o.Delivers).Select(o => o.Secs).ToList();
-            return new ArmTask(pr.Count, sat, del, all, deliv, allSecs, delivSecs);
+            return new ArmTask(
+                pr.Count,
+                sat,
+                del,
+                all,
+                deliv,
+                allSecs,
+                delivSecs,
+                pr.All(o => o.DeliveryObserved));
         }
         // Fallback: no per-run capture — treat the averaged arm as a single k=1 outcome.
         bool ok = row.Ft > 0 && row.Fp == row.Ft;
         var one = new List<long> { row.Iet };
         var oneSec = new List<long> { row.Secs };
         return new ArmTask(1, ok ? 1 : 0, ok ? 1 : 0, one, ok ? one : new List<long>(),
-                           oneSec, ok ? oneSec : new List<long>());
+                           oneSec, ok ? oneSec : new List<long>(), DeliveryObserved: false);
     }
 
     // ---- helpers ------------------------------------------------------------

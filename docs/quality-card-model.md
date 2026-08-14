@@ -139,16 +139,13 @@ fidelity signal.)
   cleanly: bin each run into tiers **and** take yield over the reruns. (We hold to **these two** tiers;
   further tier proliferation stays deferred.)
 
-> **Capture (what the harness must persist).** The graded ladder needs, per `(task, arm, run)`, **two
-> outcome bits** — `satisfies` (output works) and `delivers` (works as asked / taught API) — **and**
-> the per-run cost. None is recoverable from the current artifacts: the results JSON aggregates each
-> arm to one figure and keeps only the **last run's** assertions (`n = 1`), and while `sessions.db`
-> holds per-run cost it does **not** persist per-run assertions. So the ladder requires (1) a harness
-> change that writes per-run `{satisfies, delivers, iet, turns, sec}` arrays into the **results JSON**
-> (self-contained, not host-local db state), then (2) a re-run. The example values below are therefore
-> still the `n = 1` binary measurement — a single **functional-pass** bit (the `satisfies` gate),
-> standing in as a **proxy** for `Delivers` until the `delivers` bit is captured — marked *(graded)*
-> where they become richer once that capture lands.
+> **Capture (implemented).** The harness persists, per `(task, arm, run)`, tier-specific assertion
+> counts for `satisfies` (output works) and `delivers` (works as asked / taught API), plus the per-run
+> cost fields needed to recompute IET. An assertion opts into the closed contract with two fields:
+> `tier: satisfies|delivers` and a `mini_prompt` restating the prompt clause its deterministic test
+> gates. The analyzer enforces `Delivers ⇒ Satisfies`. Untagged historical assertions remain valid and
+> retain the explicit compatibility proxy `Delivers ≡ Satisfies`; direct C4 measurement begins only
+> once a scenario has executable delivers-tier assertions and is re-run.
 
 
 ## The grading contract — a closed prompt↔assertion loop

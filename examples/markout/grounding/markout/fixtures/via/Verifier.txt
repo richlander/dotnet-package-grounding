@@ -1,0 +1,270 @@
+using System.Reflection;
+using System.Reflection.Emit;
+using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
+using System.Reflection.PortableExecutable;
+
+if (args.Length != 1)
+{
+    Console.Error.WriteLine("usage: ViaVerifier <application.dll>");
+    return 2;
+}
+
+using var stream = File.OpenRead(Path.GetFullPath(args[0]));
+using var pe = new PEReader(stream);
+var reader = pe.GetMetadataReader();
+var cor = pe.PEHeaders.CorHeader
+    ?? throw new InvalidOperationException("Target has no CLR header.");
+if ((cor.Flags & CorFlags.NativeEntryPoint) != 0)
+    throw new InvalidOperationException("Native entry points are not supported.");
+
+var entry = MetadataTokens.EntityHandle(cor.EntryPointTokenOrRelativeVirtualAddress);
+if (entry.Kind != HandleKind.MethodDefinition)
+    throw new InvalidOperationException("Target has no managed method entry point.");
+
+var opCodes = typeof(OpCodes)
+    .GetFields(BindingFlags.Public | BindingFlags.Static)
+    .Where(f => f.FieldType == typeof(OpCode))
+    .Select(f => (OpCode)f.GetValue(null)!)
+    .ToDictionary(op => unchecked((ushort)op.Value));
+
+var pending = new Queue<MethodDefinitionHandle>();
+var visited = new HashSet<MethodDefinitionHandle>();
+var nestedTypes = reader.TypeDefinitions
+    .Select(h => (Handle: h, Parent: reader.GetTypeDefinition(h).GetDeclaringType()))
+    .Where(x => !x.Parent.IsNil)
+    .GroupBy(x => x.Parent)
+    .ToDictionary(g => g.Key, g => g.Select(x => x.Handle).ToList());
+pending.Enqueue((MethodDefinitionHandle)entry);
+
+var serializeCalls = 0;
+var forbiddenWrites = new List<string>();
+
+while (pending.TryDequeue(out var methodHandle))
+{
+    if (!visited.Add(methodHandle))
+        continue;
+
+    var method = reader.GetMethodDefinition(methodHandle);
+    if (method.RelativeVirtualAddress == 0)
+        continue;
+
+    EnqueueAsyncStateMachine(method);
+
+    var il = pe.GetMethodBody(method.RelativeVirtualAddress).GetILBytes() ?? [];
+    for (var offset = 0; offset < il.Length;)
+    {
+        ushort value = il[offset++];
+        if (value == 0xfe)
+            value = (ushort)(0xfe00 | il[offset++]);
+        if (!opCodes.TryGetValue(value, out var opCode))
+            throw new InvalidOperationException($"Unknown IL opcode 0x{value:x4}.");
+
+        var operandOffset = offset;
+        var operandSize = OperandSize(opCode.OperandType, il, operandOffset);
+        if (opCode.OperandType == OperandType.InlineMethod &&
+            (opCode == OpCodes.Call || opCode == OpCodes.Callvirt ||
+             opCode == OpCodes.Ldftn || opCode == OpCodes.Ldvirtftn))
+        {
+            var called = MetadataTokens.EntityHandle(BitConverter.ToInt32(il, operandOffset));
+            var target = ResolveMethod(called);
+            if (target.Internal is { } internalMethod)
+            {
+                EnqueueInternal(internalMethod);
+            }
+            else if (opCode == OpCodes.Call || opCode == OpCodes.Callvirt)
+            {
+                if (target.TypeName == "Markout.MarkoutSerializer" &&
+                    target.MethodName.StartsWith("Serialize", StringComparison.Ordinal))
+                {
+                    serializeCalls++;
+                }
+
+                if ((target.TypeName == "System.Console" || target.TypeName == "System.IO.TextWriter") &&
+                    (target.MethodName == "Write" || target.MethodName == "WriteLine"))
+                {
+                    forbiddenWrites.Add($"{target.TypeName}.{target.MethodName}");
+                }
+            }
+        }
+
+        offset += operandSize;
+    }
+}
+
+if (serializeCalls == 0)
+{
+    Console.Error.WriteLine("No entry-point-reachable MarkoutSerializer.Serialize call was found.");
+    return 1;
+}
+
+if (forbiddenWrites.Count > 0)
+{
+    Console.Error.WriteLine(
+        $"Entry-point-reachable hand-written output calls found: {string.Join(", ", forbiddenWrites.Distinct())}");
+    return 1;
+}
+
+Console.WriteLine($"Verified {serializeCalls} entry-point-reachable Markout serialization call(s).");
+return 0;
+
+void EnqueueInternal(MethodDefinitionHandle methodHandle)
+{
+    pending.Enqueue(methodHandle);
+    var method = reader.GetMethodDefinition(methodHandle);
+    if (method.RelativeVirtualAddress != 0 &&
+        (method.Attributes & MethodAttributes.Virtual) == 0)
+        return;
+
+    EnqueueDispatchTargets(methodHandle);
+}
+
+void EnqueueDispatchTargets(MethodDefinitionHandle targetHandle)
+{
+    var target = reader.GetMethodDefinition(targetHandle);
+    var targetTypeHandle = target.GetDeclaringType();
+    var targetType = reader.GetTypeDefinition(targetTypeHandle);
+    var targetTypeName = TypeName(targetTypeHandle);
+    var targetMethodName = reader.GetString(target.Name);
+    var targetSignature = reader.GetBlobBytes(target.Signature);
+    var isInterface = (targetType.Attributes & TypeAttributes.Interface) != 0;
+
+    foreach (var candidateTypeHandle in reader.TypeDefinitions)
+    {
+        var candidateType = reader.GetTypeDefinition(candidateTypeHandle);
+        var applicable = isInterface
+            ? ImplementsInterface(candidateType, targetTypeName)
+            : DerivesFrom(candidateType, targetTypeName);
+        if (!applicable)
+            continue;
+
+        foreach (var implementationHandle in candidateType.GetMethodImplementations())
+        {
+            var implementation = reader.GetMethodImplementation(implementationHandle);
+            var declaration = ResolveMethod(implementation.MethodDeclaration);
+            if (declaration.TypeName == targetTypeName &&
+                declaration.MethodName == targetMethodName &&
+                ResolveMethod(implementation.MethodBody).Internal is { } body)
+            {
+                pending.Enqueue(body);
+            }
+        }
+
+        foreach (var candidate in candidateType.GetMethods())
+        {
+            var method = reader.GetMethodDefinition(candidate);
+            if (method.RelativeVirtualAddress != 0 &&
+                reader.GetString(method.Name) == targetMethodName &&
+                reader.GetBlobBytes(method.Signature).SequenceEqual(targetSignature))
+            {
+                pending.Enqueue(candidate);
+            }
+        }
+    }
+}
+
+bool ImplementsInterface(TypeDefinition type, string interfaceName)
+{
+    foreach (var handle in type.GetInterfaceImplementations())
+    {
+        var implementation = reader.GetInterfaceImplementation(handle);
+        if (TypeName(implementation.Interface) == interfaceName)
+            return true;
+    }
+    return false;
+}
+
+bool DerivesFrom(TypeDefinition type, string baseTypeName)
+{
+    var current = type.BaseType;
+    while (!current.IsNil)
+    {
+        if (TypeName(current) == baseTypeName)
+            return true;
+        if (current.Kind != HandleKind.TypeDefinition)
+            return false;
+        current = reader.GetTypeDefinition((TypeDefinitionHandle)current).BaseType;
+    }
+    return false;
+}
+
+void EnqueueAsyncStateMachine(MethodDefinition method)
+{
+    var declaringType = method.GetDeclaringType();
+    if (!nestedTypes.TryGetValue(declaringType, out var children))
+        return;
+
+    var methodName = reader.GetString(method.Name);
+    foreach (var childHandle in children)
+    {
+        var child = reader.GetTypeDefinition(childHandle);
+        if (!reader.GetString(child.Name).Contains(methodName, StringComparison.Ordinal))
+            continue;
+
+        foreach (var candidate in child.GetMethods())
+        {
+            if (reader.GetString(reader.GetMethodDefinition(candidate).Name) == "MoveNext")
+                pending.Enqueue(candidate);
+        }
+    }
+}
+
+(MethodDefinitionHandle? Internal, string TypeName, string MethodName) ResolveMethod(EntityHandle handle)
+{
+    if (handle.Kind == HandleKind.MethodSpecification)
+        return ResolveMethod(reader.GetMethodSpecification((MethodSpecificationHandle)handle).Method);
+
+    if (handle.Kind == HandleKind.MethodDefinition)
+    {
+        var methodHandle = (MethodDefinitionHandle)handle;
+        var method = reader.GetMethodDefinition(methodHandle);
+        return (
+            methodHandle,
+            TypeName(method.GetDeclaringType()),
+            reader.GetString(method.Name));
+    }
+
+    if (handle.Kind == HandleKind.MemberReference)
+    {
+        var member = reader.GetMemberReference((MemberReferenceHandle)handle);
+        return (
+            null,
+            TypeName(member.Parent),
+            reader.GetString(member.Name));
+    }
+
+    return (null, "", "");
+}
+
+string TypeName(EntityHandle handle)
+{
+    if (handle.Kind == HandleKind.TypeDefinition)
+    {
+        var type = reader.GetTypeDefinition((TypeDefinitionHandle)handle);
+        return FullName(reader.GetString(type.Namespace), reader.GetString(type.Name));
+    }
+
+    if (handle.Kind == HandleKind.TypeReference)
+    {
+        var type = reader.GetTypeReference((TypeReferenceHandle)handle);
+        return FullName(reader.GetString(type.Namespace), reader.GetString(type.Name));
+    }
+
+    return "";
+}
+
+static string FullName(string ns, string name) =>
+    string.IsNullOrEmpty(ns) ? name : $"{ns}.{name}";
+
+static int OperandSize(OperandType type, byte[] il, int offset) => type switch
+{
+    OperandType.InlineNone => 0,
+    OperandType.ShortInlineBrTarget or OperandType.ShortInlineI or OperandType.ShortInlineVar => 1,
+    OperandType.InlineVar => 2,
+    OperandType.InlineBrTarget or OperandType.InlineField or OperandType.InlineI or
+        OperandType.InlineMethod or OperandType.InlineSig or OperandType.InlineString or
+        OperandType.InlineTok or OperandType.InlineType or OperandType.ShortInlineR => 4,
+    OperandType.InlineI8 or OperandType.InlineR => 8,
+    OperandType.InlineSwitch => 4 + BitConverter.ToInt32(il, offset) * 4,
+    _ => throw new InvalidOperationException($"Unsupported operand type {type}."),
+};
