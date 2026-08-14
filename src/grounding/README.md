@@ -9,7 +9,7 @@ Build / run:
 ```bash
 dotnet build src/grounding -c Release
 dotnet src/grounding/bin/Release/net11.0/grounding.dll --help
-eng/grounding --help            # launcher: builds once, then forwards args
+eng/grounding --help            # launcher: incrementally builds, then forwards args
 ```
 
 ## Install as a native tool on PATH
@@ -73,6 +73,6 @@ table.
 
 The harness scripts in `eng/` (`run-evals.sh`, `run-*-6q.sh`,
 `run-channel-matrix.sh`) call this CLI through the `eng/grounding` launcher,
-which builds the project once and forwards arguments. The MCP eval units spawn
+which incrementally builds the project and forwards arguments. The MCP eval units spawn
 the server via `dotnet <grounding.dll> mcp --root <repo>` (skill-validator's
 command allowlist permits `dotnet`, not arbitrary binaries).
