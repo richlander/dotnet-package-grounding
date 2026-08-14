@@ -60,9 +60,10 @@ knows this package — **do not author a skill**. A skill is justified only by a
    Suite size is per-unit — CT-24 is the 24-task ladder, but a unit may carry more (System.Text.Json
    carries 48). Never compare raw totals across units; every headline is a within-unit ratio.
 5. **Read the quality cards.** Ship only if both gates clear: do-no-harm (loss mass within the
-   null-calibrated threshold) and economic materiality (the per-dollar IET cost-ratio band upper is
-   `≤ ×0.80`, certifying at least a 20% cut). Duration is a co-headline, not a gate; capability
-   unlocks are reported on the return axis.
+   null-calibrated threshold) and economic materiality (the Total-IET-on-`S` ratio band upper is
+   `≤ ×0.80`, certifying at least a 20% aggregate cut). Keep the levelized geo-mean as the
+   clean-inference companion. Duration is a co-headline, not a gate; capability unlocks are reported
+   on the return axis.
 6. **Fix package docs when the eval exposes a real documentation bug.** Do not evaluate package docs
    as a separate comparison condition. If the prompts or transcripts reveal missing or misleading
    public docs, fix those docs in the same PR and cite the finding.

@@ -426,10 +426,11 @@ quality-card model fixes the measurement target:
 
 - **RETURN** — graded yield on `Fails < Satisfies < Delivers`, plus reliability `ΔP` on the shared-success
   set.
-- **EFFICIENCY** — per-dollar IET over delivered runs; duration per day is a co-headline, not a gate.
+- **EFFICIENCY** — Total IET on the shared set gates; the levelized geo-mean is the inference
+  companion, and duration per day is a co-headline.
 - **Ship gate 1: do no harm** — loss mass must clear the null-95 baseline.
-- **Ship gate 2: economic materiality** — the per-dollar credible-interval upper bound must be at most
-  `×0.80`, a cost cut of at least 20%.
+- **Ship gate 2: economic materiality** — the Total-IET ratio credible-interval upper bound must be at
+  most `×0.80`, an aggregate cost cut of at least 20% on comparable delivered work.
 
 A skill-set edit is a claim. Ship the claim only with the card and evidence that support it.
 

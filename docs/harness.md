@@ -25,11 +25,11 @@ delivered or harm incurred:
 
 - **RETURN**: graded yield on the `Fails < Satisfies < Delivers` ladder, plus reliability as ΔP on the
   shared-success set.
-- **EFFICIENCY**: cost over delivered runs. Per-dollar IET cost is the gate metric; per-day duration is
-  a co-headline, not a gate.
+- **EFFICIENCY**: cost over delivered runs. Total IET on the shared set is the gate metric; the
+  levelized geo-mean is the inference companion, and per-day duration is a co-headline.
 - **Validity**: the do-no-harm gate checks loss mass against a null-calibrated threshold. The
-  economic-materiality gate requires the per-dollar cost-ratio band upper bound to be ≤ ×0.80, certifying
-  at least a 20% cost cut.
+  economic-materiality gate requires the Total-IET-on-`S` ratio band upper bound to be ≤ ×0.80,
+  certifying at least a 20% aggregate cost cut on comparable delivered work.
 
 A headline like "grounding is cheaper and at least as correct" may rest **only** on these metrics.
 

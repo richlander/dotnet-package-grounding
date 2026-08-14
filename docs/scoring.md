@@ -24,14 +24,14 @@ The full scoring model lives in the **[quality-card model](./quality-card-model.
 
 - **RETURN** — graded yield on the ladder `Fails < Satisfies < Delivers`, plus reliability `ΔP` on the
   shared-success set.
-- **EFFICIENCY** — per-dollar IET over delivered runs is the economic cost stick; per-day duration is a
-  co-headline, reported beside it but not used as the economic gate.
+- **EFFICIENCY** — Total IET on the shared set is the economic gate quantity; the levelized per-task
+  geo-mean is the clean-inference companion, and per-day duration is a non-gating co-headline.
 
 A skill set ships only when both gates clear:
 
 1. **Do no harm:** loss mass must stay below the null-95 baseline.
-2. **Economic materiality:** the per-dollar IET credible-interval upper bound must be `≤ ×0.80`, i.e.
-   at least a certified 20% cost cut.
+2. **Economic materiality:** the Total-IET-on-`S` ratio credible-interval upper bound must be
+   `≤ ×0.80`, i.e. at least a certified 20% aggregate cost cut on comparable delivered work.
 
 Older fixed 25% win caps are superseded by the quality card's ≥20% economic gate.
 
@@ -40,11 +40,11 @@ Older fixed 25% win caps are superseded by the quality card's ≥20% economic ga
 Suite: **CT-24**. Repeats: `k = 5`. Models: `claude-haiku-4.5`, `claude-sonnet-5`,
 `claude-opus-4.8`. Comparison: grounded SKILL.md skill set versus baseline.
 
-| Model | Mean yield | Reliability ΔP | Per-$ IET geomean | Per-day duration geomean | Econ gate upper | Do-no-harm |
+| Model | Mean yield | Reliability ΔP | Total-IET gate | Levelized geo companion | Per-day duration | Do-no-harm |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Haiku | 0.533 → 0.942 | +0.263 | ×0.20 [0.18, 0.33] | ×0.28 | ×0.33 | loss mass 0.000 vs null 3.2 |
-| Sonnet | 0.775 → 1.000 | +0.191 | ×0.26 [0.23, 0.35] | ×0.21 | ×0.35 | loss mass 0.000 vs null 2.2 |
-| Opus | 0.883 → 1.000 | +0.117 ⚠ | ×0.40 [0.35, 0.52] | ×0.38 | ×0.52 | loss mass 0.000 vs null 1.2 |
+| Haiku | 0.533 → 0.942 | +0.263 | ×0.25 [0.21, 0.35] | ×0.20 [0.18, 0.33] | ×0.28 | loss mass 0.000 vs null 3.2 |
+| Sonnet | 0.775 → 1.000 | +0.191 | ×0.36 [0.30, 0.40] | ×0.26 [0.23, 0.35] | ×0.21 | loss mass 0.000 vs null 2.2 |
+| Opus | 0.883 → 1.000 | +0.117 ⚠ | ×0.44 [0.39, 0.47] | ×0.40 [0.35, 0.52] | ×0.38 | loss mass 0.000 vs null 1.2 |
 
 All three models clear the `×0.80` economic-materiality bar and the do-no-harm gate. The Opus
 reliability lift is prior-sensitive, so treat it as supportive rather than the primary headline.
@@ -58,7 +58,8 @@ grounding run <slug> --source skill --eval-mode holistic --runs 5
 ```
 
 The analyzer still contains legacy card views, but the authoritative interpretation is the quality-card
-model above: report return, per-dollar IET, per-day duration, the economic upper bound, and loss mass.
+model above: report return, Total IET and its gate band, the levelized geo-mean companion, per-day
+duration, and loss mass.
 Where historical datasets measured a package-shipped doc, call it **the grounding doc** and treat it as
 a delivery-channel experiment, not the live delivery model.
 
@@ -69,11 +70,11 @@ Paste a compact quality-card summary into the PR's *Metrics* section:
 ```text
 ### Grounding eval — <unit> · CT-24 · k=5
 
-| Model | Mean yield | Reliability ΔP | Per-$ IET geomean | Per-day duration | Gates |
-| --- | ---: | ---: | ---: | ---: | --- |
-| claude-haiku-4.5 | 0.533 → 0.942 | +0.263 | ×0.20 [0.18, 0.33] | ×0.28 | harm clear; econ upper ×0.33 |
-| claude-sonnet-5 | 0.775 → 1.000 | +0.191 | ×0.26 [0.23, 0.35] | ×0.21 | harm clear; econ upper ×0.35 |
-| claude-opus-4.8 | 0.883 → 1.000 | +0.117 ⚠ | ×0.40 [0.35, 0.52] | ×0.38 | harm clear; econ upper ×0.52 |
+| Model | Mean yield | Reliability ΔP | Total-IET gate | Levelized geo | Per-day duration | Gates |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| claude-haiku-4.5 | 0.533 → 0.942 | +0.263 | ×0.25 [0.21, 0.35] | ×0.20 [0.18, 0.33] | ×0.28 | harm clear; econ upper ×0.35 |
+| claude-sonnet-5 | 0.775 → 1.000 | +0.191 | ×0.36 [0.30, 0.40] | ×0.26 [0.23, 0.35] | ×0.21 | harm clear; econ upper ×0.40 |
+| claude-opus-4.8 | 0.883 → 1.000 | +0.117 ⚠ | ×0.44 [0.39, 0.47] | ×0.40 [0.35, 0.52] | ×0.38 | harm clear; econ upper ×0.47 |
 ```
 
 If a package-specific report also includes historical channel data, preserve its numbers but label the
@@ -134,9 +135,9 @@ grounding run <slug> --source skill --eval-mode holistic --runs 5
 - [ ] Grounded and baseline runs use the same agent, same CT-24 suite, and `k = 5` repeats.
 - [ ] Models are named: Haiku, Sonnet, and Opus.
 - [ ] RETURN is reported as graded yield plus reliability ΔP.
-- [ ] EFFICIENCY reports per-dollar IET and per-day duration.
+- [ ] EFFICIENCY reports Total IET, the levelized geo-mean companion, and per-day duration.
 - [ ] Do-no-harm gate clears: loss mass is below the null-95 baseline.
-- [ ] Economic-materiality gate clears: per-dollar credible-interval upper bound is `≤ ×0.80`.
+- [ ] Economic-materiality gate clears: Total-IET ratio credible-interval upper bound is `≤ ×0.80`.
 - [ ] Claims cite normative quality-card metrics; transcript/tool signals only explain the mechanism.
 - [ ] Frozen per-package reports are linked, not edited, when they contain historical channel data.
 

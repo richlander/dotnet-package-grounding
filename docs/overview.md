@@ -276,14 +276,11 @@ never subjective taste. Then we measure two **independent** axes behind two gate
   Grounding's return lift is the change in yield, baseline → grounded. Because five runs is a noisy
   estimate of a rate, we report it as a **band** (a 95% credible interval) rather than a point, so
   *mode-jumping between runs shows up as reliability*, exactly where it belongs.
-- **Efficiency**, the price *and* speed of a delivery (over **delivered runs only**, so a task's
-  denominator is its `K` deliveries, so a mode an arm never reached is never priced or timed). Among
-  runs that deliver, we levelize two rulers and band each as a paired, per-task geometric-mean ratio,
-  grounded vs. baseline: **per-dollar** cost in [IET](#how-we-measure-cost-iet), the fused price that
-  carries the retry tax and our economic headline, and **per-day** duration (wall-clock on one fixed
-  host, so the machine constant cancels in the ratio). This is where a good skill pays for itself: it
-  stops the agent from decompiling the package and web-searching the API. Cost gates; speed
-  co-headlines.
+- **Efficiency**, the price *and* speed of comparable delivered work. **Per-dollar Total IET on the
+  shared set** is the additive economic gate quantity. Beside it, the **levelized per-task geo-mean**
+  keeps retry tax and equal task weighting visible as the clean-inference companion. **Per-day**
+  duration is the non-gating co-headline. This is where a good skill pays for itself: it stops the
+  agent from decompiling the package and web-searching the API.
 - **Gate 1, do no harm.** Grounding must not cause a **material regression** on any task (one the
   baseline delivered but the grounded arm doesn't). We calibrate the gate against a null model, so
   normal run-to-run noise can't trip it. Only a real, sustained loss will. The principle is
@@ -292,12 +289,12 @@ never subjective taste. Then we measure two **independent** axes behind two gate
   routers can switch it mid-task without telling anyone, so a change that lifts the frontier while
   regressing the mini is not a win. Improving efficacy for mini may result in a drop in efficiency
   on frontier, resulting in significant token spend increases on the more expensive model.
-- **Gate 2, earn its keep.** The per-dollar win must clear a **≥20% floor with confidence** (the
-  band's upper bound ≤ ×0.80), the minimum premium that repays a real recurring cost: authoring the
-  skill, writing a suite that genuinely probes the package, running every task five times per arm
-  on several models, and doing it again each time the package changes. This is the number a
-  semiconductor CEO would put on an earnings slide: a committed margin, not a curve. A real-but-tiny
-  8% win passes *do no harm* yet fails here, and is correctly judged "not worth maintaining."
+- **Gate 2, earn its keep.** The **Total-IET-on-`S` ratio** must clear a **≥20% floor with
+  confidence** (the band's upper bound ≤ ×0.80), the minimum premium that repays authoring,
+  evaluation, and drift maintenance. The levelized geo-mean remains visible as the typical per-task
+  inference companion, but the additive comparable-work total is the business gate. A real-but-tiny
+  8% Total-IET win passes *do no harm* yet fails here, and is correctly judged "not worth
+  maintaining."
 
 **Why the floor is 20% and not merely positive.** Because the margin is measured against *today's*
 models, and it decays. Baselines get better on their own, which narrows the gap without anyone
@@ -313,9 +310,9 @@ skill set perfectly captured, unchanged just like it is at its git commit. A mea
 real risk on transitioning to loss. A significant win is a buffer won for your users.
 
 Three rules deliver confidence. **The task is the unit of evidence, not the run.** Every task is
-run the same number of times, five per arm. What varies is how many of those five *deliver*, and
-price is only charged on deliveries. An arm that nails a task five times out of five puts five
-priced runs into the pool; an arm that squeaks out one delivery puts in one.
+run the same number of times, five per arm. What varies is how many of those five *deliver*. The
+Total-IET point takes one representative median-Delivered cost per task/arm; the companion levelized
+metric charges all-run cost against the `K` delivered units, preserving retry tax.
 
 Never average that pool. A two-task suite shows why. Grounding here does exactly what it should: it
 makes both tasks 20% cheaper per delivery, and it drags the hard task from one delivery in five up
@@ -336,6 +333,10 @@ Now summarize it two ways.
   - Easy: `8k / 10k` = **×0.80**
   - Hard: `80k / 100k` = **×0.80**
   - Verdict: grounding is **20% cheaper**
+- **Sum representative delivered costs on the same shared set.**
+  - Baseline: `10k + 100k` = **110k**
+  - Grounded: `8k + 80k` = **88k**
+  - Verdict: grounding is **20% cheaper**
 
 Same runs, same numbers, opposite verdicts. The pooled figure inverts because the grounded arm put
 four extra *hard* deliveries into the pool, so the expensive task carries half the grounded average
@@ -343,8 +344,9 @@ and only a sixth of the baseline's. Those four deliveries are the whole point of
 pooling billed them as a loss. (The general name for the reversal is
 [Simpson's paradox](https://en.wikipedia.org/wiki/Simpson%27s_paradox).)
 
-So cost is compared per task, on the tasks both arms delivered, which keeps both averages over the
-same set of tasks.
+So cost is compared on the same tasks both arms delivered. The Total-IET gate sums one representative
+delivered cost per task; the geo-mean companion summarizes the levelized per-task multipliers. Both
+avoid the invalid delivered-run pool.
 
 One detail the example hides, since two ×0.80s average to ×0.80 whichever way you do it: per-task
 ratios are combined with a **geometric mean**, not an arithmetic one. Ratios are multiplicative, and
