@@ -53,5 +53,7 @@ Generic infrastructure for evaluating NuGet package **grounding**. Start at the 
 ## Study artifacts
 
 - **[recommendation.md](./recommendation.md)** — the NuGet v-team channel-matrix recommendation.
+- **[reports/current-skill-shelf-status.md](./reports/current-skill-shelf-status.md)** — the current
+  cross-package SKILL.md evidence, its measurement maturity, and the next experiment.
 - **[reports/](./reports/)** — per-package eval reports.
 - **[templates/canonical-grounding-pr.md](./templates/canonical-grounding-pr.md)** — the PR template.
