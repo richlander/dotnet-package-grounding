@@ -31,9 +31,11 @@ The ratified eval is **grounded SKILL.md skill set vs baseline**: same agent, sa
 installed versus not installed. Suite = **CT-24**; repeats = `k = 5`; models =
 `claude-haiku-4.5`, `claude-sonnet-5`, and `claude-opus-4.8`.
 
-This table is the last full Markout active-suite snapshot. For the current cross-package status,
-including later Markout held-outs, the stable System.CommandLine CT-18 result, System.Text.Json,
-and the evidence boundaries created by methodology changes, see
+This table is the historical three-model Markout snapshot. A fresh Haiku `k=5` recertification
+using explicit Delivers grading is return-positive and do-no-harm clean, but its Total-IET ratio
+band is ×0.83 [0.63, 1.02], so the current economic gate does not clear. For the current
+cross-package status, including later Markout held-outs, the stable System.CommandLine CT-18
+result, System.Text.Json, and the evidence boundaries created by methodology changes, see
 [`reports/current-skill-shelf-status.md`](reports/current-skill-shelf-status.md).
 
 | Model | Mean yield | Reliability ΔP | Total-IET gate | Levelized geo | Per-day duration | Gates |

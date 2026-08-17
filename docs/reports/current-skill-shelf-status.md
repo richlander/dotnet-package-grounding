@@ -17,15 +17,49 @@ It usually means the ungrounded model knew less about that package.
 
 | Package | Latest full-suite result | What the result establishes | Current limitation |
 | --- | --- | --- | --- |
-| Markout | CT-24, `k=5`, three model tiers | Do-no-harm and the current Total-IET economic gate cleared on the measured snapshot | The shelf was renamed and changed afterward; the full active suite has not re-certified those changes, and the historical CT-24 used `Delivers ≡ Satisfies` |
+| Markout | Active CT-24, Haiku, `k=5`, explicit Delivers grading | Mean Delivered yield improved 0.575 → 0.842 and do-no-harm is clean | The Total-IET point ratio is ×0.83, but its 95% upper bound is ×1.02, so the current economic gate does not clear |
 | System.CommandLine | adopter-derived stable-2.0.10 CT-18, Haiku, `k=5` | Large return gain with no baseline-only productive task | The shared cost set is only six tasks, the run predates explicit delivers-tier grading, and the harness-required base-skill identity differs from shipping |
 | System.Text.Json | CT-24, Haiku, `k=5` | Targeted return value on post-training strictness APIs; broad migration/AOT guidance is model-resident | The run predates the package-prefixed skill rename and explicit delivers-tier grading; no current economic card was produced |
 
 ## Markout
 
-### Last full active-suite snapshot
+### Current active-suite recertification
 
-The last full CT-24 quality card measured five runs per task and arm across three tiers:
+The merged shelf was remeasured after the active fixtures moved to Markout 0.35.2 and CT01–24
+received explicit `Fails < Satisfies < Delivers` contracts. The run used Haiku for five runs per
+task and arm, holistic pull delivery, and a fresh five-run baseline.
+
+The admissible replacement ran under a dedicated, filesystem-locked evaluation home. All 360
+recorded sessions completed; attempted global tool installs failed, and both isolated and host
+NuGet/tool state remained unchanged. It supersedes the withdrawn provisional run.
+
+| Model | Mean Delivered yield | Reliability `ΔP \| both` | Total-IET gate | Levelized geo | Duration geo | Do-no-harm |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| Haiku | 0.575 → 0.842 | +0.235 [+0.064, +0.249] ✅ | ×0.83 [0.63, 1.02] ⛔ | ×0.44 [0.40, 0.72] | ×0.72 [0.60, 0.89] | loss 0.600 vs null 3.400 ✅ |
+
+The shelf produced 101/120 Delivered replicates versus 69/120 for the baseline. Twenty-three tasks
+were productive in both arms, one was grounded-only, and none was baseline-only. The null-calibrated
+do-no-harm gate is clean. The reliability interval excludes zero under both the uniform prior and
+the Jeffreys sensitivity analysis.
+
+Economically, the point estimate is useful but not certified. Median-delivered Total IET on the
+23-task shared set moved from 2928.6k to 2430.0k (−17%), but the gate is margin-based: its 95% upper
+bound must be at or below ×0.80. The observed upper bound is ×1.02. The lower geo-mean IET and
+duration bands show a typical-task efficiency improvement, but neither substitutes for the additive
+Total-IET gate.
+
+Two tasks had yield regressions (CT08: 5/5 → 3/5; CT24: 5/5 → 4/5), both within the clean
+suite-level null threshold. CT23 was the grounded-only productive task. Retrieval remains
+stochastic: the base skill activated on all 24 tasks at least once and on 69/120 plugin replicates;
+the expected companion skill was pulled on 23/24 tasks, with CT20 the miss.
+
+This result supersedes the prior "remeasure next" status. It is evidence that the current shelf
+improves return without detectable suite-level harm, but it **does not renew the economic
+certification**.
+
+### Prior three-tier snapshot
+
+The earlier CT-24 quality card measured five runs per task and arm across three model tiers:
 
 | Model | Mean yield | Reliability ΔP | Total-IET ratio | Levelized geo | Per-day duration |
 | --- | ---: | ---: | ---: | ---: | ---: |
@@ -37,7 +71,7 @@ All three tiers cleared do-no-harm and the current economic-materiality rule: th
 of the Total-IET ratio stayed below ×0.80. Opus reliability is prior-sensitive and should remain a
 supporting rather than headline claim.
 
-That card is a **snapshot**, not a blanket certification of every later edit. It predates the
+That card is now **historical evidence**, not a certification of the current shelf. It predates the
 package-prefixed domain-skill rename and the adopter-driven guidance added for CT27–33, and its
 active CT-24 contracts used the historical `Delivers ≡ Satisfies` proxy rather than an independently
 measured fidelity tier.
@@ -57,9 +91,9 @@ remained noisy, and Markout's packed package documentation can still self-ground
 baseline. The focused figures should therefore be read as conservative marginal evidence, not as a
 replacement full-suite card.
 
-**Current disposition:** keep shipping the shelf. The next full experiment should re-run the active
-suite against the now-merged shelf and use explicit delivers-tier contracts before renewing the
-quality-card claim.
+**Current disposition:** the shelf is return-positive and do-no-harm clean, but it does not clear
+the current economic ship gate. Keep the historical and focused evidence visible, but do not claim
+that the present shelf has a certified ≥20% Total-IET margin.
 
 ## System.CommandLine
 
@@ -119,17 +153,20 @@ topic-specific. A new full run is needed before making a current-shelf ship-gate
 
 ## What is current, and what is still owed
 
-1. **Markout has the strongest complete economic evidence**, but its merged CT27–33 additions need a
-   fresh active-suite card and explicit fidelity grading.
+1. **Markout now has the strongest current instrument**, and its fresh active-suite card is
+   return-positive and do-no-harm clean, but the economic interval upper bound (×1.02) misses the
+   ×0.80 certification threshold.
 2. **System.CommandLine has the strongest return evidence**, but its six-task shared set is too thin
    for the current economic gate.
 3. **System.Text.Json has selective rather than general value**, and its latest full run is not
    retrieval-equivalent to the current renamed shelf.
 
-The highest-value next experiment is Markout's active suite: it is the package with a prior
-three-tier card, enough historical shared tasks to estimate economics, and meaningful shelf changes
-since the last full measurement. System.CommandLine does not need more content tuning to establish
-return, and System.Text.Json should be rerun only when a current ship decision requires it.
+Another identical Markout run is not the highest-value next step. The point estimate already sits
+near the economic threshold, while the paired finite-suite interval includes no material win.
+Further work should first decide whether to change the delivery/activation design or accept a
+return-positive shelf without a certified economic margin. System.CommandLine does not need more
+content tuning to establish return, and System.Text.Json should be rerun only when a current ship
+decision requires it.
 
 ## Evidence sources
 
@@ -137,4 +174,5 @@ return, and System.Text.Json should be rerun only when a current ship decision r
 - [System.Text.Json rebuilt-suite evidence](../authoring-principles.md#evidence-systemtextjson-unit)
 - [System.CommandLine stable CT-18 result](https://github.com/richlander/dotnet-package-skills/issues/58#issuecomment-5281623282)
 - [Markout CT27–33 focused evidence](https://github.com/richlander/markout/issues/149#issuecomment-5299227386)
+- [Markout active CT-24 explicit-Delivers recertification](https://github.com/richlander/markout/issues/149#issuecomment-5313885872)
 - [Baseline package-documentation contamination](https://github.com/richlander/dotnet-package-skills/issues/49)
