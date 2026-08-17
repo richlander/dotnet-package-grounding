@@ -9,6 +9,7 @@ namespace Grounding.Run;
 // Dataset provenance — the pin key that makes re-runs cheap. A generated arm-dataset is valid to
 // REUSE as long as its provenance matches the current corpus + doc:
 //   corpus  = pinned nuget version + fixture-set hash  (a change invalidates ALL arms)
+//           + package baseline condition (restored vs doc-stripped policy)
 //   arm doc = the grounding doc's content hash (+ commit for traceability) (invalidates only that arm)
 // Baseline has no doc, so it pins on the corpus alone. Assertions are judgment-side and are NOT part
 // of provenance — they re-score over kept sessions without regenerating (see `rescore-assertions`).
@@ -16,6 +17,7 @@ internal sealed partial class Provenance
 {
     public string? NugetVersion { get; init; }
     public string? FixtureHash { get; init; }
+    public string PackageBaseline { get; init; } = "restored";
     public string Source { get; init; } = "none";   // agents | readme | skill | none (baseline)
     public string? DocPath { get; init; }            // repo-relative, for traceability
     public string? DocCommit { get; init; }          // last commit touching the doc
@@ -25,7 +27,8 @@ internal sealed partial class Provenance
     private static partial Regex MarkoutVersion();
 
     // Compute the provenance of the arm about to be (or already) generated, from the live tree.
-    public static Provenance Compute(string root, string source, string? docPath, string fixturesDir)
+    public static Provenance Compute(
+        string root, string source, string? docPath, string fixturesDir, string packageBaseline = "restored")
     {
         string? docHash = null, docCommit = null, docRel = null;
         if (source != "none" && docPath is not null && File.Exists(docPath))
@@ -38,6 +41,7 @@ internal sealed partial class Provenance
         {
             NugetVersion = NugetFrom(fixturesDir),
             FixtureHash = HashDir(fixturesDir),
+            PackageBaseline = packageBaseline,
             Source = source,
             DocPath = docRel,
             DocCommit = docCommit,
@@ -50,6 +54,7 @@ internal sealed partial class Provenance
     public bool ReusableAs(Provenance now) =>
         NugetVersion == now.NugetVersion
         && FixtureHash == now.FixtureHash
+        && PackageBaseline == now.PackageBaseline
         && Source == now.Source
         && (Source == "none" || DocContentHash == now.DocContentHash);
 
@@ -62,6 +67,8 @@ internal sealed partial class Provenance
             v.Add($"nuget version (pinned {NugetVersion ?? "—"} vs current {now.NugetVersion ?? "—"})");
         if (FixtureHash != now.FixtureHash)
             v.Add($"fixture set (pinned {FixtureHash ?? "—"} vs current {now.FixtureHash ?? "—"})");
+        if (PackageBaseline != now.PackageBaseline)
+            v.Add($"package baseline (pinned {PackageBaseline} vs current {now.PackageBaseline})");
         if (!corpusOnly)
         {
             if (Source != now.Source)
@@ -76,6 +83,7 @@ internal sealed partial class Provenance
     {
         ["nugetVersion"] = NugetVersion,
         ["fixtureHash"] = FixtureHash,
+        ["packageBaseline"] = PackageBaseline,
         ["source"] = Source,
         ["docPath"] = DocPath,
         ["docCommit"] = DocCommit,
@@ -97,6 +105,7 @@ internal sealed partial class Provenance
         {
             NugetVersion = p["nugetVersion"]?.GetValue<string>(),
             FixtureHash = p["fixtureHash"]?.GetValue<string>(),
+            PackageBaseline = p["packageBaseline"]?.GetValue<string>() ?? "restored",
             Source = p["source"]?.GetValue<string>() ?? "none",
             DocPath = p["docPath"]?.GetValue<string>(),
             DocCommit = p["docCommit"]?.GetValue<string>(),
@@ -124,6 +133,7 @@ internal sealed partial class Provenance
             Console.WriteLine($"  source        {prov.Source}");
             Console.WriteLine($"  nugetVersion  {prov.NugetVersion ?? "—"}");
             Console.WriteLine($"  fixtureHash   {prov.FixtureHash ?? "—"}");
+            Console.WriteLine($"  packageBaseline {prov.PackageBaseline}");
             Console.WriteLine($"  docPath       {prov.DocPath ?? "—"}");
             Console.WriteLine($"  docCommit     {prov.DocCommit ?? "—"}");
             Console.WriteLine($"  docContentHash {prov.DocContentHash ?? "—"}\n");

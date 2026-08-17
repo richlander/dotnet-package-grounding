@@ -35,6 +35,9 @@ internal sealed class RunOptions
     // Smell test: unjudged "finger in the wind" run. Forces --no-judge + holistic; renders the
     // compact single-arm SmellCard (IET/turns/archaeology/skill-pulls) instead of the per-run Table.
     public bool Smell;
+    // Package context shared by both arms. "doc-stripped" runs under a disposable HOME with a
+    // sanitized copy of the warm NuGet cache; it is an artificial upper-bound probe, not default.
+    public string PackageBaseline = "restored";
 }
 
 internal static class Runner
@@ -187,7 +190,10 @@ internal static class Runner
         // whether an already-generated dataset can be REUSED instead of regenerated — the core of
         // cheap re-runs. Computed once here (model-independent) and stamped into each dataset.
         var fixturesDir = Path.Combine(root, o.TestsDir!, o.Unit, "fixtures");
-        var prov = Provenance.Compute(root, o.Source, srcDocPath, fixturesDir);
+        var packageBaseline = o.PackageBaseline == "doc-stripped"
+            ? EvalIsolation.DocStrippedPolicy
+            : "restored";
+        var prov = Provenance.Compute(root, o.Source, srcDocPath, fixturesDir, packageBaseline);
 
         // skill-validator requires a plugin.json above the skill dir. The multi-skill arm loads the
         // REAL skills/plugin.json (skills:["."]) so every sibling skill is discoverable — it is a
@@ -219,6 +225,7 @@ internal static class Runner
 
         var rc = 0;
         var smellDests = o.Smell ? new List<string>() : null;
+        EvalEnvironment? evalEnvironment = null;
         try
         {
             foreach (var model in o.Models)
@@ -233,17 +240,20 @@ internal static class Runner
                 var scenarios = o.Scenarios.Count > 0
                     ? ScenarioSelectionTag(o.Scenarios)
                     : "";
+                var packageTag = o.PackageBaseline == "doc-stripped" ? "-doc-stripped" : "";
                 var tag = o.Source switch
                 {
-                    "skill" => $"{o.Unit}-skill{dv}{abl}{scenarios}.{ms}",
-                    "readme" => $"{o.Unit}-readme{dv}{abl}{scenarios}.{ms}",
-                    "none" => $"{o.Unit}-none{dv}{abl}{scenarios}.{ms}",
-                    _ => $"{o.Unit}{dv}{abl}{scenarios}.{ms}",
+                    "skill" => $"{o.Unit}-skill{dv}{abl}{scenarios}{packageTag}.{ms}",
+                    "readme" => $"{o.Unit}-readme{dv}{abl}{scenarios}{packageTag}.{ms}",
+                    "none" => $"{o.Unit}-none{dv}{abl}{scenarios}{packageTag}.{ms}",
+                    _ => $"{o.Unit}{dv}{abl}{scenarios}{packageTag}.{ms}",
                 };
                 var resultsDir = DataCache.ResultsDir(o.Unit, tag);
                 var cmd = BuildCommand(bin ?? "<skill-validator>", o, model, resultsDir, groundingArg);
 
-                Console.WriteLine($"#### {o.Unit}  source={o.Source}  delivery={o.Delivery}  model={ms}  runs={o.Runs} ####");
+                Console.WriteLine(
+                    $"#### {o.Unit}  source={o.Source}  delivery={o.Delivery}  " +
+                    $"package={packageBaseline}  model={ms}  runs={o.Runs} ####");
                 var artifact = o.Delivery == "push" ? $"{o.Unit}.agent.md" : "SKILL.md";
                 Console.WriteLine($"    {artifact} <- {o.Source}   dataset -> {Path.Combine(outDir, tag + ".json")}");
                 Console.WriteLine("    " + cmd);
@@ -260,7 +270,8 @@ internal static class Runner
                 if (cached is not null && cached.ReusableAs(prov))
                 {
                     Console.WriteLine($"    ↺ REUSED (provenance match: {prov.Source} doc {prov.DocContentHash ?? "—"}, "
-                        + $"nuget {prov.NugetVersion ?? "?"}, fixtures {prov.FixtureHash ?? "?"}) — skipped generation.");
+                        + $"nuget {prov.NugetVersion ?? "?"}, fixtures {prov.FixtureHash ?? "?"}, "
+                        + $"package baseline {prov.PackageBaseline}) — skipped generation.");
                     if (smellDests is not null) smellDests.Add(destPath);
                     else new Analyze.Cards().Table(new[] { destPath });
                     continue;
@@ -277,13 +288,36 @@ internal static class Runner
                     return 1;
                 }
 
+                if (!ValidateBaselinePin(o, model, prov))
+                    return 1;
+
+                if (o.PackageBaseline == "doc-stripped" && evalEnvironment is null)
+                {
+                    try
+                    {
+                        evalEnvironment = EvalIsolation.Prepare(o.Unit);
+                        Console.WriteLine(
+                            $"grounding: package baseline={EvalIsolation.DocStrippedPolicy}; " +
+                            $"isolated HOME={evalEnvironment.Root}; copied {evalEnvironment.CopiedFiles:N0} files; " +
+                            $"stripped {evalEnvironment.StrippedFiles:N0} documentation/archive files; " +
+                            $"sanitized {evalEnvironment.SanitizedManifests:N0} NuGet manifests.");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.Error.WriteLine($"grounding: could not prepare doc-stripped package baseline: {ex.Message}");
+                        return 1;
+                    }
+                }
+
                 Directory.CreateDirectory(outDir);
-                rc |= RunOne(root, skillPath, skillText, bin, o, model, resultsDir, groundingArg, outDir, tag, prov, smellDests);
+                rc |= RunOne(root, skillPath, skillText, bin, o, model, resultsDir, groundingArg,
+                    outDir, tag, prov, evalEnvironment, smellDests);
             }
             if (smellDests is { Count: > 0 }) new Analyze.Cards().SmellCard(smellDests);
         }
         finally
         {
+            evalEnvironment?.Dispose();
             if (wrotePlugin && File.Exists(pluginJson)) File.Delete(pluginJson);
         }
         return rc;
@@ -295,6 +329,7 @@ internal static class Runner
     // agent, selected as primary persona at t=0). skill-validator auto-discovers which.
     private static int RunOne(string root, string skillPath, string skillText, string bin,
         RunOptions o, string model, string resultsDir, string groundingArg, string outDir, string tag, Provenance prov,
+        EvalEnvironment? evalEnvironment,
         List<string>? smellDests = null)
     {
         var unitDir = Path.GetDirectoryName(skillPath)!;
@@ -312,6 +347,7 @@ internal static class Runner
             File.WriteAllText(target, artifactText);
 
             var psi = new ProcessStartInfo(bin) { WorkingDirectory = root, UseShellExecute = false };
+            evalEnvironment?.ApplyTo(psi);
             psi.ArgumentList.Add("evaluate");
             psi.ArgumentList.Add("--tests-dir"); psi.ArgumentList.Add(o.TestsDir!);
             psi.ArgumentList.Add("--model"); psi.ArgumentList.Add(model);
@@ -331,23 +367,6 @@ internal static class Runner
             if (o.BaselineFrom is { } bf)
             { psi.ArgumentList.Add("--baseline-from"); psi.ArgumentList.Add(bf.Replace("{model}", ms)); }
             psi.ArgumentList.Add(groundingArg);
-
-            // Refuse a --baseline-from pin whose corpus (nuget + fixtures) does not match this run —
-            // a baseline from a different world would make the comparison meaningless. Fail fast and
-            // name the violated rule(s). A pre-provenance pin can't be checked, so it only warns.
-            if (o.BaselineFrom is { } bfPin)
-            {
-                var pin = bfPin.Replace("{model}", ms);
-                var violations = SharedBaseline.Validate(pin, prov);
-                var hard = violations.Where(v => !v.StartsWith("unverified")).ToList();
-                if (hard.Count > 0)
-                {
-                    Console.Error.WriteLine($"   !! invalid --baseline-from {Path.GetFileName(pin)}: refusing to reuse a baseline from a different corpus. Violated:");
-                    foreach (var v in hard) Console.Error.WriteLine($"        - {v}");
-                    return 1;
-                }
-                foreach (var v in violations) Console.Error.WriteLine($"   !! {v}; reusing anyway.");
-            }
 
             using var p = Process.Start(psi)!;
             p.WaitForExit();
@@ -415,6 +434,31 @@ internal static class Runner
         var exclude = o.ExcludeSkills.Count > 0 ? string.Concat(o.ExcludeSkills.Select(x => $"--exclude-skill {x} ")) : "";
         return $"{bin} evaluate --tests-dir {o.TestsDir} --model {model} {judge} " +
                $"--runs {o.Runs} --keep-sessions --results-dir {resultsDir} {evalMode}{exclude}{baseline}{groundingArg}";
+    }
+
+    // Refuse a --baseline-from pin whose corpus (nuget + fixtures + package baseline) does not
+    // match this run. Validate before preparing a potentially large isolated cache.
+    private static bool ValidateBaselinePin(RunOptions o, string model, Provenance prov)
+    {
+        if (o.BaselineFrom is not { } baselinePattern)
+            return true;
+
+        var pin = baselinePattern.Replace("{model}", ShortModel(model));
+        var violations = SharedBaseline.Validate(pin, prov);
+        var hard = violations.Where(v => !v.StartsWith("unverified")).ToList();
+        if (hard.Count > 0)
+        {
+            Console.Error.WriteLine(
+                $"   !! invalid --baseline-from {Path.GetFileName(pin)}: " +
+                "refusing to reuse a baseline from a different corpus. Violated:");
+            foreach (var violation in hard)
+                Console.Error.WriteLine($"        - {violation}");
+            return false;
+        }
+
+        foreach (var violation in violations)
+            Console.Error.WriteLine($"   !! {violation}; reusing anyway.");
+        return true;
     }
 
     private static string? FindSkillValidator(string root)

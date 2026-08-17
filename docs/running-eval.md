@@ -4,6 +4,12 @@
 > **[quality-card model](./quality-card-model.md)** (two axes — return + efficiency — and two ship
 > gates). This doc is the *operational* how-to: build the harness, point it at a repo, run.
 
+For the artificial package-documentation-denied upper-bound probe, add
+`--package-baseline doc-stripped` and supply `COPILOT_GITHUB_TOKEN`. The harness runs both arms under
+one disposable HOME with a documentation-stripped copy of the current warm NuGet cache and clears
+the isolated user's default NuGet sources.
+See [the cache confound and probe contract](harness.md#a-confound-the-baseline-can-read-the-package-from-the-nuget-cache).
+
 This repo is the **generic eval harness**. It holds no package grounding of its own — the package's
 `SKILL.md` skill set lives in the **package's own repo** under `skills/`, with its eval
 (`eval.yaml` + `fixtures/`) beside it under `grounding/<unit>/`. You run eval by pointing the harness at that repo. Nothing is packed or published
