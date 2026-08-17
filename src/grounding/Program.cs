@@ -171,13 +171,19 @@ var baselineFromOpt = new Option<string?>("--baseline-from") { Description = "Sh
 var freshOpt = new Option<bool>("--fresh") { Description = "Regenerate even when a dataset with matching provenance (same corpus + doc content) already exists. Default reuses it (cheap re-runs)." };
 var evalModeOpt = new Option<string>("--eval-mode") { Description = "Evaluation lens: 'per-skill' (grade min(isolated, plugin) — one skill's standalone value) or 'holistic' (skip the isolated arm; grade the self-selecting plugin arm — the whole-shelf CT-24 benchmark).", DefaultValueFactory = _ => "per-skill" };
 evalModeOpt.AcceptOnlyFromAmong("per-skill", "holistic");
+var packageBaselineOpt = new Option<string>("--package-baseline")
+{
+    Description = "Package context available to both arms: 'restored' (normal NuGet cache) or 'doc-stripped' (disposable isolated HOME/cache with package docs and nupkg archives removed, and default NuGet sources cleared). The doc-stripped condition is an artificial upper-bound probe, not the default developer environment.",
+    DefaultValueFactory = _ => "restored",
+};
+packageBaselineOpt.AcceptOnlyFromAmong("restored", "doc-stripped");
 var excludeSkillOpt = new Option<string[]>("--exclude-skill") { Description = "Leave-one-out ablation: omit the named skill from the plugin arm's shelf (forwarded to skill-validator). Repeatable. Datasets are tagged '<unit>-skill-minus-<X>' so shelf-minus-X sits beside the full-shelf dataset for marginal comparison.", AllowMultipleArgumentsPerToken = true };
 var scenariosOpt = new Option<string[]>("--scenarios") { Description = "Restrict the run to scenarios whose name starts with or contains these tokens (for example, S10 S18).", AllowMultipleArgumentsPerToken = true };
 
 var run = new Command("run", "Run a grounding unit through skill-validator with a chosen source.")
 {
     unitArg, sourceOpt, deliveryOpt, modelOpt, runsOpt, judgeOpt, noJudgeOpt,
-    testsDirOpt, outOpt, readmeFileOpt, dryRunOpt, emitSkillOpt, rootOpt, baselineOutOpt, baselineFromOpt, freshOpt, evalModeOpt, excludeSkillOpt, scenariosOpt,
+    testsDirOpt, outOpt, readmeFileOpt, dryRunOpt, emitSkillOpt, rootOpt, baselineOutOpt, baselineFromOpt, freshOpt, evalModeOpt, packageBaselineOpt, excludeSkillOpt, scenariosOpt,
 };
 run.SetAction(parse =>
 {
@@ -204,6 +210,7 @@ run.SetAction(parse =>
         BaselineFrom = parse.GetValue(baselineFromOpt),
         Fresh = parse.GetValue(freshOpt),
         EvalMode = parse.GetValue(evalModeOpt)!,
+        PackageBaseline = parse.GetValue(packageBaselineOpt)!,
         ExcludeSkills = (parse.GetValue(excludeSkillOpt) ?? Array.Empty<string>()).ToList(),
         Scenarios = (parse.GetValue(scenariosOpt) ?? Array.Empty<string>()).ToList(),
     };

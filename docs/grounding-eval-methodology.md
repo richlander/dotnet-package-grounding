@@ -162,6 +162,11 @@ local NuGet cache, letting the baseline discover the doc through archaeology. Th
 partly self-grounded and understates the value of explicit grounding. Treat those historical deltas as
 lower bounds.
 
+`--package-baseline doc-stripped` provides an explicit upper-bound probe: both arms receive the same
+disposable warm cache with package documentation removed, while only the grounded arm receives the
+installed shelf. It is not the default developer environment and does not replace the restored-cache
+ship gate. Its versioned package-baseline policy is part of dataset provenance.
+
 ### Tool availability
 
 To keep the contrast about grounding content rather than tooling, evals should hold tool availability

@@ -87,11 +87,12 @@ its shipped docs being readable** — the docs travel with the code. Since every
 cache. So in any build-based scenario the web-blocked baseline is **never truly empty of package
 context**.
 
-That makes only two baseline conditions physically meaningful:
+That makes only two baseline conditions physically meaningful by default:
 
 1. **Warm / restored** — the only condition compatible with build-based scenarios. The package and its
    shipped docs are on disk; the baseline competes against package-cache context, not against model
-   ignorance. **Every number in this repo is this condition.**
+   ignorance. Unless a dataset is explicitly tagged `doc-stripped`, numbers in this repo use this
+   condition.
 2. **Cold / no-restore** — a truly empty cache where the package is never restored. Here the baseline
    has model knowledge only. But this is only achievable for **advisory scenarios that never build**;
    the moment a task requires `dotnet build`, restore warms the cache and condition (1) returns.
@@ -120,16 +121,41 @@ that corresponds to no real developer setup — you would never have a restored,
 with its `README.md` surgically deleted. It is useful only as an upper-bound probe of "how much does
 denying the cached docs cost the baseline," not as a realistic ungrounded baseline.
 
+The harness can create that probe reproducibly:
+
+```bash
+COPILOT_GITHUB_TOKEN="$(gh auth token)" \
+  grounding run markout --root ../markout \
+  --source skill --package-baseline doc-stripped --fresh
+```
+
+`doc-stripped` copies the current warm global-package cache into a disposable evaluation home,
+removes package documentation directories, Markdown-family documents, README/AGENTS/SKILL/change-log
+files, XML API-documentation sidecars, and the original `.nupkg`/`.snupkg` archives. It also removes
+descriptive/repository fields from `.nuspec` files and source paths from `.nupkg.metadata`. It gives
+**both arms** that same sanitized cache, clears package sources, and redirects `HOME`,
+`DOTNET_CLI_HOME`, NuGet caches, and the global-tool location into the disposable tree. Applying the
+same package condition to both arms preserves everything except the intended intervention: only the
+grounded arm receives the installed shelf.
+
+The source cache must already contain every package needed by the fixtures because the isolated
+user-level NuGet configuration clears default package sources. This denies ordinary restore-driven
+repopulation; it is not a network sandbox, and an agent can still use explicitly available web
+tools or construct an explicit source. The eval's `reject_tools` assertions remain the enforcement
+for those behaviors. The output dataset is tagged `-doc-stripped`, and
+`provenance.packageBaseline` carries the versioned stripping policy so it cannot be reused as a
+normal restored baseline. This mode remains an upper-bound probe rather than the default ship gate.
+
 NuGetFetch `0.6.2` ships **no** docs in its nupkg (only the DLL), so its baseline leak is reflection
 only (weaker) — which is itself a reason the NuGetFetch baseline looks stronger relative to grounding
 than Markout's.
 
 **The doc-strip probe (Markout `0.13.8`, n=3 matched).** As an upper-bound probe we relocated the
-`0.13.8` docs out of the cache (lib kept) and re-ran the baseline. Method note: a HOME-redirected
-isolation harness **does not work** — the Copilot CLI's auth state is HOME-bound, so a redirected
-`HOME` fails with `Not authenticated`; the working approach (`.tools/baseline-cache-clean.sh`,
-gitignored) keeps the real `HOME` and relocates only the doc files with a checksum-verified restore
-trap. Stripping `0.13.8` dropped the baseline's successful cache-doc reads from **28 → 1**: the single
+`0.13.8` docs out of the cache (lib kept) and re-ran the baseline. The original probe predated token
+forwarding into an isolated Copilot CLI, so `.tools/baseline-cache-clean.sh` (gitignored) kept the real
+`HOME` and relocated only the doc files with a checksum-verified restore trap. The automated mode
+above replaces that host-mutating approach. Stripping `0.13.8` dropped the baseline's successful
+cache-doc reads from **28 → 1**: the single
 survivor was the agent **falling back to a sibling cached version** —
 `cat .../0.13.8/README.md || cat .../0.13.7/README.md` — proving that stripping one version is *not* a
 cold cache (the global cache here held five Markout versions: 0.10.2, 0.13.7, 0.13.8, 0.13.9, 10.0.2,
