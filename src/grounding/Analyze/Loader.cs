@@ -393,6 +393,7 @@ internal static class Loader
             IsReadme = file.Contains("readme"),
             IsSkill = file.Contains("skill"),
             IsPush = isPush,
+            PackageBaseline = d.Provenance?.PackageBaseline ?? "restored",
             Path = path,
         };
     }

@@ -250,9 +250,17 @@ internal sealed partial class Cards
             + "**Efficiency** (independent of the gate): **BETTER** = more tasks correct / archaeology→0 / work IET cut ≥20%; "
             + "**WORSE** = fewer tasks correct than baseline, or work IET / output inflated ≥20%; **NEUTRAL** = held. "
             + "A correctness regression forces WORSE (cheaper-but-wrong is never better); a doc can FAIL the gate yet be BETTER on efficiency._\n");
-        _o.WriteLine("> Note: even ungrounded, the baseline self-grounds from the restored NuGet cache "
-            + "(the README and docs are packed in the nupkg) and the open web — so its resourcefulness count is a "
-            + "**lower bound** and grounding's advantage is understated.\n");
+        if (arms.All(a => a.PackageBaseline.StartsWith("doc-stripped", StringComparison.Ordinal)))
+            _o.WriteLine("> **Package baseline:** both arms used the same disposable doc-stripped package cache. "
+                + "Packed docs, XML docs, and package archives were removed and default NuGet sources were cleared; "
+                + "explicit web tools remained governed by the eval assertions. This is an upper-bound isolation probe.\n");
+        else if (arms.Any(a => a.PackageBaseline.StartsWith("doc-stripped", StringComparison.Ordinal)))
+            _o.WriteLine("> ⚠ **Mixed package baselines:** this card combines restored and doc-stripped datasets; "
+                + "compare them only after separating the package-baseline conditions.\n");
+        else
+            _o.WriteLine("> Note: even ungrounded, the baseline self-grounds from the restored NuGet cache "
+                + "(the README and docs are packed in the nupkg) and the open web — so its resourcefulness count is a "
+                + "**lower bound** and grounding's advantage is understated.\n");
         if (arms.Any(a => a.Agg[a.GroundArm].SkillCounts.Count > 0))
             _o.WriteLine("> **Skills pulled** (self-select from shelf, ×scenarios): "
                 + string.Join(" \u2014 ", arms.Select(a => $"`{a.Model}` {SkillBreakdown(a.Agg[a.GroundArm])}"))

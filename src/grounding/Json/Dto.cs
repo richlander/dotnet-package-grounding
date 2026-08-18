@@ -10,7 +10,13 @@ public sealed class ResultsFile
 {
     [JsonPropertyName("model")] public string? Model { get; set; }
     [JsonPropertyName("judgeModel")] public string? JudgeModel { get; set; }
+    [JsonPropertyName("provenance")] public DatasetProvenance? Provenance { get; set; }
     [JsonPropertyName("verdicts")] public List<Verdict>? Verdicts { get; set; }
+}
+
+public sealed class DatasetProvenance
+{
+    [JsonPropertyName("packageBaseline")] public string PackageBaseline { get; set; } = "restored";
 }
 
 public sealed class Verdict

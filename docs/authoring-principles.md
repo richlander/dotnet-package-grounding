@@ -326,6 +326,11 @@ The third row is the one that carries the principle. It is the only STJ family w
 silent *and* the API postdates the model's training, and it moves four times the whole-suite average.
 Where either condition fails, grounding buys nothing.
 
+The current package-prefixed, explicit-Delivers, doc-stripped recertification supersedes this run for
+ship status: whole-suite Delivered yield is 76.7% → 83.3%, with strictness at 40% → 100%, a clean
+do-no-harm gate, and no economic certification. The authoring conclusion remains the same; see the
+[current shelf status](reports/current-skill-shelf-status.md#systemtextjson).
+
 #### Superseded figures
 
 The same two families were previously reported as **−12.5%** and **+7.9%**. Those came from the

@@ -19,7 +19,7 @@ It usually means the ungrounded model knew less about that package.
 | --- | --- | --- | --- |
 | Markout | Active CT-24, Haiku, `k=5`, explicit Delivers grading | Mean Delivered yield improved 0.575 → 0.842 and do-no-harm is clean | The Total-IET point ratio is ×0.83, but its 95% upper bound is ×1.02, so the current economic gate does not clear |
 | System.CommandLine | adopter-derived stable-2.0.10 CT-18, Haiku, `k=5` | Large return gain with no baseline-only productive task | The shared cost set is only six tasks, the run predates explicit delivers-tier grading, and the harness-required base-skill identity differs from shipping |
-| System.Text.Json | CT-24, Haiku, `k=5` | Targeted return value on post-training strictness APIs; broad migration/AOT guidance is model-resident | The run predates the package-prefixed skill rename and explicit delivers-tier grading; no current economic card was produced |
+| System.Text.Json | Current CT-24, Haiku, `k=5`, explicit Delivers grading, doc-stripped | Mean Delivered yield improved 0.767 → 0.833; strictness and migration carry the return; do-no-harm is clean | Shared reliability includes zero and Total-IET is ×1.02 [×0.93, ×1.12], so no current economic certification |
 
 ## Markout
 
@@ -129,27 +129,38 @@ currently certified economic win until a measurement produces a sufficiently lar
 
 ## System.Text.Json
 
-The rebuilt, hint-free CT-24 suite measured Haiku five times per scenario:
+The current package-prefixed shelf was remeasured after CT-24 received explicit
+`Fails < Satisfies < Delivers` contracts. The fresh run used Haiku five times per task and arm,
+holistic pull delivery, and the symmetric `doc-stripped-v3` package baseline.
 
-| Scenario family | Baseline → grounded | Movement |
+| Scenario family | Baseline → grounded Delivered yield | Movement |
 | --- | --- | ---: |
-| Whole suite | 77.5% → 86.7% | **+9.2 pts** |
-| Newtonsoft migration | 100% → 100% | +0.0 pts |
-| Source generation / Native AOT | 100% → 100% | +0.0 pts |
-| .NET 10/11 strictness | 30% → 70% | **+40.0 pts** |
-| Base-skill scenarios | 78% → 92% | +14.0 pts |
-| Converters and polymorphism | 86.7% → 80.0% | −6.7 pts |
+| Whole suite | 76.7% → 83.3% | **+6.7 pts** |
+| .NET 10/11 strictness | 40.0% → 100.0% | **+60.0 pts** |
+| Newtonsoft migration | 80.0% → 100.0% | **+20.0 pts** |
+| Source generation / Native AOT | 86.7% → 100.0% | +13.3 pts |
+| DOM / streaming | 53.3% → 66.7% | +13.3 pts |
+| Base-skill scenarios | 77.8% → 73.3% | −4.4 pts |
+| Converters and polymorphism | 100.0% → 85.0% | −15.0 pts |
 
-The result supports a narrow authoring conclusion: famous migration defaults and loud AOT failures
-are already recoverable, while silent, post-training strictness APIs create real shelf value. The
-small converters movement covers only three scenarios and is not evidence of a durable regression.
+The 120 replicates per arm produced 92 → 100 Delivers, 23 → 17 Satisfies, and 5 → 3 Fails.
+Coverage was 21 both-productive tasks, two grounded-only tasks, one baseline-only task, and no task
+unreached by both arms. Shared-task reliability moved +0.057, but its 95% interval
+[-0.052, +0.129] includes zero.
 
-This run predates the package-prefixed skill rename, which changes what the agent sees during
-retrieval. It also predates explicit delivers-tier contracts and did not produce a current
-Total-IET quality card.
+The do-no-harm gate is clean: loss mass 1.600 versus the null-calibrated threshold 2.400. The
+economic gate fails: Total-IET on the shared set is ×1.02 [×0.93, ×1.12], not a certified reduction.
+The run recorded no web or NuGet-cache archaeology; both arms used the same disposable
+documentation-stripped package cache.
 
-**Current disposition:** retain the targeted shelf, but describe the evidence as return-only and
-topic-specific. A new full run is needed before making a current-shelf ship-gate claim.
+The current conclusion is narrower and stronger than the historical one. Strictness, migration
+defaults, and AOT configuration provide selective return; heavily model-resident base and converter
+workflows do not establish broad reliability or cost value. The S10/S12 regressions are retrieval
+misses, but their combined loss remains below the null-calibrated harm threshold and should not be
+tuned from one card without new adopter evidence.
+
+**Current disposition:** retain the targeted shelf, especially its strictness, migration, and AOT
+guidance. Do not claim a general reliability improvement or economic certification.
 
 ## What is current, and what is still owed
 
@@ -158,20 +169,20 @@ topic-specific. A new full run is needed before making a current-shelf ship-gate
    ×0.80 certification threshold.
 2. **System.CommandLine has the strongest return evidence**, but its six-task shared set is too thin
    for the current economic gate.
-3. **System.Text.Json has selective rather than general value**, and its latest full run is not
-   retrieval-equivalent to the current renamed shelf.
+3. **System.Text.Json has selective rather than general value**: its current retrieval-equivalent
+   card is return-positive and do-no-harm clean, but reliability is unestablished and economics fail.
 
 Another identical Markout run is not the highest-value next step. The point estimate already sits
 near the economic threshold, while the paired finite-suite interval includes no material win.
-Further work should first decide whether to change the delivery/activation design or accept a
-return-positive shelf without a certified economic margin. System.CommandLine does not need more
-content tuning to establish return, and System.Text.Json should be rerun only when a current ship
-decision requires it.
+Further work should first decide whether to change the delivery/activation design or accept
+return-positive shelves without certified economic margins. System.CommandLine and System.Text.Json
+do not need more content tuning from these cards alone.
 
 ## Evidence sources
 
 - [Current Markout quality-card table](../recommendation.md#current-evaluation-frame)
 - [System.Text.Json rebuilt-suite evidence](../authoring-principles.md#evidence-systemtextjson-unit)
+- [System.Text.Json current explicit-Delivers recertification](https://github.com/richlander/dotnet-package-skills/pull/76#issuecomment-5323533387)
 - [System.CommandLine stable CT-18 result](https://github.com/richlander/dotnet-package-skills/issues/58#issuecomment-5281623282)
 - [Markout CT27–33 focused evidence](https://github.com/richlander/markout/issues/149#issuecomment-5299227386)
 - [Markout active CT-24 explicit-Delivers recertification](https://github.com/richlander/markout/issues/149#issuecomment-5313885872)
