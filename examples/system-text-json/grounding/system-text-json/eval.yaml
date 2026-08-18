@@ -19,6 +19,12 @@
 #     names, casing, presence/absence, restored values — so an over-/under-configured serializer
 #     fails while the intended idiom lands.
 #
+# TIER GRADING:
+#   - Fails: any Satisfies assertion fails.
+#   - Satisfies: the project builds and meets the observable/user constraints, but at least one
+#     STJ-native Delivers assertion fails.
+#   - Delivers: every Satisfies and Delivers assertion passes.
+#
 # STATUS: VERIFIED. Every scenario was executed end-to-end against the net10.0 SDK by running a
 # reference solution through the real assertions: all 24 build, run, and satisfy their code greps
 # and output regexes. Negative controls (a plausible ungrounded solution per scenario shape) were
@@ -47,10 +53,12 @@ scenarios:
         - { path: Program.cs, source: fixtures/s01-roundtrip/Program.cs }
     reject_tools: [web_search, web_fetch]
     assertions:
-      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin JsonSerializer .", expected_exit_code: 0, command_timeout: 30 }
-      - { type: file_not_contains, path: "Program.cs", value: "\\\"City\\\":" }
+      - { type: run_command_and_assert, tier: satisfies, mini_prompt: "Build the project.", command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, tier: delivers, mini_prompt: "Drive the solution through System.Text.Json serialization.", command_to_run: "grep", command_arguments: "-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin JsonSerializer .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_not_contains, tier: satisfies, mini_prompt: "Do not hand-build the JSON text.", path: "Program.cs", value: "\\\"City\\\":" }
       - type: run_command_and_assert
+        tier: satisfies
+        mini_prompt: "Round-trip the weather report and print the restored values."
         command_to_run: "dotnet"
         command_arguments: "run --no-build"
         expected_exit_code: 0
@@ -73,9 +81,11 @@ scenarios:
         - { path: Program.cs, source: fixtures/s02-indented/Program.cs }
     reject_tools: [web_search, web_fetch]
     assertions:
-      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin WriteIndented .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, tier: satisfies, mini_prompt: "Build the project.", command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, tier: delivers, mini_prompt: "Configure STJ to emit human-readable indented JSON.", command_to_run: "grep", command_arguments: "-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin WriteIndented .", expected_exit_code: 0, command_timeout: 30 }
       - type: run_command_and_assert
+        tier: satisfies
+        mini_prompt: "Print the report as visibly indented JSON."
         command_to_run: "dotnet"
         command_arguments: "run --no-build"
         expected_exit_code: 0
@@ -99,10 +109,12 @@ scenarios:
         - { path: Program.cs, source: fixtures/s03-wire-names-camel/Program.cs }
     reject_tools: [web_search, web_fetch]
     assertions:
-      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin PropertyNamingPolicy .", expected_exit_code: 0, command_timeout: 30 }
-      - { type: file_not_contains, path: "Program.cs", value: "JsonPropertyName" }
+      - { type: run_command_and_assert, tier: satisfies, mini_prompt: "Build the project.", command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, tier: delivers, mini_prompt: "Apply the wire naming policy across the complete type.", command_to_run: "grep", command_arguments: "-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin PropertyNamingPolicy .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_not_contains, tier: satisfies, mini_prompt: "Apply the naming rule type-wide rather than per property.", path: "Program.cs", value: "JsonPropertyName" }
       - type: run_command_and_assert
+        tier: satisfies
+        mini_prompt: "Emit every property with the required camelCase wire name."
         command_to_run: "dotnet"
         command_arguments: "run --no-build"
         expected_exit_code: 0
@@ -125,9 +137,11 @@ scenarios:
         - { path: Program.cs, source: fixtures/s04-omit-nulls/Program.cs }
     reject_tools: [web_search, web_fetch]
     assertions:
-      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin WhenWritingNull .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, tier: satisfies, mini_prompt: "Build the project.", command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, tier: delivers, mini_prompt: "Configure null omission through serializer options.", command_to_run: "grep", command_arguments: "-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin WhenWritingNull .", expected_exit_code: 0, command_timeout: 30 }
       - type: run_command_and_assert
+        tier: satisfies
+        mini_prompt: "Omit the unset nickname while preserving populated properties."
         command_to_run: "dotnet"
         command_arguments: "run --no-build"
         expected_exit_code: 0
@@ -152,9 +166,11 @@ scenarios:
         - { path: Program.cs, source: fixtures/s05-wire-names-snake/Program.cs }
     reject_tools: [web_search, web_fetch]
     assertions:
-      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin JsonPropertyName .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, tier: satisfies, mini_prompt: "Build the project.", command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, tier: delivers, mini_prompt: "Declare the two exceptional wire names on their properties.", command_to_run: "grep", command_arguments: "-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin JsonPropertyName .", expected_exit_code: 0, command_timeout: 30 }
       - type: run_command_and_assert
+        tier: satisfies
+        mini_prompt: "Write and read the two required partner wire names."
         command_to_run: "dotnet"
         command_arguments: "run --no-build"
         expected_exit_code: 0
@@ -178,10 +194,12 @@ scenarios:
         - { path: Program.cs, source: fixtures/s06-fields/Program.cs }
     reject_tools: [web_search, web_fetch]
     assertions:
-      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin (IncludeFields|JsonInclude) .", expected_exit_code: 0, command_timeout: 30 }
-      - { type: file_not_contains, path: "Program.cs", value: "public string Name { get" }
+      - { type: run_command_and_assert, tier: satisfies, mini_prompt: "Build the project.", command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, tier: delivers, mini_prompt: "Opt the supplied public fields into serialization.", command_to_run: "grep", command_arguments: "-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin (IncludeFields|JsonInclude) .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_not_contains, tier: satisfies, mini_prompt: "Keep the supplied public fields instead of restructuring the type.", path: "Program.cs", value: "public string Name { get" }
       - type: run_command_and_assert
+        tier: satisfies
+        mini_prompt: "Round-trip both public fields without changing the type shape."
         command_to_run: "dotnet"
         command_arguments: "run --no-build"
         expected_exit_code: 0
@@ -207,9 +225,11 @@ scenarios:
         - { path: Program.cs, source: fixtures/s07-incoming-camel/Program.cs }
     reject_tools: [web_search, web_fetch]
     assertions:
-      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin (PropertyNameCaseInsensitive|JsonSerializerDefaults\\.Web) .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, tier: satisfies, mini_prompt: "Build the project.", command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, tier: delivers, mini_prompt: "Configure case-insensitive incoming property matching.", command_to_run: "grep", command_arguments: "-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin (PropertyNameCaseInsensitive|JsonSerializerDefaults\\.Web) .", expected_exit_code: 0, command_timeout: 30 }
       - type: run_command_and_assert
+        tier: satisfies
+        mini_prompt: "Populate the model from differently cased incoming names."
         command_to_run: "dotnet"
         command_arguments: "run --no-build"
         expected_exit_code: 0
@@ -234,11 +254,13 @@ scenarios:
         - { path: config.jsonc,  source: fixtures/s08-config-file/config.jsonc }
     reject_tools: [web_search, web_fetch]
     assertions:
-      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin AllowTrailingCommas .", expected_exit_code: 0, command_timeout: 30 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin ReadCommentHandling .", expected_exit_code: 0, command_timeout: 30 }
-      - { type: file_contains, path: "config.jsonc", value: "// the deployment writes this file" }
+      - { type: run_command_and_assert, tier: satisfies, mini_prompt: "Build the project.", command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, tier: delivers, mini_prompt: "Allow the hand-maintained config's trailing comma.", command_to_run: "grep", command_arguments: "-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin AllowTrailingCommas .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, tier: delivers, mini_prompt: "Skip comments while reading the hand-maintained config.", command_to_run: "grep", command_arguments: "-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin ReadCommentHandling .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_contains, tier: satisfies, mini_prompt: "Leave the supplied config file unchanged.", path: "config.jsonc", value: "// the deployment writes this file" }
       - type: run_command_and_assert
+        tier: satisfies
+        mini_prompt: "Read the commented, trailing-comma config file unchanged."
         command_to_run: "dotnet"
         command_arguments: "run --no-build"
         expected_exit_code: 0
@@ -249,7 +271,7 @@ scenarios:
     timeout: 900
 
   - name: "S09: an enum that must travel as a readable word"
-    expected_skill: system-text-json
+    expected_skill: system-text-json-converters-and-polymorphism
     prompt: |
       Program.cs holds one Job value and the JSON our partner sends. The partner's payloads spell
       the status as a word (`Complete`), not a number, and they expect ours to do the same — a
@@ -261,9 +283,11 @@ scenarios:
         - { path: Program.cs, source: fixtures/s09-enum-wire/Program.cs }
     reject_tools: [web_search, web_fetch]
     assertions:
-      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin JsonStringEnumConverter .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, tier: satisfies, mini_prompt: "Build the project.", command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, tier: delivers, mini_prompt: "Configure enum values to use their word representation.", command_to_run: "grep", command_arguments: "-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin JsonStringEnumConverter .", expected_exit_code: 0, command_timeout: 30 }
       - type: run_command_and_assert
+        tier: satisfies
+        mini_prompt: "Write and read the enum as its required word value."
         command_to_run: "dotnet"
         command_arguments: "run --no-build"
         expected_exit_code: 0
@@ -287,9 +311,11 @@ scenarios:
         - { path: Program.cs, source: fixtures/s10-self-reference/Program.cs }
     reject_tools: [web_search, web_fetch]
     assertions:
-      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin ReferenceHandler .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, tier: satisfies, mini_prompt: "Build the project.", command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, tier: delivers, mini_prompt: "Configure STJ to handle the cyclic object graph.", command_to_run: "grep", command_arguments: "-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin ReferenceHandler .", expected_exit_code: 0, command_timeout: 30 }
       - type: run_command_and_assert
+        tier: satisfies
+        mini_prompt: "Serialize the cyclic graph without failing."
         command_to_run: "dotnet"
         command_arguments: "run --no-build"
         expected_exit_code: 0
@@ -315,9 +341,11 @@ scenarios:
         - { path: Program.cs, source: fixtures/s11-scalar-format/Program.cs }
     reject_tools: [web_search, web_fetch]
     assertions:
-      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin JsonConverter .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, tier: satisfies, mini_prompt: "Build the project.", command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, tier: delivers, mini_prompt: "Implement the value type's reusable STJ converter.", command_to_run: "grep", command_arguments: "-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin JsonConverter .", expected_exit_code: 0, command_timeout: 30 }
       - type: run_command_and_assert
+        tier: satisfies
+        mini_prompt: "Round-trip the temperature through its custom wire spelling."
         command_to_run: "dotnet"
         command_arguments: "run --no-build"
         expected_exit_code: 0
@@ -341,9 +369,11 @@ scenarios:
         - { path: Program.cs, source: fixtures/s12-derived-types/Program.cs }
     reject_tools: [web_search, web_fetch]
     assertions:
-      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin JsonDerivedType .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, tier: satisfies, mini_prompt: "Build the project.", command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, tier: delivers, mini_prompt: "Declare the permitted polymorphic derived types.", command_to_run: "grep", command_arguments: "-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin JsonDerivedType .", expected_exit_code: 0, command_timeout: 30 }
       - type: run_command_and_assert
+        tier: satisfies
+        mini_prompt: "Restore every polymorphic item as its concrete type."
         command_to_run: "dotnet"
         command_arguments: "run --no-build"
         expected_exit_code: 0
@@ -367,9 +397,11 @@ scenarios:
         - { path: Program.cs, source: fixtures/s13-unknown-properties/Program.cs }
     reject_tools: [web_search, web_fetch]
     assertions:
-      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin JsonExtensionData .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, tier: satisfies, mini_prompt: "Build the project.", command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, tier: delivers, mini_prompt: "Capture undeclared properties as extension data.", command_to_run: "grep", command_arguments: "-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin JsonExtensionData .", expected_exit_code: 0, command_timeout: 30 }
       - type: run_command_and_assert
+        tier: satisfies
+        mini_prompt: "Preserve and forward properties the model does not declare."
         command_to_run: "dotnet"
         command_arguments: "run --no-build"
         expected_exit_code: 0
@@ -395,10 +427,12 @@ scenarios:
         - { path: Program.cs, source: fixtures/s14-edit-document/Program.cs }
     reject_tools: [web_search, web_fetch]
     assertions:
-      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin JsonNode .", expected_exit_code: 0, command_timeout: 30 }
-      - { type: file_not_contains, path: "Program.cs", value: "Replace(" }
+      - { type: run_command_and_assert, tier: satisfies, mini_prompt: "Build the project.", command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, tier: delivers, mini_prompt: "Edit the payload through STJ's mutable DOM.", command_to_run: "grep", command_arguments: "-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin JsonNode .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_not_contains, tier: satisfies, mini_prompt: "Do not edit JSON with string replacement.", path: "Program.cs", value: "Replace(" }
       - type: run_command_and_assert
+        tier: satisfies
+        mini_prompt: "Edit the unmodelled payload while preserving its required shape."
         command_to_run: "dotnet"
         command_arguments: "run --no-build"
         expected_exit_code: 0
@@ -421,9 +455,11 @@ scenarios:
         - { path: Program.cs, source: fixtures/s15-inspect-document/Program.cs }
     reject_tools: [web_search, web_fetch]
     assertions:
-      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin (JsonDocument|JsonElement) .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, tier: satisfies, mini_prompt: "Build the project.", command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, tier: delivers, mini_prompt: "Inspect the payload through STJ's read-only DOM.", command_to_run: "grep", command_arguments: "-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin (JsonDocument|JsonElement) .", expected_exit_code: 0, command_timeout: 30 }
       - type: run_command_and_assert
+        tier: satisfies
+        mini_prompt: "Read the requested count and tag without creating model types."
         command_to_run: "dotnet"
         command_arguments: "run --no-build"
         expected_exit_code: 0
@@ -447,10 +483,12 @@ scenarios:
         - { path: feed.json,   source: fixtures/s16-stream-array/feed.json }
     reject_tools: [web_search, web_fetch]
     assertions:
-      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin DeserializeAsyncEnumerable .", expected_exit_code: 0, command_timeout: 30 }
-      - { type: file_not_contains, path: "Program.cs", value: "ReadAllText" }
+      - { type: run_command_and_assert, tier: satisfies, mini_prompt: "Build the project.", command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, tier: delivers, mini_prompt: "Stream array elements with STJ's async enumerable API.", command_to_run: "grep", command_arguments: "-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin DeserializeAsyncEnumerable .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, tier: satisfies, mini_prompt: "Do not buffer the complete feed as text, bytes, a DOM, or a collection.", command_to_run: "grep", command_arguments: '-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin (ReadAllText|ReadAllBytes|ReadAllLines|JsonDocument\.Parse|JsonNode\.Parse|Deserialize<[^>]*(\[\]|List<)|Array\.Resize|MemoryStream) .', expected_exit_code: 1, command_timeout: 30 }
       - type: run_command_and_assert
+        tier: satisfies
+        mini_prompt: "Process and print every feed item without buffering the full feed."
         command_to_run: "dotnet"
         command_arguments: "run --no-build"
         expected_exit_code: 0
@@ -477,10 +515,12 @@ scenarios:
         - { path: Program.cs, source: fixtures/s17-aot-publish/Program.cs }
     reject_tools: [web_search, web_fetch]
     assertions:
-      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin JsonSerializerContext .", expected_exit_code: 0, command_timeout: 30 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin JsonSerializable .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, tier: satisfies, mini_prompt: "Build the project.", command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, tier: delivers, mini_prompt: "Use generated STJ type metadata for the AOT build.", command_to_run: "grep", command_arguments: "-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin JsonSerializerContext .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, tier: delivers, mini_prompt: "Register the serialized type on the generated context.", command_to_run: "grep", command_arguments: "-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin JsonSerializable .", expected_exit_code: 0, command_timeout: 30 }
       - type: run_command_and_assert
+        tier: satisfies
+        mini_prompt: "Serialize successfully with reflection disabled for the AOT build."
         command_to_run: "dotnet"
         command_arguments: "run --no-build"
         expected_exit_code: 0
@@ -506,9 +546,11 @@ scenarios:
         - { path: Program.cs, source: fixtures/s18-context-shape/Program.cs }
     reject_tools: [web_search, web_fetch]
     assertions:
-      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin JsonSourceGenerationOptions .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, tier: satisfies, mini_prompt: "Build the project.", command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, tier: delivers, mini_prompt: "Declare the wire contract on the generated context.", command_to_run: "grep", command_arguments: "-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin JsonSourceGenerationOptions .", expected_exit_code: 0, command_timeout: 30 }
       - type: run_command_and_assert
+        tier: satisfies
+        mini_prompt: "Apply naming and null-omission in the AOT-compatible build."
         command_to_run: "dotnet"
         command_arguments: "run --no-build"
         expected_exit_code: 0
@@ -532,10 +574,12 @@ scenarios:
         - { path: Program.cs, source: fixtures/s19-aot-enum-wire/Program.cs }
     reject_tools: [web_search, web_fetch]
     assertions:
-      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin (UseStringEnumConverter|JsonStringEnumConverter<) .', expected_exit_code: 0, command_timeout: 30 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin JsonSerializerContext .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, tier: satisfies, mini_prompt: "Build the project.", command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, tier: delivers, mini_prompt: "Configure string enums through AOT-safe generated metadata.", command_to_run: "grep", command_arguments: '-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin (UseStringEnumConverter|JsonStringEnumConverter<) .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, tier: delivers, mini_prompt: "Use generated STJ type metadata for the AOT build.", command_to_run: "grep", command_arguments: "-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin JsonSerializerContext .", expected_exit_code: 0, command_timeout: 30 }
       - type: run_command_and_assert
+        tier: satisfies
+        mini_prompt: "Write the enum as a word in the AOT-compatible build."
         command_to_run: "dotnet"
         command_arguments: "run --no-build"
         expected_exit_code: 0
@@ -562,9 +606,11 @@ scenarios:
         - { path: Program.cs, source: fixtures/s20-untrusted-input/Program.cs }
     reject_tools: [web_search, web_fetch]
     assertions:
-      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin (AllowDuplicateProperties|JsonSerializerOptions\\.Strict) .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, tier: satisfies, mini_prompt: "Build the project.", command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, tier: delivers, mini_prompt: "Configure duplicate-property rejection through STJ.", command_to_run: "grep", command_arguments: "-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin (AllowDuplicateProperties|JsonSerializerOptions\\.Strict) .", expected_exit_code: 0, command_timeout: 30 }
       - type: run_command_and_assert
+        tier: satisfies
+        mini_prompt: "Reject the crafted payload containing a duplicate property."
         command_to_run: "dotnet"
         command_arguments: "run --no-build"
         expected_exit_code: 0
@@ -588,16 +634,18 @@ scenarios:
         - { path: Program.cs, source: fixtures/s21-unknown-rejected/Program.cs }
     reject_tools: [web_search, web_fetch]
     assertions:
-      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: "-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin JsonUnmappedMemberHandling .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, tier: satisfies, mini_prompt: "Build the project.", command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, tier: delivers, mini_prompt: "Configure unmapped-member rejection declaratively.", command_to_run: "grep", command_arguments: '-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin (JsonUnmappedMemberHandling|JsonSerializerOptions\.Strict) .', expected_exit_code: 0, command_timeout: 30 }
       - type: run_command_and_assert
+        tier: satisfies
+        mini_prompt: "Reject configuration containing an unmapped property."
         command_to_run: "dotnet"
         command_arguments: "run --no-build"
         expected_exit_code: 0
         expected_std_output_matches: 'rejected'
         command_timeout: 120
     rubric:
-      - "Turns unmapped members into a failure declaratively; does not compare property lists by hand"
+      - "Turns unmapped members into a failure through JsonUnmappedMemberHandling or the Strict preset; does not compare property lists by hand"
     timeout: 900
 
   # --------------------------------------------- system-text-json-newtonsoft-migration (S22-S24)
@@ -617,10 +665,13 @@ scenarios:
         - { path: Program.cs, source: fixtures/s22-migrate-report/Program.cs }
     reject_tools: [web_search, web_fetch]
     assertions:
-      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
-      - { type: file_not_contains, path: "Program.cs", value: "Newtonsoft" }
-      - { type: file_not_contains, path: "App.csproj", value: "Newtonsoft" }
+      - { type: run_command_and_assert, tier: satisfies, mini_prompt: "Build the project.", command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, tier: delivers, mini_prompt: "Drive the migration through System.Text.Json serialization.", command_to_run: "grep", command_arguments: "-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin JsonSerializer .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_not_contains, tier: satisfies, mini_prompt: "Remove Newtonsoft.Json usage from the source.", path: "Program.cs", value: "Newtonsoft" }
+      - { type: file_not_contains, tier: satisfies, mini_prompt: "Remove the Newtonsoft.Json package dependency.", path: "App.csproj", value: "Newtonsoft" }
       - type: run_command_and_assert
+        tier: satisfies
+        mini_prompt: "Preserve the report writer's complete wire and round-trip behavior."
         command_to_run: "dotnet"
         command_arguments: "run --no-build"
         expected_exit_code: 0
@@ -646,10 +697,13 @@ scenarios:
         - { path: Program.cs, source: fixtures/s23-migrate-sample/Program.cs }
     reject_tools: [web_search, web_fetch]
     assertions:
-      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
-      - { type: file_not_contains, path: "Program.cs", value: "Newtonsoft" }
-      - { type: file_not_contains, path: "App.csproj", value: "Newtonsoft" }
+      - { type: run_command_and_assert, tier: satisfies, mini_prompt: "Build the project.", command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, tier: delivers, mini_prompt: "Drive the migration through System.Text.Json serialization.", command_to_run: "grep", command_arguments: "-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin JsonSerializer .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_not_contains, tier: satisfies, mini_prompt: "Remove Newtonsoft.Json usage from the source.", path: "Program.cs", value: "Newtonsoft" }
+      - { type: file_not_contains, tier: satisfies, mini_prompt: "Remove the Newtonsoft.Json package dependency.", path: "App.csproj", value: "Newtonsoft" }
       - type: run_command_and_assert
+        tier: satisfies
+        mini_prompt: "Restore both field and case-insensitive migration behavior."
         command_to_run: "dotnet"
         command_arguments: "run --no-build"
         expected_exit_code: 0
@@ -675,10 +729,13 @@ scenarios:
         - { path: Program.cs, source: fixtures/s24-migrate-profile/Program.cs }
     reject_tools: [web_search, web_fetch]
     assertions:
-      - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
-      - { type: file_not_contains, path: "Program.cs", value: "Newtonsoft" }
-      - { type: file_not_contains, path: "App.csproj", value: "Newtonsoft" }
+      - { type: run_command_and_assert, tier: satisfies, mini_prompt: "Build the project.", command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
+      - { type: run_command_and_assert, tier: delivers, mini_prompt: "Drive the migration through System.Text.Json serialization.", command_to_run: "grep", command_arguments: "-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin JsonSerializer .", expected_exit_code: 0, command_timeout: 30 }
+      - { type: file_not_contains, tier: satisfies, mini_prompt: "Remove Newtonsoft.Json usage from the source.", path: "Program.cs", value: "Newtonsoft" }
+      - { type: file_not_contains, tier: satisfies, mini_prompt: "Remove the Newtonsoft.Json package dependency.", path: "App.csproj", value: "Newtonsoft" }
       - type: run_command_and_assert
+        tier: satisfies
+        mini_prompt: "Preserve the profile service's complete wire and round-trip behavior."
         command_to_run: "dotnet"
         command_arguments: "run --no-build"
         expected_exit_code: 0

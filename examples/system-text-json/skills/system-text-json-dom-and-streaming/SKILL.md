@@ -3,8 +3,9 @@ name: system-text-json-dom-and-streaming
 version: 10.0.0
 description: >-
   Use when System.Text.Json work is not a plain POCO round-trip — inspecting/mutating JSON without a
-  model (JsonNode / JsonDocument), reading or writing at high throughput (Utf8JsonReader /
-  Utf8JsonWriter, byte and Stream overloads), or streaming large sequences
+  model (including answering a few questions about an unknown payload), editing JSON whose shape is
+  not controlled by the app, reading or writing at high throughput (Utf8JsonReader / Utf8JsonWriter,
+  byte and Stream overloads), or processing a JSON array/feed too large to fit in memory
   (DeserializeAsyncEnumerable).
 ---
 
