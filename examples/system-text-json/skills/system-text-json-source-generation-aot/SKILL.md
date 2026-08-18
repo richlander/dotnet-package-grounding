@@ -7,7 +7,8 @@ description: >-
   [JsonSerializable]. Reflection-based JsonSerializer compiles but THROWS at run time under AOT; the
   source generator is the only supported path. Also covers configuring a context with
   [JsonSourceGenerationOptions] and why naming policy is per-context, not per-model, so one type
-  serialized by two contexts can emit two different spellings.
+  serialized by two contexts can emit two different spellings, plus word-valued enums that must
+  remain trim/AOT-safe.
 ---
 
 # Source generation & Native AOT

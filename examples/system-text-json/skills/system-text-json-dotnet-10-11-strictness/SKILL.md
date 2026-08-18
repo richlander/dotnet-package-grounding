@@ -5,9 +5,10 @@ description: >-
   Use when targeting recent .NET runtimes (8/9/10+) and you need the newer, stricter System.Text.Json
   behavior or APIs a model trained on older docs may not know — the JsonSerializerOptions.Strict
   preset, AllowDuplicateProperties, RespectNullableAnnotations / RespectRequiredConstructorParameters,
-  PipeReader overloads, and JsonMarshal. Also covers why duplicate-key rejection matters at untrusted
-  parse boundaries, the .NET 11 [JsonNamingPolicy] attribute and its non-transitivity, and getting
-  newer STJ APIs on an older runtime via the out-of-band package.
+  rejecting unknown/unmapped configuration properties, PipeReader overloads, and JsonMarshal. Also
+  covers why duplicate-key rejection matters at untrusted parse boundaries, the .NET 11
+  [JsonNamingPolicy] attribute and its non-transitivity, and getting newer STJ APIs on an older
+  runtime via the out-of-band package.
 ---
 
 # Newer-runtime strictness & APIs (.NET 8 → 10)

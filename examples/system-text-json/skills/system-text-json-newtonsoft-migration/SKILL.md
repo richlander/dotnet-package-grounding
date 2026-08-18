@@ -26,6 +26,11 @@ Then apply the API map **and** re-check the behavioral defaults, because most br
 property names **case-sensitively**, so camelCase JSON into PascalCase members yields null/default
 with no exception.
 
+> **Inventory public fields before changing calls.** Newtonsoft serializes them; STJ silently drops
+> them unless `IncludeFields = true` or `[JsonInclude]` is applied. A migrated object unexpectedly
+> becoming `{}` is the signature of this miss. Preserve the supplied type shape; do not convert its
+> fields into properties just to make serialization work.
+
 ## API map
 
 | Newtonsoft.Json | System.Text.Json |
@@ -65,8 +70,9 @@ with no exception.
 ## Migration checklist
 
 1. Swap package + usings + the API-map calls above.
-2. Set `PropertyNameCaseInsensitive` (or `Web` defaults) if any input is camelCase.
-3. Re-add field inclusion, comment/trailing-comma tolerance, and quoted-number handling **only if the
+2. Inventory public fields and preserve them with `IncludeFields` / `[JsonInclude]`.
+3. Set `PropertyNameCaseInsensitive` (or `Web` defaults) if any input is camelCase.
+4. Re-add comment/trailing-comma tolerance and quoted-number handling **only if the
    old code relied on them** — don't loosen defaults blindly.
-4. Replace `StringEnumConverter` with `JsonStringEnumConverter`; replace date-format strings with a converter.
-5. Build **and run a round-trip test** — the breaks are silent, so a compile is not enough.
+5. Replace `StringEnumConverter` with `JsonStringEnumConverter`; replace date-format strings with a converter.
+6. Build **and run a round-trip test** — the breaks are silent, so a compile is not enough.
