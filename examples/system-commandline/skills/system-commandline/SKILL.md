@@ -48,7 +48,7 @@ var type = new Option<string[]>("--type")
     HelpName = string.Join("|", knownTypes),
     AllowMultipleArgumentsPerToken = true,
 };
-type.CompletionSources.Add(knownTypes); // 2.0.10 takes the strings directly
+type.CompletionSources.Add(knownTypes); // 2.0.11 takes the strings directly
 type.Validators.Add(result =>
 {
     foreach (string value in result.GetValueOrDefault<string[]>() ?? [])
@@ -95,7 +95,7 @@ Give sibling commands separate option and action instances when their required/d
 contracts differ. If the requirement says asynchronous action, inherit
 `AsynchronousCommandLineAction` even when the initial body has no naturally asynchronous operation.
 
-For 2.0.10 completion, copy `option.CompletionSources.Add(knownValues)` exactly. The collection takes
+For 2.0.11 completion, copy `option.CompletionSources.Add(knownValues)` exactly. The collection takes
 the strings directly; do **not** invent a `CompletionSource.ForValues(...)` wrapper and then remove
 completion when that obsolete shape fails. Likewise, do not remove an option's parser default to make
 an all-or-none check easier: keep the contract and use `GetResult(...).Implicit` for explicit presence.
