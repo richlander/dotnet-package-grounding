@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "suite": "Incomplete adapter fixture",
+  "source": {
+    "repository": "richlander/dotnet-package-skills",
+    "commit": "fixture",
+    "path": "experiments/markout-vally-prototype/testdata"
+  },
+  "skills": [
+    {
+      "name": "markout",
+      "activationNames": ["markout"],
+      "tasks": ["CT-both", "CT-grounded-only", "CT-missing"]
+    }
+  ]
+}

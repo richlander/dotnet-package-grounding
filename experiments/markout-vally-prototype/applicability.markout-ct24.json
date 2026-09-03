@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "suite": "Markout CT-24",
+  "source": {
+    "repository": "richlander/markout",
+    "commit": "e744d7ba3b13c6490bd3a660a4cc87f235f81918",
+    "path": "grounding/markout/eval.yaml"
+  },
+  "skills": [
+    {
+      "name": "markout",
+      "activationNames": ["markout"],
+      "tasks": [
+        "CT01", "CT02", "CT03", "CT04", "CT05", "CT06", "CT07", "CT08",
+        "CT09", "CT10", "CT11", "CT12", "CT13", "CT14", "CT15", "CT16",
+        "CT17", "CT18", "CT19", "CT20", "CT21", "CT22", "CT23", "CT24"
+      ]
+    },
+    {
+      "name": "markout-built-in-shapes",
+      "activationNames": ["markout-built-in-shapes", "built-in-shapes"],
+      "tasks": ["CT10", "CT15", "CT20"]
+    },
+    {
+      "name": "markout-conditional-composition",
+      "activationNames": ["markout-conditional-composition", "conditional-composition"],
+      "tasks": ["CT07", "CT08", "CT12", "CT13", "CT17", "CT18", "CT22", "CT24"]
+    },
+    {
+      "name": "markout-output-formats",
+      "activationNames": ["markout-output-formats", "output-formats"],
+      "tasks": ["CT09", "CT14", "CT19", "CT23"]
+    },
+    {
+      "name": "markout-composite-cells-cards",
+      "activationNames": ["markout-composite-cells-cards", "composite-cells-cards"],
+      "tasks": ["CT11", "CT16", "CT21"]
+    }
+  ]
+}

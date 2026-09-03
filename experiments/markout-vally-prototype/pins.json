@@ -1,0 +1,57 @@
+{
+  "schema": 1,
+  "vally": {
+    "packageVersion": "0.13.0",
+    "sourceCommit": "f7a653272642d52b2b6375bfa3995dddc72fcd49",
+    "agentModel": "claude-haiku-4.5",
+    "agentReasoningEffort": null,
+    "agentReasoningNote": "claude-haiku-4.5 does not accept reasoning_effort through Copilot SDK; historical CT-24 records no explicit effort",
+    "judgeModel": "gpt-5.5",
+    "judgeReasoningEffort": "high"
+  },
+  "dotnet": {
+    "sdkVersion": "10.0.300"
+  },
+  "markout": {
+    "packageVersion": "0.35.2",
+    "packageUrl": "https://api.nuget.org/v3-flatcontainer/markout/0.35.2/markout.0.35.2.nupkg",
+    "packageSha256": "b407f0188a27d59934b17c5855f4716afa6385975cb214bc3767ff69dbedff38",
+    "packageRepositoryCommit": "e2302d97c166aad0ef73a00d79bc50e8f228d379",
+    "sourceCommit": "e744d7ba3b13c6490bd3a660a4cc87f235f81918"
+  },
+  "packageClosure": [
+    {
+      "id": "MarkdownTable.Formatting",
+      "version": "0.3.4",
+      "url": "https://api.nuget.org/v3-flatcontainer/markdowntable.formatting/0.3.4/markdowntable.formatting.0.3.4.nupkg",
+      "sha256": "fcd57a615e6967d45693867c4a754e2fd692f8306ac19bfd22f4c360871d6576"
+    }
+  ],
+  "fixtures": {
+    "hash": "sha256:e7ad42d63ec6f7e2b2a6d982e0bf59f49a36878e1068b5f14d1d75fbab4b07f7"
+  },
+  "shelf": {
+    "hash": "sha256:f4bcaaac648f3d5ee231409957abcd07954169e66576c80e8ca878fc5b7c5675"
+  },
+  "applicability": {
+    "suite": "Markout CT-24",
+    "sourcePath": "grounding/markout/eval.yaml",
+    "sourceCommit": "e744d7ba3b13c6490bd3a660a4cc87f235f81918",
+    "hash": "sha256:d23391ca6e0644bc5b5dd9866a7c6462bd5a136200acee3ecaed7832a62f52a0"
+  },
+  "prototype": {
+    "vallyEvalHash": "sha256:dbd2c6f077cfb70e42bd150c37a14cf7bd2e0a258e97ff43e2a04a6c6b4d82c7",
+    "graderManifestHash": "sha256:7cd6345200af04d4771b2a113ee774a24905c0d6d2b3ec7f9e0775377126ec97"
+  },
+  "customBridge": {
+    "skillValidatorCommit": "40950f2884ed1469c063a92f68896ea15cca75c1",
+    "copilotCliVersion": "1.0.71",
+    "sdkOverlayEvalHash": "sha256:37cb028bf0fc1b4d52cafa7aed72261bb05882c3f62d1fd3b01e5fb0e3d10c62"
+  },
+  "ct24": {
+    "sourceEvalHash": "sha256:1ec9b86eed7789ef024ed74c5b882b94a82564a6ae3416221dfefc6961e8ec42",
+    "fixtureHash": "sha256:a2ad9d70d44b9546cf28082a2692c007f7aa6702d09edecb6ef796ddb83581de",
+    "vallyEvalHash": "sha256:29508ca5cdcac001fd429c900f4cb056415a56b33551b1e528f6274258d58ca1",
+    "graderManifestHash": "sha256:619454b4093245e45a69785c9244e5d9922544b8f0a8a01aa4cb03e94ef42c66"
+  }
+}

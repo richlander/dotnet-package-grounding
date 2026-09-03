@@ -42,6 +42,8 @@ dotnet tool install --global --add-source src/grounding/nupkg dotnet-package-gro
 | --- | --- |
 | `analyze <results.json...>` | default = raw per-scenario table |
 | `analyze --card / --doc-card / --model-diff / --source-diff / --tools-card / --web-card` | also `-v <view>`; `--no-title` supported |
+| `vally task-card <run-directory> --grader-manifest <manifest.json>` | fail-closed reconstruction of deterministic ladder outcomes and task-level metrics from Vally experiment JSONL |
+| `vally skill-card <run-directory> <applicability> --grader-manifest <manifest.json>` | fail-closed six-row observational per-skill cards from natural full-shelf activation |
 | `run <unit> --source skill\|readme\|none` | skill/README/nothing toggle; `--dry-run`, `--emit-skill` |
 | `gen-plugins` | expand `grounding/**/plugin.json.in` |
 | `rescore <model=path>… [--w N]` | IET rubric, Pareto gate |
@@ -51,6 +53,12 @@ dotnet tool install --global --add-source src/grounding/nupkg dotnet-package-gro
 | `mcp [--root <repo>]` | stdio JSON-RPC server (`GROUNDING_GATE`) |
 
 This CLI is the single implementation of the repo's eval tooling.
+
+The Vally card commands require a schema-1 grader manifest. The manifest is authoritative
+for the eval name/hash, model, `k`, exact stimulus set, and each stimulus's exact top-level
+grader names and types. Records with execution errors, provenance/identity mismatches, or
+missing, duplicate, renamed, unexpected, or type-mismatched graders are rejected rather
+than classified as ladder failures.
 
 ## Source toggle (skill / README / nothing)
 

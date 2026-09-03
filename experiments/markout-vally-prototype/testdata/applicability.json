@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "suite": "Adapter fixture",
+  "source": {
+    "repository": "richlander/dotnet-package-skills",
+    "commit": "fixture",
+    "path": "experiments/markout-vally-prototype/testdata"
+  },
+  "skills": [
+    {
+      "name": "markout",
+      "activationNames": ["markout"],
+      "tasks": ["CT-both", "CT-grounded-only"]
+    },
+    {
+      "name": "markout-output-formats",
+      "activationNames": ["markout-output-formats"],
+      "tasks": ["CT-both"]
+    }
+  ]
+}

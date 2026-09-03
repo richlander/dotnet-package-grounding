@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "evalName": "synthetic-grounding-adapter",
+  "evalFile": "synthetic-eval.yaml",
+  "evalHash": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+  "model": "claude-haiku-4.5",
+  "k": 2,
+  "tasks": [
+    {
+      "id": "CT-both",
+      "name": "CT-both",
+      "graders": [
+        {
+          "name": "satisfies/builds",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/behavior",
+          "type": "run-command"
+        }
+      ]
+    },
+    {
+      "id": "CT-grounded-only",
+      "name": "CT-grounded-only",
+      "graders": [
+        {
+          "name": "satisfies/builds",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/behavior",
+          "type": "run-command"
+        }
+      ]
+    }
+  ]
+}

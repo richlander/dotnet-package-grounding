@@ -2,6 +2,7 @@ using System.CommandLine;
 using Grounding;
 using Grounding.Analyze;
 using Grounding.Run;
+using Grounding.Vally;
 
 var root = new RootCommand("grounding — package-grounding eval orchestration & analysis");
 
@@ -75,6 +76,132 @@ analyze.SetAction(parse =>
     return 0;
 });
 root.Subcommands.Add(analyze);
+
+// ---- vally --------------------------------------------------------------
+// Vally is an additive execution/data plane. The grounding CLI remains the methodology and
+// reporting plane, reconstructing Fails/Satisfies/Delivers from deterministic named graders.
+var vally = new Command("vally", "Read Vally run artifacts using the grounding methodology.");
+var vallyRunDirArg = new Argument<string>("run-directory")
+{
+    Description = "Timestamped Vally experiment run directory containing <variant>/results.jsonl.",
+};
+var vallyBaselineOpt = new Option<string>("--baseline")
+{
+    Description = "Baseline variant directory name.",
+    DefaultValueFactory = _ => "baseline",
+};
+var vallyGroundedOpt = new Option<string>("--grounded")
+{
+    Description = "Grounded variant directory name.",
+    DefaultValueFactory = _ => "grounded",
+};
+var vallyGraderManifestOpt = new Option<string>("--grader-manifest")
+{
+    Description = "Schema-1 JSON manifest defining the exact eval, model, k, tasks, and top-level graders.",
+    Required = true,
+};
+var vallyRunsOpt = new Option<int?>("--runs")
+{
+    Description = "Optional assertion that must equal the grader manifest k.",
+};
+var vallyModelOpt = new Option<string?>("--model")
+{
+    Description = "Optional assertion that must equal the grader manifest model.",
+};
+var vallyIetOpt = new Option<string>("--iet-model")
+{
+    Description = $"IET model: {IetModels.Names}.",
+    DefaultValueFactory = _ => "auto",
+};
+vallyIetOpt.AcceptOnlyFromAmong("auto", "anthropic", "claude", "openai", "gpt", "no-cache", "nocache", "gpt-pro", "gpt-5.5-pro");
+var vallyNoTitleOpt = new Option<bool>("--no-title") { Description = "Omit the card heading." };
+var vallyTaskCard = new Command("task-card", "Render task-level coverage, reliability, fidelity, harm, and efficiency from Vally results.")
+{
+    vallyRunDirArg, vallyGraderManifestOpt, vallyBaselineOpt, vallyGroundedOpt,
+    vallyRunsOpt, vallyModelOpt, vallyIetOpt, vallyNoTitleOpt,
+};
+vallyTaskCard.SetAction(parse =>
+{
+    IetModels.Apply(IetModels.ParseSelection((parse.GetValue(vallyIetOpt) ?? "auto").Trim().ToLowerInvariant()));
+    return new VallyTaskCard(Console.Out).Render(
+        parse.GetValue(vallyRunDirArg)!,
+        parse.GetValue(vallyGraderManifestOpt)!,
+        parse.GetValue(vallyBaselineOpt)!,
+        parse.GetValue(vallyGroundedOpt)!,
+        parse.GetValue(vallyRunsOpt),
+        parse.GetValue(vallyModelOpt),
+        parse.GetValue(vallyNoTitleOpt));
+});
+vally.Subcommands.Add(vallyTaskCard);
+
+var vallySkillRunDirArg = new Argument<string>("run-directory")
+{
+    Description = "Timestamped Vally experiment run directory containing <variant>/results.jsonl.",
+};
+var vallyApplicabilityArg = new Argument<string>("applicability")
+{
+    Description = "Pre-registered JSON task-to-skill applicability contract.",
+};
+var vallySkillBaselineOpt = new Option<string>("--baseline")
+{
+    Description = "Baseline variant directory name.",
+    DefaultValueFactory = _ => "baseline",
+};
+var vallySkillGroundedOpt = new Option<string>("--grounded")
+{
+    Description = "Grounded variant directory name.",
+    DefaultValueFactory = _ => "grounded",
+};
+var vallySkillGraderManifestOpt = new Option<string>("--grader-manifest")
+{
+    Description = "Schema-1 JSON manifest defining the exact eval, model, k, tasks, and top-level graders.",
+    Required = true,
+};
+var vallySkillRunsOpt = new Option<int?>("--runs")
+{
+    Description = "Optional assertion that must equal the grader manifest k.",
+};
+var vallySkillModelOpt = new Option<string?>("--model")
+{
+    Description = "Optional assertion that must equal the grader manifest model.",
+};
+var vallySkillIetOpt = new Option<string>("--iet-model")
+{
+    Description = $"IET model: {IetModels.Names}.",
+    DefaultValueFactory = _ => "auto",
+};
+vallySkillIetOpt.AcceptOnlyFromAmong("auto", "anthropic", "claude", "openai", "gpt", "no-cache", "nocache", "gpt-pro", "gpt-5.5-pro");
+var vallySkillFilterOpt = new Option<string[]>("--skill")
+{
+    Description = "Render only named skills from the applicability contract. Repeatable.",
+    Arity = ArgumentArity.ZeroOrMore,
+    AllowMultipleArgumentsPerToken = true,
+};
+var vallySkillNoTotalOpt = new Option<bool>("--no-total") { Description = "Omit the all-task shelf reference card." };
+var vallySkillNoTitleOpt = new Option<bool>("--no-title") { Description = "Omit card headings." };
+var vallySkillCard = new Command("skill-card", "Render six-row observational per-skill cards from a natural full-shelf Vally run.")
+{
+    vallySkillRunDirArg, vallyApplicabilityArg, vallySkillBaselineOpt, vallySkillGroundedOpt,
+    vallySkillGraderManifestOpt, vallySkillRunsOpt, vallySkillModelOpt, vallySkillIetOpt,
+    vallySkillFilterOpt, vallySkillNoTotalOpt, vallySkillNoTitleOpt,
+};
+vallySkillCard.SetAction(parse =>
+{
+    IetModels.Apply(IetModels.ParseSelection((parse.GetValue(vallySkillIetOpt) ?? "auto").Trim().ToLowerInvariant()));
+    return new VallySkillCard(Console.Out).Render(
+        parse.GetValue(vallySkillRunDirArg)!,
+        parse.GetValue(vallyApplicabilityArg)!,
+        parse.GetValue(vallySkillGraderManifestOpt)!,
+        parse.GetValue(vallySkillBaselineOpt)!,
+        parse.GetValue(vallySkillGroundedOpt)!,
+        parse.GetValue(vallySkillRunsOpt),
+        parse.GetValue(vallySkillModelOpt),
+        parse.GetValue(vallySkillFilterOpt) ?? Array.Empty<string>(),
+        parse.GetValue(vallySkillNoTotalOpt),
+        parse.GetValue(vallySkillNoTitleOpt));
+});
+vally.Subcommands.Add(vallySkillCard);
+root.Subcommands.Add(vally);
 
 // ---- ledger -------------------------------------------------------------
 // The content ledger — attribute each SKILL.md block to the ladder rung(s) where baseline shows
