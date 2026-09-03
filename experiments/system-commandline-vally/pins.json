@@ -1,0 +1,69 @@
+{
+  "schema": 1,
+  "vally": {
+    "packageVersion": "0.13.0",
+    "sourceCommit": "f7a653272642d52b2b6375bfa3995dddc72fcd49",
+    "models": [
+      {
+        "id": "gpt-5.6-luna",
+        "role": "mini",
+        "reasoningEffort": "high"
+      },
+      {
+        "id": "gpt-5.6-terra",
+        "role": "balanced",
+        "reasoningEffort": "high"
+      },
+      {
+        "id": "gpt-5.6-sol",
+        "role": "frontier",
+        "reasoningEffort": "high"
+      }
+    ],
+    "judgeModel": "gpt-5.6-sol",
+    "judgeReasoningEffort": "high"
+  },
+  "dotnet": {
+    "sdkVersion": "10.0.300"
+  },
+  "systemCommandLine": {
+    "packageVersion": "3.0.0-preview.7.26381.103",
+    "packageUrl": "https://api.nuget.org/v3-flatcontainer/system.commandline/3.0.0-preview.7.26381.103/system.commandline.3.0.0-preview.7.26381.103.nupkg",
+    "packageSha256": "3212b9dda19c8f707b111b5ee6dff461fd3c86c83e20da97bda71df2e802ddd7",
+    "packageRepositoryCommit": "e2c1e00b3d0f96afb892fb261d5921565b400246",
+    "sourceRepositoryCommit": "1f13873cf84d5547d1b8d4f9d68dcb06b3ea0a69"
+  },
+  "source": {
+    "repository": "richlander/dotnet-package-skills",
+    "commit": "bac0194ab5f0f4ef414ec21a06ad1e1ba7665200",
+    "evalPath": "examples/system-commandline/grounding/system-commandline/eval.yaml",
+    "skillsPath": "examples/system-commandline/skills",
+    "evalHash": "sha256:2f526663ea55467fccc8b1bc837659f6fe03e15e2ba6f053e6937b8e7c38db72"
+  },
+  "fixtures": {
+    "hash": "sha256:60df5f5708595ac4f79fdc94046f4be1ce32ba755b43d015deee5232cc5b1e77"
+  },
+  "shelf": {
+    "hash": "sha256:a358b2f28049ee58da878a23b6061eb17a8e6d9c4669c3fffc6be34c9585b509"
+  },
+  "applicability": {
+    "hash": "sha256:478c636a705f76f664a4967fde7a6a91f3817a1d169412885c421e10fc2e8623"
+  },
+  "matrix": {
+    "k": 5,
+    "models": {
+      "gpt-5.6-luna": {
+        "evalHash": "sha256:fdc5947dbc7e98b8d31f920e794f877ae0f9951bd363650bb8ccc870c0ec005c",
+        "graderManifestHash": "sha256:6d0cdcd4e6f2786dd77f8c8ec1e7272d674c9cf1379781efc979fb451a518990"
+      },
+      "gpt-5.6-terra": {
+        "evalHash": "sha256:1e637c6e8abd0bf0cd72b79085c9863937188ca2dd42c8961039cfcefeaab1e2",
+        "graderManifestHash": "sha256:e18ce8caabb6aed0fb78e2beadf2931232ea8eb6ba2d027c9e809d89d8402493"
+      },
+      "gpt-5.6-sol": {
+        "evalHash": "sha256:5056f65187c614cd35599892dd6f5af5fed5b63340f790b80e057ed3acdc8be9",
+        "graderManifestHash": "sha256:2f29bca1acef6ebf9066dfeef72645be1d45b45068b0edc84525e7e2a36ca5a9"
+      }
+    }
+  }
+}
