@@ -1,0 +1,30 @@
+{
+  "name": "markout-vally-regime-prototype",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.0.0",
+    "npm": ">=11.11.1"
+  },
+  "scripts": {
+    "bootstrap": "node scripts/materialize-inputs.mjs",
+    "lint": "npm run bootstrap && vally lint --eval-spec eval.yaml && vally lint --eval-spec controls/eval.yaml",
+    "lint:ct24": "npm run bootstrap && vally lint --eval-spec eval.ct24.yaml && node scripts/verify-ct24-spec.mjs",
+    "dry-run": "npm run bootstrap && vally experiment run experiment.yaml --dry-run",
+    "dry-run:ct24": "npm run bootstrap && vally experiment run experiment.ct24.yaml --dry-run",
+    "smoke:ct24": "npm run bootstrap && node scripts/smoke-ct24.mjs",
+    "experiment": "npm run bootstrap && node scripts/run-experiment.mjs",
+    "experiment:ct24": "npm run bootstrap && node scripts/run-experiment.mjs experiment.ct24.yaml",
+    "bridge:custom": "npm run bootstrap && (cd ../.. && dotnet publish src/grounding -c Release -r osx-arm64 --self-contained --nologo) && node scripts/run-custom-bridge.mjs",
+    "bridge:compare": "node scripts/compare-bridge.mjs",
+    "analyze": "node scripts/analyze.mjs",
+    "skill-card": "node scripts/skill-card.mjs",
+    "verify-controls": "npm run bootstrap && node scripts/verify-controls.mjs",
+    "test": "node --test && (cd ../.. && dotnet build src/grounding -c Release --nologo --verbosity quiet) && node scripts/verify-grounding-adapter.mjs"
+  },
+  "dependencies": {
+    "@microsoft/vally": "0.13.0",
+    "@microsoft/vally-cli": "0.13.0",
+    "yaml": "2.9.0"
+  }
+}

@@ -1,0 +1,100 @@
+{
+  "schema": 1,
+  "evalName": "markout-0.35.2-regime-prototype",
+  "evalFile": "eval.yaml",
+  "evalHash": "sha256:dbd2c6f077cfb70e42bd150c37a14cf7bd2e0a258e97ff43e2a04a6c6b4d82c7",
+  "model": "claude-haiku-4.5",
+  "k": 5,
+  "tasks": [
+    {
+      "id": "CT01",
+      "name": "CT01-minimal-report",
+      "graders": [
+        {
+          "name": "harness/completed",
+          "type": "completed"
+        },
+        {
+          "name": "satisfies/build",
+          "type": "run-command"
+        },
+        {
+          "name": "satisfies/render-output",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/serializer",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/context",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/no-handwritten-table",
+          "type": "file-not-contains"
+        }
+      ]
+    },
+    {
+      "id": "CT15",
+      "name": "CT15-dependency-tree",
+      "graders": [
+        {
+          "name": "harness/completed",
+          "type": "completed"
+        },
+        {
+          "name": "satisfies/build",
+          "type": "run-command"
+        },
+        {
+          "name": "satisfies/render-output",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/serializer",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/unicode-formatter",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/no-handwritten-tree",
+          "type": "file-not-contains"
+        }
+      ]
+    },
+    {
+      "id": "CT18",
+      "name": "CT18-verbosity-levels",
+      "graders": [
+        {
+          "name": "harness/completed",
+          "type": "completed"
+        },
+        {
+          "name": "satisfies/build",
+          "type": "run-command"
+        },
+        {
+          "name": "satisfies/render-output",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/serializer",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/include-sections",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/no-handwritten-sections",
+          "type": "file-not-contains"
+        }
+      ]
+    }
+  ]
+}

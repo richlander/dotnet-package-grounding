@@ -1,0 +1,738 @@
+{
+  "schema": 1,
+  "evalName": "markout-0.35.2-ct24",
+  "evalFile": "eval.ct24.yaml",
+  "evalHash": "sha256:29508ca5cdcac001fd429c900f4cb056415a56b33551b1e528f6274258d58ca1",
+  "model": "claude-haiku-4.5",
+  "k": 5,
+  "tasks": [
+    {
+      "id": "CT01",
+      "name": "CT01: minimal report — title + scalar field table",
+      "graders": [
+        {
+          "name": "harness/completed",
+          "type": "completed"
+        },
+        {
+          "name": "satisfies/01-build-the-project",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/02-drive-output-through-markoutserializer-serialize",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/03-register-the-model-with-a-markout-serializer-context",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/04-do-not-hand-write-the-markdown-table",
+          "type": "file-not-contains"
+        },
+        {
+          "name": "satisfies/05-render-the-project-title-and-scalar-field-value-rows",
+          "type": "run-command"
+        }
+      ]
+    },
+    {
+      "id": "CT02",
+      "name": "CT02: scalar cell formatters (number, date, bool)",
+      "graders": [
+        {
+          "name": "harness/completed",
+          "type": "completed"
+        },
+        {
+          "name": "satisfies/01-build-the-project",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/02-drive-output-through-markoutserializer-serialize",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/03-use-the-serializer-s-boolean-formatting-attribute-for-yes-no-val",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/04-do-not-hand-write-the-markdown-table",
+          "type": "file-not-contains"
+        },
+        {
+          "name": "satisfies/05-render-the-title-and-formatted-download-date-and-signed-values",
+          "type": "run-command"
+        }
+      ]
+    },
+    {
+      "id": "CT03",
+      "name": "CT03: rename and hide fields",
+      "graders": [
+        {
+          "name": "harness/completed",
+          "type": "completed"
+        },
+        {
+          "name": "satisfies/01-build-the-project",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/02-drive-output-through-markoutserializer-serialize",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/03-rename-the-field-with-the-serializer-s-property-name-attribute",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/04-hide-the-internal-field-with-the-serializer-s-ignore-attribute",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/05-do-not-hand-write-the-markdown-table",
+          "type": "file-not-contains"
+        },
+        {
+          "name": "satisfies/06-render-total-and-passed-while-omitting-internalrunid-and-totalte",
+          "type": "run-command"
+        }
+      ]
+    },
+    {
+      "id": "CT04",
+      "name": "CT04: simple list section",
+      "graders": [
+        {
+          "name": "harness/completed",
+          "type": "completed"
+        },
+        {
+          "name": "satisfies/01-build-the-project",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/02-drive-output-through-markoutserializer-serialize",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/03-declare-the-dependencies-list-as-a-named-serializer-section",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/04-do-not-hand-write-the-section-table",
+          "type": "file-not-contains"
+        },
+        {
+          "name": "satisfies/05-render-the-project-title-and-dependencies-table-with-both-rows",
+          "type": "run-command"
+        }
+      ]
+    },
+    {
+      "id": "CT05",
+      "name": "CT05: one model, two output formats (Markdown + plain text)",
+      "graders": [
+        {
+          "name": "harness/completed",
+          "type": "completed"
+        },
+        {
+          "name": "satisfies/01-build-the-project",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/02-drive-both-renderings-through-markoutserializer-serialize",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/03-use-the-serializer-s-plaintextformatter-for-the-plain-text-rende",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/04-do-not-hand-write-either-report-table",
+          "type": "file-not-contains"
+        },
+        {
+          "name": "satisfies/05-render-the-same-release-as-markdown-and-aligned-ascii-plain-text",
+          "type": "run-command"
+        }
+      ]
+    },
+    {
+      "id": "CT06",
+      "name": "CT06: description paragraph + inline field layout",
+      "graders": [
+        {
+          "name": "harness/completed",
+          "type": "completed"
+        },
+        {
+          "name": "satisfies/01-build-the-project",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/02-drive-output-through-markoutserializer-serialize",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/03-configure-the-serializer-s-inline-field-layout",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/04-declare-the-summary-as-the-serializer-description-property",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/05-do-not-hand-write-a-markdown-field-table",
+          "type": "file-not-contains"
+        },
+        {
+          "name": "satisfies/06-render-the-title-summary-paragraph-and-owner-and-status-inline",
+          "type": "run-command"
+        }
+      ]
+    },
+    {
+      "id": "CT07",
+      "name": "CT07: conditional section via ShowWhenProperty",
+      "graders": [
+        {
+          "name": "harness/completed",
+          "type": "completed"
+        },
+        {
+          "name": "satisfies/01-build-the-project",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/02-drive-both-reports-through-markoutserializer-serialize",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/03-gate-the-deprecations-section-with-showwhenproperty",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/04-do-not-hand-write-the-conditional-section-table",
+          "type": "file-not-contains"
+        },
+        {
+          "name": "satisfies/05-render-both-package-reports-with-deprecations-appearing-exactly-",
+          "type": "run-command"
+        }
+      ]
+    },
+    {
+      "id": "CT08",
+      "name": "CT08: render a section subset with IncludeSections",
+      "graders": [
+        {
+          "name": "harness/completed",
+          "type": "completed"
+        },
+        {
+          "name": "satisfies/01-build-the-project",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/02-drive-both-views-through-markoutserializer-serialize",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/03-select-the-rendered-sections-with-includesections-at-serializati",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/04-do-not-hand-write-the-omitted-or-included-section-tables",
+          "type": "file-not-contains"
+        },
+        {
+          "name": "satisfies/05-render-a-quiet-view-without-sections-and-a-full-view-with-incide",
+          "type": "run-command"
+        }
+      ]
+    },
+    {
+      "id": "CT09",
+      "name": "CT09: machine-readable TSV output",
+      "graders": [
+        {
+          "name": "harness/completed",
+          "type": "completed"
+        },
+        {
+          "name": "satisfies/01-build-the-project",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/02-drive-tsv-output-through-markoutserializer-serialize",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/03-use-the-serializer-table-formatter-in-tsv-tablemode",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/04-do-not-hand-write-the-tsv-or-a-markdown-table",
+          "type": "file-not-contains"
+        },
+        {
+          "name": "satisfies/05-render-a-tab-delimited-header-and-member-rows-without-a-markdown",
+          "type": "run-command"
+        }
+      ]
+    },
+    {
+      "id": "CT10",
+      "name": "CT10: metric bars and a breakdown",
+      "graders": [
+        {
+          "name": "harness/completed",
+          "type": "completed"
+        },
+        {
+          "name": "satisfies/01-build-the-project",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/02-drive-terminal-output-through-markoutserializer-serialize",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/03-render-the-serializer-s-metric-and-breakdown-shapes-with-unicode",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/04-do-not-hand-write-the-metric-or-breakdown-rows",
+          "type": "file-not-contains"
+        },
+        {
+          "name": "satisfies/05-render-labeled-timing-bars-and-a-coverage-breakdown-using-block-",
+          "type": "run-command"
+        }
+      ]
+    },
+    {
+      "id": "CT11",
+      "name": "CT11: before -> after change cells",
+      "graders": [
+        {
+          "name": "harness/completed",
+          "type": "completed"
+        },
+        {
+          "name": "satisfies/01-build-the-project",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/02-drive-change-cell-output-through-markoutserializer-serialize",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/03-annotate-change-cells-with-the-serializer-s-absolute-markoutdelt",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/04-do-not-hand-write-the-change-rows",
+          "type": "file-not-contains"
+        },
+        {
+          "name": "satisfies/05-render-before-and-after-values-with-signed-absolute-deltas",
+          "type": "run-command"
+        }
+      ]
+    },
+    {
+      "id": "CT12",
+      "name": "CT12: conditional table column via IgnoreColumnWhen",
+      "graders": [
+        {
+          "name": "harness/completed",
+          "type": "completed"
+        },
+        {
+          "name": "satisfies/01-build-the-project",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/02-drive-both-dependency-reports-through-markoutserializer-serializ",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/03-hide-the-uniform-optional-column-with-markoutignorecolumnwhen",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/04-do-not-hand-write-or-imperatively-gate-the-dependency-tables",
+          "type": "file-not-contains"
+        },
+        {
+          "name": "satisfies/05-render-optional-only-for-the-mixed-dependency-table",
+          "type": "run-command"
+        }
+      ]
+    },
+    {
+      "id": "CT13",
+      "name": "CT13: verbosity-gated detail sections (quiet vs verbose)",
+      "graders": [
+        {
+          "name": "harness/completed",
+          "type": "completed"
+        },
+        {
+          "name": "satisfies/01-build-the-project",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/02-drive-quiet-and-verbose-reports-through-markoutserializer-serial",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/03-gate-the-declared-detail-sections-with-showwhenproperty-or-inclu",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/04-do-not-hand-write-the-detail-sections",
+          "type": "file-not-contains"
+        },
+        {
+          "name": "satisfies/05-render-quiet-without-details-and-verbose-with-dependencies-and-t",
+          "type": "run-command"
+        }
+      ]
+    },
+    {
+      "id": "CT14",
+      "name": "CT14: JSONL with typed numeric values",
+      "graders": [
+        {
+          "name": "harness/completed",
+          "type": "completed"
+        },
+        {
+          "name": "satisfies/01-build-the-project",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/02-drive-jsonl-output-through-markoutserializer-serialize",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/03-enable-the-serializer-s-typed-json-values-for-jsonl-output",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/04-do-not-hand-write-the-jsonl",
+          "type": "file-not-contains"
+        },
+        {
+          "name": "satisfies/05-render-one-json-object-per-line-with-unquoted-numeric-values",
+          "type": "run-command"
+        }
+      ]
+    },
+    {
+      "id": "CT15",
+      "name": "CT15: dependency tree with badges",
+      "graders": [
+        {
+          "name": "harness/completed",
+          "type": "completed"
+        },
+        {
+          "name": "satisfies/01-build-the-project",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/02-drive-tree-output-through-markoutserializer-serialize",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/03-render-the-serializer-s-tree-shape-with-unicodeformatter",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/04-do-not-hand-write-the-tree-indentation-or-rows",
+          "type": "file-not-contains"
+        },
+        {
+          "name": "satisfies/05-render-the-dependency-hierarchy-with-branch-connectors-and-badge",
+          "type": "run-command"
+        }
+      ]
+    },
+    {
+      "id": "CT16",
+      "name": "CT16: gated metric-change card with goals",
+      "graders": [
+        {
+          "name": "harness/completed",
+          "type": "completed"
+        },
+        {
+          "name": "satisfies/01-build-the-project",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/02-drive-the-card-through-markoutserializer-serialize",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/03-do-not-hand-write-the-metric-card-table",
+          "type": "file-not-contains"
+        },
+        {
+          "name": "satisfies/04-render-goal-and-derived-status-glyphs-for-failures-and-coverage",
+          "type": "run-command"
+        }
+      ]
+    },
+    {
+      "id": "CT17",
+      "name": "CT17: same-name polymorphic sections (one heading, two shapes)",
+      "graders": [
+        {
+          "name": "harness/completed",
+          "type": "completed"
+        },
+        {
+          "name": "satisfies/01-build-the-project",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/02-drive-both-package-reports-through-markoutserializer-serialize",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/03-gate-the-same-name-signals-section-variants-with-showwhenpropert",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/04-do-not-hand-write-the-signals-headings-or-tables",
+          "type": "file-not-contains"
+        },
+        {
+          "name": "satisfies/05-render-one-signals-variant-per-package-showing-both-api-and-type",
+          "type": "run-command"
+        }
+      ]
+    },
+    {
+      "id": "CT18",
+      "name": "CT18: one model rendered at three verbosity levels",
+      "graders": [
+        {
+          "name": "harness/completed",
+          "type": "completed"
+        },
+        {
+          "name": "satisfies/01-build-the-project",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/02-drive-all-three-views-through-markoutserializer-serialize",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/03-select-progressive-verbosity-sections-with-includesections",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/04-do-not-hand-write-the-omitted-or-included-sections",
+          "type": "file-not-contains"
+        },
+        {
+          "name": "satisfies/05-render-quiet-normal-and-detailed-views-with-progressively-added-",
+          "type": "run-command"
+        }
+      ]
+    },
+    {
+      "id": "CT19",
+      "name": "CT19: central multi-format dispatch with row cap",
+      "graders": [
+        {
+          "name": "harness/completed",
+          "type": "completed"
+        },
+        {
+          "name": "satisfies/01-build-the-project",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/02-drive-every-format-through-markoutserializer-serialize",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/03-apply-the-markdown-row-cap-with-the-serializer-s-maxitems-option",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/04-select-tsv-and-jsonl-through-the-serializer-s-tablemode",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/05-do-not-hand-write-any-output-format",
+          "type": "file-not-contains"
+        },
+        {
+          "name": "satisfies/06-render-capped-markdown-tab-delimited-tsv-and-one-object-per-line",
+          "type": "run-command"
+        }
+      ]
+    },
+    {
+      "id": "CT20",
+      "name": "CT20: advisory with a callout, code block, and definitions",
+      "graders": [
+        {
+          "name": "harness/completed",
+          "type": "completed"
+        },
+        {
+          "name": "satisfies/01-build-the-project",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/02-drive-the-advisory-through-markoutserializer-serialize",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/03-keep-the-non-tabular-serializer-shape-list-out-of-table-renderin",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/04-do-not-hand-write-the-alert-code-fence-definitions-or-table",
+          "type": "file-not-contains"
+        },
+        {
+          "name": "satisfies/05-render-a-warning-alert-csharp-code-fence-and-definition-style-te",
+          "type": "run-command"
+        }
+      ]
+    },
+    {
+      "id": "CT21",
+      "name": "CT21: multi-source comparison matrix with verdicts",
+      "graders": [
+        {
+          "name": "harness/completed",
+          "type": "completed"
+        },
+        {
+          "name": "satisfies/01-build-the-project",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/02-drive-the-comparison-matrix-through-markoutserializer-serialize",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/03-do-not-hand-write-the-comparison-matrix",
+          "type": "file-not-contains"
+        },
+        {
+          "name": "satisfies/04-render-metrics-as-rows-with-baseline-and-grounded-columns-and-co",
+          "type": "run-command"
+        }
+      ]
+    },
+    {
+      "id": "CT22",
+      "name": "CT22: full composed inspection report",
+      "graders": [
+        {
+          "name": "harness/completed",
+          "type": "completed"
+        },
+        {
+          "name": "satisfies/01-build-the-project",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/02-drive-the-composed-report-through-markoutserializer-serialize",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/03-use-showwhenproperty-for-conditional-deprecations-and-same-name-",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/04-use-markoutignorecolumnwhen-for-the-conditional-optional-depende",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/05-do-not-hand-write-the-composed-headings-or-tables",
+          "type": "file-not-contains"
+        },
+        {
+          "name": "satisfies/06-render-formatted-fields-and-the-ordered-deprecations-dependencie",
+          "type": "run-command"
+        }
+      ]
+    },
+    {
+      "id": "CT23",
+      "name": "CT23: dense composite cell that decomposes into columns",
+      "graders": [
+        {
+          "name": "harness/completed",
+          "type": "completed"
+        },
+        {
+          "name": "satisfies/01-build-the-project",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/02-drive-markdown-tsv-and-jsonl-through-markoutserializer-serialize",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/03-annotate-the-change-cell-with-the-serializer-s-percent-markoutde",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/04-do-not-hand-write-any-of-the-three-output-formats",
+          "type": "file-not-contains"
+        },
+        {
+          "name": "satisfies/05-render-a-dense-markdown-change-and-decomposed-tsv-and-jsonl-chan",
+          "type": "run-command"
+        }
+      ]
+    },
+    {
+      "id": "CT24",
+      "name": "CT24: section-targeted verbosity views from one model (-D / -S)",
+      "graders": [
+        {
+          "name": "harness/completed",
+          "type": "completed"
+        },
+        {
+          "name": "satisfies/01-build-the-project",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/02-drive-all-three-views-through-markoutserializer-serialize",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/03-target-serializer-sections-by-name-with-includesections",
+          "type": "run-command"
+        },
+        {
+          "name": "delivers/04-do-not-hand-write-omitted-or-selected-sections",
+          "type": "file-not-contains"
+        },
+        {
+          "name": "satisfies/05-render-quiet-diagnostics-only-and-detailed-views-with-the-reques",
+          "type": "run-command"
+        }
+      ]
+    }
+  ]
+}

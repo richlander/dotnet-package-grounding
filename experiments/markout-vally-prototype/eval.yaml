@@ -1,0 +1,193 @@
+name: markout-0.35.2-regime-prototype
+description: Three task-level probes for preserving the Fails/Satisfies/Delivers grounding regime in Vally.
+version: 0.35.2
+type: capability
+tags:
+  markout-package-version: "0.35.2"
+  markout-package-sha256: b407f0188a27d59934b17c5855f4716afa6385975cb214bc3767ff69dbedff38
+  fixture-hash: sha256:e7ad42d63ec6f7e2b2a6d982e0bf59f49a36878e1068b5f14d1d75fbab4b07f7
+  shelf-hash: sha256:f4bcaaac648f3d5ee231409957abcd07954169e66576c80e8ca878fc5b7c5675
+  markout-source-commit: e744d7ba3b13c6490bd3a660a4cc87f235f81918
+  vally-source-commit: f7a653272642d52b2b6375bfa3995dddc72fcd49
+
+defaults:
+  runs: 5
+  timeout: 15m
+  executor: copilot-sdk
+  model: claude-haiku-4.5
+  judge_model: gpt-5.5
+  judge_reasoning_effort: high
+
+scoring:
+  threshold: 1
+
+stimuli:
+  - name: CT01-minimal-report
+    prompt: |
+      This console project references a source-generated .NET serializer that projects annotated
+      objects into Markdown. Program.cs holds one plain BuildReport object. Using the serializer,
+      print a Markdown report whose H1 title is the project name, followed by a Field | Value table
+      of the remaining scalar values (Configuration, Warnings, Errors). Drive the output through
+      the serializer; do not hand-write the Markdown. Build and run the project to confirm it
+      prints the expected report.
+    environment:
+      files:
+        - src: global.json
+          dest: global.json
+        - src: vendor/fixtures/ct01/Report.csproj
+          dest: Report.csproj
+        - src: vendor/fixtures/ct01/Program.cs
+          dest: Program.cs
+    constraints:
+      max_duration: 15m
+      reject_tools: [web_search, web_fetch]
+    graders:
+      - type: completed
+        name: harness/completed
+      - type: run-command
+        name: satisfies/build
+        config:
+          command: dotnet
+          args: [build]
+          expected_exit_code: 0
+          timeout: 10m
+      - type: run-command
+        name: satisfies/render-output
+        config:
+          command: dotnet
+          args: [run, --no-build]
+          expected_exit_code: 0
+          stdout_matches: '(?=[\s\S]*# Web\.Api)(?=[\s\S]*\| Configuration \| Release \|)(?=[\s\S]*\| Warnings \| 3 \|)[\s\S]*'
+          timeout: 2m
+      - type: run-command
+        name: delivers/serializer
+        config:
+          command: grep
+          args: [-rq, '--include=*.cs', '--exclude-dir=obj', '--exclude-dir=bin', MarkoutSerializer.Serialize, .]
+          expected_exit_code: 0
+          timeout: 30s
+      - type: run-command
+        name: delivers/context
+        config:
+          command: grep
+          args: [-rq, '--include=*.cs', '--exclude-dir=obj', '--exclude-dir=bin', MarkoutContext, .]
+          expected_exit_code: 0
+          timeout: 30s
+      - type: file-not-contains
+        name: delivers/no-handwritten-table
+        config:
+          path: Program.cs
+          value: '| ---'
+
+  - name: CT15-dependency-tree
+    prompt: |
+      This console project references a source-generated .NET serializer. Program.cs holds one
+      plain DependencyTree whose Root is a TreeNode with nested children, some carrying a badge.
+      Using the serializer, render this for a terminal with Unicode branch connectors and badges
+      next to their nodes. Use the serializer's tree shape rather than hand-built indentation.
+      Build and run to confirm.
+    environment:
+      files:
+        - src: global.json
+          dest: global.json
+        - src: vendor/fixtures/ct15/Report.csproj
+          dest: Report.csproj
+        - src: vendor/fixtures/ct15/Program.cs
+          dest: Program.cs
+    constraints:
+      max_duration: 15m
+      reject_tools: [web_search, web_fetch]
+    graders:
+      - type: completed
+        name: harness/completed
+      - type: run-command
+        name: satisfies/build
+        config:
+          command: dotnet
+          args: [build]
+          expected_exit_code: 0
+          timeout: 10m
+      - type: run-command
+        name: satisfies/render-output
+        config:
+          command: dotnet
+          args: [run, --no-build]
+          expected_exit_code: 0
+          stdout_matches: '(?=[\s\S]*MyApp)(?=[\s\S]*└─)(?=[\s\S]*Serilog\.Sinks\.Console)(?=[\s\S]*✓)[\s\S]*'
+          timeout: 2m
+      - type: run-command
+        name: delivers/serializer
+        config:
+          command: grep
+          args: [-rq, '--include=*.cs', '--exclude-dir=obj', '--exclude-dir=bin', MarkoutSerializer.Serialize, .]
+          expected_exit_code: 0
+          timeout: 30s
+      - type: run-command
+        name: delivers/unicode-formatter
+        config:
+          command: grep
+          args: [-rq, '--include=*.cs', '--exclude-dir=obj', '--exclude-dir=bin', UnicodeFormatter, .]
+          expected_exit_code: 0
+          timeout: 30s
+      - type: file-not-contains
+        name: delivers/no-handwritten-tree
+        config:
+          path: Program.cs
+          value: '| ---'
+
+  - name: CT18-verbosity-levels
+    prompt: |
+      This console project references a source-generated .NET serializer. Program.cs holds one
+      PackageReport with scalar fields and two list sections: Dependencies and Diagnostics. Using
+      the serializer, print the same model at three levels from one definition: quiet (title and
+      scalars only), normal (adds Dependencies), and detailed (adds Dependencies and Diagnostics).
+      Choose sections at serialize time; do not define separate models or hand-write omitted
+      sections. Build and run to confirm.
+    environment:
+      files:
+        - src: global.json
+          dest: global.json
+        - src: vendor/fixtures/ct18/Report.csproj
+          dest: Report.csproj
+        - src: vendor/fixtures/ct18/Program.cs
+          dest: Program.cs
+    constraints:
+      max_duration: 15m
+      reject_tools: [web_search, web_fetch]
+    graders:
+      - type: completed
+        name: harness/completed
+      - type: run-command
+        name: satisfies/build
+        config:
+          command: dotnet
+          args: [build]
+          expected_exit_code: 0
+          timeout: 10m
+      - type: run-command
+        name: satisfies/render-output
+        config:
+          command: dotnet
+          args: [run, --no-build]
+          expected_exit_code: 0
+          stdout_matches: '(?=[\s\S]*## Dependencies)(?=[\s\S]*transitive version conflict)^(?:(?!## Diagnostics)[\s\S])*## Diagnostics(?:(?!## Diagnostics)[\s\S])*$'
+          timeout: 2m
+      - type: run-command
+        name: delivers/serializer
+        config:
+          command: grep
+          args: [-rq, '--include=*.cs', '--exclude-dir=obj', '--exclude-dir=bin', MarkoutSerializer.Serialize, .]
+          expected_exit_code: 0
+          timeout: 30s
+      - type: run-command
+        name: delivers/include-sections
+        config:
+          command: grep
+          args: [-rq, '--include=*.cs', '--exclude-dir=obj', '--exclude-dir=bin', IncludeSections, .]
+          expected_exit_code: 0
+          timeout: 30s
+      - type: file-not-contains
+        name: delivers/no-handwritten-sections
+        config:
+          path: Program.cs
+          value: '| ---'

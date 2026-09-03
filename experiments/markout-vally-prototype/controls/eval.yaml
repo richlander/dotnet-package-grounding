@@ -1,0 +1,95 @@
+name: markout-regime-controls
+description: Offline deterministic controls for the three prototype grader contracts.
+version: 0.35.2
+type: capability
+
+defaults:
+  runs: 1
+  timeout: 15m
+  executor: mock
+  model: claude-haiku-4.5
+  reasoning_effort: high
+  judge_model: gpt-5.5
+  judge_reasoning_effort: high
+
+scoring:
+  threshold: 1
+
+stimuli:
+  - name: CT01-minimal-report
+    prompt: Control trajectory for CT01.
+    graders:
+      - type: completed
+        name: harness/completed
+      - type: run-command
+        name: satisfies/build
+        config: { command: dotnet, args: [build], expected_exit_code: 0, timeout: 10m }
+      - type: run-command
+        name: satisfies/render-output
+        config:
+          command: dotnet
+          args: [run, --no-build]
+          expected_exit_code: 0
+          stdout_matches: '(?=[\s\S]*# Web\.Api)(?=[\s\S]*\| Configuration \| Release \|)(?=[\s\S]*\| Warnings \| 3 \|)[\s\S]*'
+          timeout: 2m
+      - type: run-command
+        name: delivers/serializer
+        config: { command: grep, args: [-rq, '--include=*.cs', '--exclude-dir=obj', '--exclude-dir=bin', MarkoutSerializer.Serialize, .], expected_exit_code: 0, timeout: 30s }
+      - type: run-command
+        name: delivers/context
+        config: { command: grep, args: [-rq, '--include=*.cs', '--exclude-dir=obj', '--exclude-dir=bin', MarkoutContext, .], expected_exit_code: 0, timeout: 30s }
+      - type: file-not-contains
+        name: delivers/no-handwritten-table
+        config: { path: Program.cs, value: '| ---' }
+
+  - name: CT15-dependency-tree
+    prompt: Control trajectory for CT15.
+    graders:
+      - type: completed
+        name: harness/completed
+      - type: run-command
+        name: satisfies/build
+        config: { command: dotnet, args: [build], expected_exit_code: 0, timeout: 10m }
+      - type: run-command
+        name: satisfies/render-output
+        config:
+          command: dotnet
+          args: [run, --no-build]
+          expected_exit_code: 0
+          stdout_matches: '(?=[\s\S]*MyApp)(?=[\s\S]*└─)(?=[\s\S]*Serilog\.Sinks\.Console)(?=[\s\S]*✓)[\s\S]*'
+          timeout: 2m
+      - type: run-command
+        name: delivers/serializer
+        config: { command: grep, args: [-rq, '--include=*.cs', '--exclude-dir=obj', '--exclude-dir=bin', MarkoutSerializer.Serialize, .], expected_exit_code: 0, timeout: 30s }
+      - type: run-command
+        name: delivers/unicode-formatter
+        config: { command: grep, args: [-rq, '--include=*.cs', '--exclude-dir=obj', '--exclude-dir=bin', UnicodeFormatter, .], expected_exit_code: 0, timeout: 30s }
+      - type: file-not-contains
+        name: delivers/no-handwritten-tree
+        config: { path: Program.cs, value: '| ---' }
+
+  - name: CT18-verbosity-levels
+    prompt: Control trajectory for CT18.
+    graders:
+      - type: completed
+        name: harness/completed
+      - type: run-command
+        name: satisfies/build
+        config: { command: dotnet, args: [build], expected_exit_code: 0, timeout: 10m }
+      - type: run-command
+        name: satisfies/render-output
+        config:
+          command: dotnet
+          args: [run, --no-build]
+          expected_exit_code: 0
+          stdout_matches: '(?=[\s\S]*## Dependencies)(?=[\s\S]*transitive version conflict)^(?:(?!## Diagnostics)[\s\S])*## Diagnostics(?:(?!## Diagnostics)[\s\S])*$'
+          timeout: 2m
+      - type: run-command
+        name: delivers/serializer
+        config: { command: grep, args: [-rq, '--include=*.cs', '--exclude-dir=obj', '--exclude-dir=bin', MarkoutSerializer.Serialize, .], expected_exit_code: 0, timeout: 30s }
+      - type: run-command
+        name: delivers/include-sections
+        config: { command: grep, args: [-rq, '--include=*.cs', '--exclude-dir=obj', '--exclude-dir=bin', IncludeSections, .], expected_exit_code: 0, timeout: 30s }
+      - type: file-not-contains
+        name: delivers/no-handwritten-sections
+        config: { path: Program.cs, value: '| ---' }

@@ -1,0 +1,10 @@
+Console.WriteLine("=== QUIET ===");
+Console.WriteLine("# Serilog");
+Console.WriteLine("=== NORMAL ===");
+Console.WriteLine("## Dependencies");
+Console.WriteLine("Serilog.Sinks.Console 5.0.0");
+Console.WriteLine("=== DETAILED ===");
+Console.WriteLine("## Dependencies");
+Console.WriteLine("Serilog.Sinks.Console 5.0.0");
+Console.WriteLine("## Diagnostics");
+Console.WriteLine("transitive version conflict");

@@ -1,0 +1,24 @@
+name: markout-vally-ct24
+evals:
+  - eval.ct24.yaml
+
+vary:
+  - /environment/skills
+
+baseline: baseline
+variants:
+  baseline:
+    environment:
+      skills: []
+
+  grounded:
+    environment:
+      skills:
+        - vendor/skills/markout
+        - vendor/skills/markout-built-in-shapes
+        - vendor/skills/markout-conditional-composition
+        - vendor/skills/markout-output-formats
+        - vendor/skills/markout-composite-cells-cards
+
+execution:
+  workers: 1
