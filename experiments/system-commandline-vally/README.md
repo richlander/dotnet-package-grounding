@@ -64,6 +64,12 @@ npm run smoke
 npm run run
 ```
 
+Resume an incomplete matrix without rerunning completed model children:
+
+```bash
+node scripts/run-matrix.mjs --resume results/<matrix-run-id>
+```
+
 `npm run pin` is an explicit maintenance command that prints regenerated hashes and exits 2. Normal
 bootstrap is fail-closed and rejects any drift.
 
@@ -91,6 +97,11 @@ results/<matrix-run-id>/
 Every child must contain exactly 120 baseline and 120 grounded trials with one exact model,
 contiguous trial identities, the complete task set, successful execution, valid telemetry, exact
 experiment provenance, and every required named grader exactly once.
+
+If a child contains an execution or harness-completion failure, repair is model-local and
+non-selective: every trial for the complete `(model, task, arm)` group is rerun. Individual outcomes
+are never selected or replaced. The original attempt, repair attempts, canonical results, and their
+hashes remain attested under the matrix directory.
 
 ## Isolation
 

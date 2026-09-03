@@ -49,6 +49,16 @@ test("rejects a missing deterministic grader", () => {
   );
 });
 
+test("accepts only well-formed canonical repair provenance", () => {
+  const records = [repairTrial(0), repairTrial(1)];
+  validateArm(records, { arm: "baseline", manifest });
+  records[1].repair.sourceVariant = "baseline";
+  assert.throws(
+    () => validateArm(records, { arm: "baseline", manifest }),
+    /repair provenance mismatch/
+  );
+});
+
 function trial(index) {
   return {
     type: "trial-result",
@@ -82,4 +92,15 @@ function trial(index) {
       },
     },
   };
+}
+
+function repairTrial(index) {
+  const record = trial(index);
+  delete record.experiment;
+  record.repair = {
+    sourceVariant: "main",
+    originalItemId: record.itemId.replace("::baseline::", "::main::"),
+    repairRun: `repairs/${task.id}/baseline/attempt-1`
+  };
+  return record;
 }

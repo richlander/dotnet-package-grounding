@@ -90,13 +90,23 @@ function validateRecord(record, task, arm, manifest, requireActivation) {
   if (!record.itemId.endsWith(suffix)) {
     throw new Error(`${label}: itemId identity mismatch`);
   }
-  const expectedHash = manifest.evalHash.replace(/^sha256:/, "").slice(0, 16);
-  if (!record.experiment ||
-      record.experiment.evalHash !== expectedHash ||
-      record.experiment.variant !== arm ||
-      path.basename(record.experiment.evalFile ?? "") !== manifest.evalFile ||
-      !/^[0-9a-f]{16}$/.test(record.experiment.configHash ?? "")) {
-    throw new Error(`${label}: experiment provenance mismatch`);
+  if (record.experiment) {
+    const expectedHash = manifest.evalHash.replace(/^sha256:/, "").slice(0, 16);
+    if (record.experiment.evalHash !== expectedHash ||
+        record.experiment.variant !== arm ||
+        path.basename(record.experiment.evalFile ?? "") !== manifest.evalFile ||
+        !/^[0-9a-f]{16}$/.test(record.experiment.configHash ?? "")) {
+      throw new Error(`${label}: experiment provenance mismatch`);
+    }
+  } else if (record.repair) {
+    const originalSuffix = `::main::${manifest.model}::${task.name}::trial-${index}`;
+    if (record.repair.sourceVariant !== "main" ||
+        !record.repair.repairRun ||
+        !record.repair.originalItemId?.endsWith(originalSuffix)) {
+      throw new Error(`${label}: repair provenance mismatch`);
+    }
+  } else {
+    throw new Error(`${label}: missing experiment or repair provenance`);
   }
   if (record.status !== "success") {
     throw new Error(`${label}: execution status is ${record.status}`);
