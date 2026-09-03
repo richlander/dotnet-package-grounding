@@ -65,6 +65,8 @@ export async function generateMatrix({ allowUnpinned = false } = {}) {
         "skills-source-commit": pins.source.commit,
         "package-source-commit": pins.systemCommandLine.sourceRepositoryCommit,
         "vally-source-commit": pins.vally.sourceCommit,
+        "copilot-sdk-version": pins.vally.copilotSdkVersion,
+        "copilot-cli-version": pins.vally.copilotCliVersion,
         "model-role": model.role
       },
       defaults: {

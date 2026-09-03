@@ -37,6 +37,8 @@ const matrix = {
   k: pins.matrix.k,
   vallyVersion: pins.vally.packageVersion,
   vallyCommit: pins.vally.sourceCommit,
+  copilotSdkVersion: pins.vally.copilotSdkVersion,
+  copilotCliVersion: pins.vally.copilotCliVersion,
   judgeModel: pins.vally.judgeModel,
   judgeReasoningEffort: pins.vally.judgeReasoningEffort,
   pinsHash: await hashFile(path.join(root, "pins.json")),

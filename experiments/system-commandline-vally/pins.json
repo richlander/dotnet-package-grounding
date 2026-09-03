@@ -3,6 +3,8 @@
   "vally": {
     "packageVersion": "0.13.0",
     "sourceCommit": "f7a653272642d52b2b6375bfa3995dddc72fcd49",
+    "copilotSdkVersion": "1.0.9",
+    "copilotCliVersion": "1.0.79",
     "models": [
       {
         "id": "gpt-5.6-luna",
@@ -53,16 +55,16 @@
     "k": 5,
     "models": {
       "gpt-5.6-luna": {
-        "evalHash": "sha256:fdc5947dbc7e98b8d31f920e794f877ae0f9951bd363650bb8ccc870c0ec005c",
-        "graderManifestHash": "sha256:6d0cdcd4e6f2786dd77f8c8ec1e7272d674c9cf1379781efc979fb451a518990"
+        "evalHash": "sha256:9ffdfca5098d0e21c3ad120a20333f8de8f3a2523d83ae1325b6732ff4990f51",
+        "graderManifestHash": "sha256:4a1a6b0e074b401eb938c9a531cfcd5155857a356326b1e0462e077a86c1547b"
       },
       "gpt-5.6-terra": {
-        "evalHash": "sha256:1e637c6e8abd0bf0cd72b79085c9863937188ca2dd42c8961039cfcefeaab1e2",
-        "graderManifestHash": "sha256:e18ce8caabb6aed0fb78e2beadf2931232ea8eb6ba2d027c9e809d89d8402493"
+        "evalHash": "sha256:dee2be458c4e40ac5e216b4f9f46a27060154cb0ea8cc14dd0db654de6cd919b",
+        "graderManifestHash": "sha256:2d537c23339eba5bc96cc12f4efedeab0bd815fbaf4418cd318c17d3f73b4766"
       },
       "gpt-5.6-sol": {
-        "evalHash": "sha256:5056f65187c614cd35599892dd6f5af5fed5b63340f790b80e057ed3acdc8be9",
-        "graderManifestHash": "sha256:2f29bca1acef6ebf9066dfeef72645be1d45b45068b0edc84525e7e2a36ca5a9"
+        "evalHash": "sha256:13fe0a6431ecc2399f5759e9201daa2f0343eea4c357ecd8edbd78b476642a0b",
+        "graderManifestHash": "sha256:906c70bd17913ab9596bea5d5251bef11e8fe85988b95aff22874f58591f28f2"
       }
     }
   }

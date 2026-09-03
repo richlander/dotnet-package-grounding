@@ -22,6 +22,7 @@ those model-specific results and deliberately computes no pooled metrics.
 - .NET SDK: `10.0.300`
 - Vally: `0.13.0`, source commit
   `f7a653272642d52b2b6375bfa3995dddc72fcd49`
+- Copilot SDK/CLI execution closure: `1.0.9` / `1.0.79`
 - Runs: `k=5` per task and arm
 - Agent reasoning effort: `high` for Luna, Terra, and Sol
 - Non-authoritative judge pin: `gpt-5.6-sol`, `high`
