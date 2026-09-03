@@ -48,6 +48,7 @@ internal sealed class LoadedArm
     public required bool IsReadme;
     public required bool IsSkill;
     public bool IsPush;
+    public required string PackageBaseline;
     public required string Path;
 }
 
