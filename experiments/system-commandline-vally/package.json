@@ -1,0 +1,30 @@
+{
+  "name": "system-commandline-vally-evaluation",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.0.0",
+    "npm": ">=11.11.1"
+  },
+  "scripts": {
+    "bootstrap": "node scripts/materialize-inputs.mjs",
+    "pin": "node scripts/materialize-inputs.mjs --allow-unpinned",
+    "lint": "npm run bootstrap && node scripts/lint-matrix.mjs",
+    "controls": "npm run bootstrap && node scripts/verify-controls.mjs",
+    "smoke": "npm run bootstrap && node scripts/smoke-matrix.mjs",
+    "focus": "npm run bootstrap && node scripts/smoke-matrix.mjs --tasks C10,C20,C24 --runs 5",
+    "dry-run": "npm run bootstrap && node scripts/run-matrix.mjs --dry-run",
+    "run": "npm run bootstrap && node scripts/run-matrix.mjs",
+    "analyze": "node scripts/analyze-matrix.mjs",
+    "test": "npm run bootstrap && node --test"
+  },
+  "dependencies": {
+    "@microsoft/vally": "0.13.0",
+    "@microsoft/vally-cli": "0.13.0",
+    "yaml": "2.9.0"
+  },
+  "overrides": {
+    "@github/copilot-sdk": "1.0.9",
+    "@github/copilot": "1.0.79"
+  }
+}

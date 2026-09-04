@@ -48,7 +48,7 @@ var type = new Option<string[]>("--type")
     HelpName = string.Join("|", knownTypes),
     AllowMultipleArgumentsPerToken = true,
 };
-type.CompletionSources.Add(knownTypes); // 2.0.10 takes the strings directly
+type.CompletionSources.Add(knownTypes); // 2.0.11 takes the strings directly
 type.Validators.Add(result =>
 {
     foreach (string value in result.GetValueOrDefault<string[]>() ?? [])
@@ -88,14 +88,17 @@ internal sealed class AddAction(
 }
 ```
 
-On stable 2.0.x, `AcceptOnlyFromAmong` is case-sensitive and its comparer overload is not available.
-Use a case-insensitive validator as above; never normalize by rewriting raw `args`. A rule spanning
-options belongs on `command.Validators`, not inside the action, so invalid input prevents invocation.
-Give sibling commands separate option and action instances when their required/default/arity
-contracts differ. If the requirement says asynchronous action, inherit
+For a finite **case-sensitive** set on either 2.x or 3.x, prefer the package-owned parser rule:
+`option.AcceptOnlyFromAmong("dev", "prod")`. For case-insensitive matching, pull the
+3.x-additions skill when targeting 3.x; only stable 2.x needs the validator fallback shown above.
+Never normalize by rewriting raw `args`.
+
+A rule spanning options belongs on `command.Validators`, not inside the action, so invalid input
+prevents invocation. Give sibling commands separate option and action instances when their
+required/default/arity contracts differ. If the requirement says asynchronous action, inherit
 `AsynchronousCommandLineAction` even when the initial body has no naturally asynchronous operation.
 
-For 2.0.10 completion, copy `option.CompletionSources.Add(knownValues)` exactly. The collection takes
+For 2.0.11 completion, copy `option.CompletionSources.Add(knownValues)` exactly. The collection takes
 the strings directly; do **not** invent a `CompletionSource.ForValues(...)` wrapper and then remove
 completion when that obsolete shape fails. Likewise, do not remove an option's parser default to make
 an all-or-none check easier: keep the contract and use `GetResult(...).Implicit` for explicit presence.

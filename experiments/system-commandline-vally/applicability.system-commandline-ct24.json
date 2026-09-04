@@ -1,0 +1,41 @@
+{
+  "schema": 1,
+  "suite": "System.CommandLine CT-24",
+  "source": {
+    "repository": "richlander/dotnet-package-skills",
+    "commit": "42c65bfc1344d21d16be1024f1a6b06f064e2d23",
+    "path": "examples/system-commandline/grounding/system-commandline/eval.yaml"
+  },
+  "skills": [
+    {
+      "name": "system-commandline",
+      "activationNames": ["system-commandline"],
+      "tasks": ["C01", "C02", "C03", "C04", "C05", "C06", "C24"]
+    },
+    {
+      "name": "system-commandline-subcommands-and-help",
+      "activationNames": ["system-commandline-subcommands-and-help"],
+      "tasks": ["C07", "C08", "C09", "C18", "C22"]
+    },
+    {
+      "name": "system-commandline-options-and-arguments",
+      "activationNames": ["system-commandline-options-and-arguments"],
+      "tasks": ["C10", "C11", "C14", "C15", "C16"]
+    },
+    {
+      "name": "system-commandline-actions-and-invocation",
+      "activationNames": ["system-commandline-actions-and-invocation"],
+      "tasks": ["C12", "C17"]
+    },
+    {
+      "name": "system-commandline-beta-to-ga-migration",
+      "activationNames": ["system-commandline-beta-to-ga-migration"],
+      "tasks": ["C13", "C23"]
+    },
+    {
+      "name": "system-commandline-net-3x-additions",
+      "activationNames": ["system-commandline-net-3x-additions"],
+      "tasks": ["C19", "C20", "C21"]
+    }
+  ]
+}

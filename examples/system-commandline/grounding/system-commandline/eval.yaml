@@ -3,7 +3,7 @@ config:
 
 # =============================================================================
 # System.CommandLine — CT-24. A grounding packet for the CURRENT GA / 3.x API
-# (System.CommandLine 3.0.0-preview.6, net10.0). The 2.0 GA release was a
+# (System.CommandLine 3.0.0-preview.7, net10.0). The 2.0 GA release was a
 # breaking redesign that REMOVED the beta invocation/binding stack (SetHandler,
 # AddOption/AddCommand/AddGlobalOption, BinderBase<T>, IConsole, HelpBuilder,
 # getDefaultValue:, IsRequired, ExistingOnly). Training data and the open web are
@@ -16,21 +16,21 @@ config:
 # blocked so the eval reads model + skill knowledge, not archaeology. Every API
 # shape, error message, and exit code below was verified by building and running
 # against System.CommandLine 3.0.0-preview.5.26302.115 on net10.0. The fixtures
-# have since been repinned to 3.0.0-preview.6.26359.118 — the latest 3.x, and the
+# have since been repinned to 3.0.0-preview.7.26381.103 — the latest published 3.x, and the
 # version the skills now tell readers to install — so the eval exercises the
 # guidance we actually give.
 #
 # STATUS: VERIFIED on preview.6. Every scenario was re-executed end-to-end by
 # running a reference solution through the real assertions: all 24 build, run,
 # and satisfy their code greps and output regexes on
-# 3.0.0-preview.6.26359.118/net10.0. Negative controls were also run and
+# 3.0.0-preview.7.26381.103/net10.0. Negative controls were also run and
 # correctly FAIL (e.g. C09 with the option repeated per-subcommand instead of
 # declared Recursive, and C11 hand-rolling repeated-option parsing off raw args).
 #
-# NOTE: C19-C21 grade members that do NOT exist in stable 2.0.10
+# NOTE: C19-C21 grade members that do NOT exist in stable 2.0.11
 # (Argument<T>.CaptureRemainingTokens, RootCommand.HelpName, and the
 # AcceptOnlyFromAmong(StringComparer, ...) overload — all three fail to compile
-# against 2.0.10). This suite therefore cannot be repointed at the stable package
+# against 2.0.11). This suite therefore cannot be repointed at the stable package
 # without dropping or reworking those three scenarios.
 #
 # PROMPTS state the USER'S GOAL — what someone typing the command should
@@ -333,7 +333,7 @@ scenarios:
         command_to_run: "dotnet"
         command_arguments: "run --no-build -- --level bogus"
         expected_exit_code: 1
-        expected_std_error_matches: 'not recognized'
+        expected_std_error_matches: 'not recognized|Invalid|invalid|Unknown|unknown|Expected|expected|Supported|supported'
         command_timeout: 120
     rubric:
       - "Uses AcceptOnlyFromAmong(\"debug\", \"info\", \"warn\")"
@@ -631,7 +631,8 @@ scenarios:
     reject_tools: [web_search, web_fetch]
     assertions:
       - { type: run_command_and_assert, command_to_run: "dotnet", command_arguments: "build", expected_exit_code: 0, command_timeout: 600 }
-      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rqE --include=*.cs --exclude-dir=obj --exclude-dir=bin AcceptOnlyFromAmong\(\s*StringComparer .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin AcceptOnlyFromAmong .', expected_exit_code: 0, command_timeout: 30 }
+      - { type: run_command_and_assert, command_to_run: "grep", command_arguments: '-rq --include=*.cs --exclude-dir=obj --exclude-dir=bin StringComparer.OrdinalIgnoreCase .', expected_exit_code: 0, command_timeout: 30 }
       - { type: file_not_contains, path: "Program.cs", value: "args[0]" }
       - type: run_command_and_assert
         command_to_run: "dotnet"

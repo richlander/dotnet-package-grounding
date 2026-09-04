@@ -8,6 +8,10 @@ demand** and a consuming repo can remove. The arrangement we settled on, and the
 document assumes throughout, is a small **base skill** (named for the package) plus a handful of
 **domain skills** for its long-tail workflows.
 
+New measurements use the three-model OpenAI cohort defined in the
+[OpenAI model transition](./openai-model-transition.md). Anthropic results remain frozen historical
+evidence and are not pooled or trended with the new measurement epoch.
+
 ## Why grounding is needed
 
 When an agent touches a package, the best it usually gets is the package README, and often not even
@@ -378,6 +382,8 @@ grounding unlocks tasks they never delivered, and slashes the cost and time of t
 
 - **[getting-started.md](./getting-started.md)** — the workflow end to end, stage by stage, and who
   should drive each stage.
+- **[openai-model-transition.md](./openai-model-transition.md)** — the active model cohort,
+  measurement-epoch boundary, and System.CommandLine upstream gate.
 - **[grounding-eval-methodology.md](./grounding-eval-methodology.md)** — the full measurement approach.
 - **[quality-card-model.md](./quality-card-model.md)** — how a run becomes a graded, gated decision.
 - **[scoring.md](./scoring.md)** — turning a graded run into a reviewable grounding PR.
