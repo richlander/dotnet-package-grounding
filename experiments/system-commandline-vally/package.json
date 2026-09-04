@@ -12,6 +12,7 @@
     "lint": "npm run bootstrap && node scripts/lint-matrix.mjs",
     "controls": "npm run bootstrap && node scripts/verify-controls.mjs",
     "smoke": "npm run bootstrap && node scripts/smoke-matrix.mjs",
+    "focus": "npm run bootstrap && node scripts/smoke-matrix.mjs --tasks C10,C20,C24 --runs 5",
     "dry-run": "npm run bootstrap && node scripts/run-matrix.mjs --dry-run",
     "run": "npm run bootstrap && node scripts/run-matrix.mjs",
     "analyze": "node scripts/analyze-matrix.mjs",

@@ -8,7 +8,11 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const repositoryRoot = path.resolve(root, "../..");
 const pins = JSON.parse(await readFile(path.join(root, "pins.json"), "utf8"));
 const outputRoot = path.join(root, ".cache", "matrix-smoke");
-const taskIds = ["C01", "C13", "C20"];
+const taskIds = (optionValue("--tasks") ?? "C01,C13,C20").split(",").filter(Boolean);
+const runs = Number(optionValue("--runs") ?? "1");
+if (!Number.isInteger(runs) || runs < 1) {
+  throw new Error(`--runs must be a positive integer, got '${runs}'`);
+}
 await rm(outputRoot, { recursive: true, force: true });
 
 for (const model of pins.vally.models) {
@@ -20,9 +24,12 @@ for (const model of pins.vally.models) {
     const smokeManifest = {
       ...manifest,
       synthetic: true,
-      k: 1,
+      k: runs,
       tasks: manifest.tasks.filter((task) => taskIds.includes(task.id))
     };
+    if (smokeManifest.tasks.length !== taskIds.length) {
+      throw new Error(`${model.id}: unknown or duplicate task in ${taskIds.join(",")}`);
+    }
     const modelRoot = path.join(outputRoot, model.id);
     const paired = path.join(modelRoot, "paired");
     await mkdir(path.join(paired, "baseline"), { recursive: true });
@@ -36,8 +43,8 @@ for (const model of pins.vally.models) {
           "eval",
           "--eval-spec", `generated/eval.${model.id}.yaml`,
           "--tag", `task-id=${taskId}`,
-          "--runs", "1",
-          "--workers", "1",
+          "--runs", String(runs),
+          "--workers", String(Math.min(runs, 5)),
           "--max-retries", "0",
           "--output-dir", output
         ];
@@ -45,9 +52,11 @@ for (const model of pins.vally.models) {
           args.push("--skill-dir", "vendor/skills");
         }
         run(args, isolation);
-        const record = await readTrial(output);
-        validateTelemetry(record, model.id, arm);
-        records[arm].push(canonicalize(record, arm));
+        const taskRecords = await readTrials(output, runs);
+        for (const record of taskRecords) {
+          validateTelemetry(record, model.id, arm);
+          records[arm].push(canonicalize(record, arm));
+        }
       }
     }
 
@@ -64,7 +73,7 @@ for (const model of pins.vally.models) {
       [
         "vally", "task-card", paired,
         "--grader-manifest", manifestPath,
-        "--runs", "1",
+        "--runs", String(runs),
         "--model", model.id,
         "--iet-model", "openai",
         "--no-title"
@@ -90,7 +99,7 @@ function run(args, isolation) {
   }
 }
 
-async function readTrial(directory) {
+async function readTrials(directory, expected) {
   const timestamps = (await readdir(directory, { withFileTypes: true }))
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
@@ -106,10 +115,10 @@ async function readTrial(directory) {
     .filter(Boolean)
     .map(JSON.parse)
     .filter((record) => record.type === "trial-result");
-  if (records.length !== 1) {
-    throw new Error(`${directory}: expected one trial-result, found ${records.length}`);
+  if (records.length !== expected) {
+    throw new Error(`${directory}: expected ${expected} trial-results, found ${records.length}`);
   }
-  return records[0];
+  return records;
 }
 
 function validateTelemetry(record, model, arm) {
@@ -130,4 +139,14 @@ function validateTelemetry(record, model, arm) {
 function canonicalize(record, variant) {
   const itemId = record.itemId?.replace("::main::", `::${variant}::`);
   return { ...record, variant, ...(itemId ? { itemId } : {}) };
+}
+
+function optionValue(name) {
+  const index = process.argv.indexOf(name);
+  if (index < 0) return undefined;
+  const value = process.argv[index + 1];
+  if (!value || value.startsWith("--")) {
+    throw new Error(`${name} requires a value`);
+  }
+  return value;
 }

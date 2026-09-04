@@ -82,6 +82,10 @@ The smoke runs C01, C13, and C20 once per arm on all three models. It verifies m
 reasoning compatibility, execution completion, token/cache/duration telemetry, grounded activation
 telemetry, exact graders, and adapter compatibility before the 720-session full matrix.
 
+After an evidence-driven shelf revision, `npm run focus` runs C10, C20, and C24 at `k=5` in both
+arms for every model. The same script accepts explicit `--tasks C01,C02` and `--runs 3` arguments;
+focused results are diagnostic and do not replace a complete shelf recertification.
+
 ## Output
 
 Full results are ignored under:
