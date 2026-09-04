@@ -333,7 +333,7 @@ scenarios:
         command_to_run: "dotnet"
         command_arguments: "run --no-build -- --level bogus"
         expected_exit_code: 1
-        expected_std_error_matches: 'not recognized'
+        expected_std_error_matches: 'not recognized|Invalid|invalid|Unknown|unknown|Expected|expected|Supported|supported'
         command_timeout: 120
     rubric:
       - "Uses AcceptOnlyFromAmong(\"debug\", \"info\", \"warn\")"

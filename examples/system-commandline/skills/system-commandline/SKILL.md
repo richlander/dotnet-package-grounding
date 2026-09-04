@@ -88,11 +88,15 @@ internal sealed class AddAction(
 }
 ```
 
-On stable 2.0.x, `AcceptOnlyFromAmong` is case-sensitive and its comparer overload is not available.
-Use a case-insensitive validator as above; never normalize by rewriting raw `args`. A rule spanning
-options belongs on `command.Validators`, not inside the action, so invalid input prevents invocation.
-Give sibling commands separate option and action instances when their required/default/arity
-contracts differ. If the requirement says asynchronous action, inherit
+For a finite **case-sensitive** set on either 2.x or 3.x, prefer the package-owned parser rule:
+`option.AcceptOnlyFromAmong("dev", "prod")`. On 3.x, case-insensitive matching uses the comparer
+overload from the 3.x-additions skill:
+`option.AcceptOnlyFromAmong(StringComparer.OrdinalIgnoreCase, "dev", "prod")`. Only stable 2.x needs
+the case-insensitive validator fallback shown above. Never normalize by rewriting raw `args`.
+
+A rule spanning options belongs on `command.Validators`, not inside the action, so invalid input
+prevents invocation. Give sibling commands separate option and action instances when their
+required/default/arity contracts differ. If the requirement says asynchronous action, inherit
 `AsynchronousCommandLineAction` even when the initial body has no naturally asynchronous operation.
 
 For 2.0.11 completion, copy `option.CompletionSources.Add(knownValues)` exactly. The collection takes

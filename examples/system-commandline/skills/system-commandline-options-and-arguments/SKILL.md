@@ -3,10 +3,11 @@ name: system-commandline-options-and-arguments
 version: 2.0.0
 description: >-
   Use when declaring or configuring System.CommandLine inputs — Option<T> and Argument<T>: names vs
-  aliases, Description, HelpName, completion, Required, DefaultValueFactory, Arity, stable-2.x
-  case-insensitive known values, collection parsing, existing file/directory requirements, rejecting
-  bad input, and checking explicit option presence across a command. This is where CompletionSources,
-  CustomParser, Validators.Add, GetResult, and result.AddError belong.
+  aliases, Description, HelpName, completion, Required, DefaultValueFactory, Arity, finite known
+  values, collection parsing, existing file/directory requirements, rejecting bad input, and
+  checking explicit option presence across a command. Case-sensitive sets use AcceptOnlyFromAmong
+  on 2.x or 3.x; case-insensitive sets use its comparer overload on 3.x and a validator only on
+  stable 2.x.
 ---
 
 # System.CommandLine: options & arguments
@@ -104,7 +105,23 @@ var path = new Argument<FileInfo>("path")
 path.AcceptExistingOnly();                        // NOT ExistingOnly(); also on Argument<DirectoryInfo>
 ```
 
-## Known values, completion, and stable 2.x case-insensitivity
+## Known values, completion, and version-specific case-insensitivity
+
+Choose the package-owned constraint before writing a validator:
+
+```csharp
+// 2.x or 3.x: exact, case-sensitive finite set.
+var environment = new Option<string>("--env");
+environment.AcceptOnlyFromAmong("dev", "prod");
+
+// 3.x only: finite set with explicit comparison.
+var level = new Option<string>("--level");
+level.AcceptOnlyFromAmong(StringComparer.OrdinalIgnoreCase, "debug", "info", "warn");
+```
+
+If a 3.x task asks for case-insensitive known values, use the comparer overload above and pull the
+3.x-additions skill for the version-specific surface. Do not substitute the stable fallback below.
+On stable 2.x, the comparer overload does not exist, so use a validator:
 
 ```csharp
 string[] knownFormats = ["json", "yaml"];
@@ -126,11 +143,8 @@ format.Validators.Add(result =>
 ```
 
 Derive `HelpName`, completion, and validation from one list so they cannot drift. `HelpName` is the
-text *inside* generated angle brackets: use `"json|yaml"`, not `"<json|yaml>"`.
-
-`AcceptOnlyFromAmong("json", "yaml")` is concise but **case-sensitive on stable 2.0.x**. The
-`AcceptOnlyFromAmong(StringComparer, ...)` overload is 3.x-only. On 2.0.x, use a custom parser or
-validator with `StringComparison.OrdinalIgnoreCase`; never normalize by rewriting raw `args`.
+text *inside* generated angle brackets: use `"json|yaml"`, not `"<json|yaml>"`. Never normalize by
+rewriting raw `args`.
 
 For a required collection that accepts several values after one token, combine the pieces:
 
