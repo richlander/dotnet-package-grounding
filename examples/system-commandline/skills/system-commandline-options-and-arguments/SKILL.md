@@ -6,8 +6,8 @@ description: >-
   aliases, Description, HelpName, completion, Required, DefaultValueFactory, Arity, finite known
   values, collection parsing, existing file/directory requirements, rejecting bad input, and
   checking explicit option presence across a command. Case-sensitive sets use AcceptOnlyFromAmong
-  on 2.x or 3.x; case-insensitive sets use its comparer overload on 3.x and a validator only on
-  stable 2.x.
+  on 2.x or 3.x. For case-insensitive sets, use the 3.x-additions skill on 3.x; this skill carries
+  the validator fallback for stable 2.x.
 ---
 
 # System.CommandLine: options & arguments
@@ -114,14 +114,11 @@ Choose the package-owned constraint before writing a validator:
 var environment = new Option<string>("--env");
 environment.AcceptOnlyFromAmong("dev", "prod");
 
-// 3.x only: finite set with explicit comparison.
-var level = new Option<string>("--level");
-level.AcceptOnlyFromAmong(StringComparer.OrdinalIgnoreCase, "debug", "info", "warn");
 ```
 
-If a 3.x task asks for case-insensitive known values, use the comparer overload above and pull the
-3.x-additions skill for the version-specific surface. Do not substitute the stable fallback below.
-On stable 2.x, the comparer overload does not exist, so use a validator:
+If a 3.x task asks for case-insensitive known values, pull the 3.x-additions skill for the
+version-specific package surface. Do not substitute the stable fallback below. On stable 2.x, use a
+validator:
 
 ```csharp
 string[] knownFormats = ["json", "yaml"];

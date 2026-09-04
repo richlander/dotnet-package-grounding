@@ -89,10 +89,9 @@ internal sealed class AddAction(
 ```
 
 For a finite **case-sensitive** set on either 2.x or 3.x, prefer the package-owned parser rule:
-`option.AcceptOnlyFromAmong("dev", "prod")`. On 3.x, case-insensitive matching uses the comparer
-overload from the 3.x-additions skill:
-`option.AcceptOnlyFromAmong(StringComparer.OrdinalIgnoreCase, "dev", "prod")`. Only stable 2.x needs
-the case-insensitive validator fallback shown above. Never normalize by rewriting raw `args`.
+`option.AcceptOnlyFromAmong("dev", "prod")`. For case-insensitive matching, pull the
+3.x-additions skill when targeting 3.x; only stable 2.x needs the validator fallback shown above.
+Never normalize by rewriting raw `args`.
 
 A rule spanning options belongs on `command.Validators`, not inside the action, so invalid input
 prevents invocation. Give sibling commands separate option and action instances when their
