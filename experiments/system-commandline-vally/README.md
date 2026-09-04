@@ -17,7 +17,7 @@ those model-specific results and deliberately computes no pooled metrics.
 ## Pinned candidate
 
 - Skills and CT-24 source: `richlander/dotnet-package-skills` at
-  `d43a0f8fa69767df307dedf166e56c7c72d19b6a`
+  `42c65bfc1344d21d16be1024f1a6b06f064e2d23`
 - System.CommandLine: `3.0.0-preview.7.26381.103`
 - .NET SDK: `10.0.300`
 - Vally: `0.13.0`, source commit

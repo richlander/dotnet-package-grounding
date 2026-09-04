@@ -37,34 +37,34 @@
   },
   "source": {
     "repository": "richlander/dotnet-package-skills",
-    "commit": "d43a0f8fa69767df307dedf166e56c7c72d19b6a",
+    "commit": "42c65bfc1344d21d16be1024f1a6b06f064e2d23",
     "evalPath": "examples/system-commandline/grounding/system-commandline/eval.yaml",
     "skillsPath": "examples/system-commandline/skills",
-    "evalHash": "sha256:a2301e178cc71bd70b7e0676c162d09466ed9d6a26deb2faf3616feb0e443d3c"
+    "evalHash": "sha256:3d6c48c3882a2f03450cd0c510115636c57b01da1161ad8090789e4fd49ff36b"
   },
   "fixtures": {
     "hash": "sha256:60df5f5708595ac4f79fdc94046f4be1ce32ba755b43d015deee5232cc5b1e77"
   },
   "shelf": {
-    "hash": "sha256:ab19f69aa1c0d93e74e7ac7c1f84e6ca39c2c78731c8af204a299eb6bd4e6bff"
+    "hash": "sha256:a7fe49b0eea8d3bf5c7398645255e1dc4f9e66d84de89e00f88fc71cc3492d23"
   },
   "applicability": {
-    "hash": "sha256:d475595766447e018a66f77f6db40ff6ecdd07d3635f5e2afe7d69b30a6a937e"
+    "hash": "sha256:9b19bd75dd3afa46ff4dceaf1ccf1bc6d7991c9ec196e84c06a848af82970a35"
   },
   "matrix": {
     "k": 5,
     "models": {
       "gpt-5.6-luna": {
-        "evalHash": "sha256:5d232ce6f7aae8563f1ad39faa0b127ead1f8d206e304f93075359405dbf441f",
-        "graderManifestHash": "sha256:628b1ec11693f9ce79122672bdeec61ea2cbbcce27df99f3cb3cd2eca3fb557c"
+        "evalHash": "sha256:8d968adf476dc8af8490673c032b24f4bcaff1fb5fcfaa0f5c4e0704c7f14524",
+        "graderManifestHash": "sha256:42a58e62bcb365b4cacda9a471c382fab5e9f54fb228458f2e0fab2538e06344"
       },
       "gpt-5.6-terra": {
-        "evalHash": "sha256:db35000ec41e97143303ac53a2e4bf8fa2d18aa1ce124686392f6e7cb56019c0",
-        "graderManifestHash": "sha256:9c40967abe11791da3ea4182a84bacbeef60a1cfe257401fe3b6a4094dad8075"
+        "evalHash": "sha256:cccbcb87494bae014eb91b88582abeadd7bda98a1ea58d8416babd60ddb30b7b",
+        "graderManifestHash": "sha256:99a9b1e38c8ad99464d5d55fe5950497d823d7d1a364568279e59df4f3d3475d"
       },
       "gpt-5.6-sol": {
-        "evalHash": "sha256:00c6a6b416e2c2e3a9795efedbe7ddc9fc8a1a66bcbd819754907a766f8aebe9",
-        "graderManifestHash": "sha256:624d47a111a62c8924fdf097262d5ff5370a07eb5cceb76850e12f41c2b50325"
+        "evalHash": "sha256:3273257e971afee7b45c038493bdb70fed2e0b83904fcbb72af94c30534f3e11",
+        "graderManifestHash": "sha256:95f21256fe8764baf7e86b0823ab9e7ab13dbb9785009d465bc899c9c2b14f97"
       }
     }
   }

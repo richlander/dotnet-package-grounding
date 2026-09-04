@@ -3,7 +3,7 @@
   "suite": "System.CommandLine CT-24",
   "source": {
     "repository": "richlander/dotnet-package-skills",
-    "commit": "d43a0f8fa69767df307dedf166e56c7c72d19b6a",
+    "commit": "42c65bfc1344d21d16be1024f1a6b06f064e2d23",
     "path": "examples/system-commandline/grounding/system-commandline/eval.yaml"
   },
   "skills": [
