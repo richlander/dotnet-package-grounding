@@ -18,7 +18,7 @@ It usually means the ungrounded model knew less about that package.
 | Package | Latest full-suite result | What the result establishes | Current limitation |
 | --- | --- | --- | --- |
 | Markout | Active CT-24, Haiku, `k=5`, explicit Delivers grading | Mean Delivered yield improved 0.575 → 0.842 and do-no-harm is clean | The Total-IET point ratio is ×0.83, but its 95% upper bound is ×1.02, so the current economic gate does not clear |
-| System.CommandLine | Preview.7 CT-24, GPT-5.6 Luna/Terra/Sol, `k=5`, upstream Vally | Model-specific deterministic cards: Luna 69→103, Terra 79→106, and Sol 100→106 Delivered runs | The candidate needs finite-value routing and base-skill revisions before upstream; Sol costs 9% more on shared work |
+| System.CommandLine | Preview.7 CT-24, GPT-5.6 Luna/Terra/Sol, `k=5`, upstream Vally | Revised model-specific deterministic cards: Luna 71→115, Terra 77→115, and Sol 100→108 Delivered runs | Four skills are ready for upstream; the base and actions skills remain too expensive, especially on Sol |
 | System.Text.Json | Current CT-24, Haiku, `k=5`, explicit Delivers grading, doc-stripped | Mean Delivered yield improved 0.767 → 0.833; strictness and migration carry the return; do-no-harm is clean | Shared reliability includes zero and Total-IET is ×1.02 [×0.93, ×1.12], so no current economic certification |
 
 ## Markout
@@ -97,49 +97,58 @@ that the present shelf has a certified ≥20% Total-IET margin.
 
 ## System.CommandLine
 
-The first accepted OpenAI/Vally matrix measured the production-identity six-skill shelf against
-System.CommandLine `3.0.0-preview.7.26381.103`. Each of the 24 tasks ran five times in baseline and
-grounded arms for each GPT-5.6 model. Only named deterministic graders reconstructed
+The revised OpenAI/Vally matrix measured the production-identity six-skill shelf against
+System.CommandLine `3.0.0-preview.7.26381.103`. It includes the finite-value routing and deterministic
+stderr-grading revisions prompted by the first accepted matrix. Each of the 24 tasks ran five times
+in baseline and grounded arms for each GPT-5.6 model. Only named deterministic graders reconstructed
 `Fails < Satisfies < Delivers`; models were analyzed separately and were not pooled.
 
 | Model | Delivered runs | Coverage (both / grounded-only / neither) | Fidelity | Shared Total-IET | Do-no-harm loss mass |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Luna | 69/120 → 103/120 (**+28.3 pts**) | 20 / 3 / 1 | 59.5% → 88.8% | **×0.81** | 0.800 |
-| Terra | 79/120 → 106/120 (**+22.5 pts**) | 20 / 3 / 1 | 71.2% → 92.2% | **×0.95** | 0.200 |
-| Sol | 100/120 → 106/120 (**+5.0 pts**) | 22 / 2 / 0 | 85.5% → 90.6% | **×1.09** | 0.600 |
+| Luna | 71/120 → 115/120 (**+36.7 pts**) | 20 / 3 / 1 | 61.7% → 95.8% | **×0.94** | 0.000 |
+| Terra | 77/120 → 115/120 (**+31.7 pts**) | 20 / 4 / 0 | 65.3% → 95.8% | **×0.91** | 0.000 |
+| Sol | 100/120 → 108/120 (**+6.7 pts**) | 24 / 0 / 0 | 83.3% → 90.0% | **×1.09** | 0.600 |
 
 The shelf is decisively useful to Luna and Terra. Sol has much less capability headroom and pays 9%
-more IET on shared work, so the present shelf is not an all-model economic win. There was no
-baseline-only productive task. Luna required nine model-local whole-`(task, arm)` infrastructure
-repairs; Terra and Sol required none. Source attempts, repair attempts, canonical outputs, and hashes
-were retained.
+more IET on shared work, so the complete six-skill shelf is not an all-model economic win. There was
+no baseline-only productive task. Luna and Terra required no infrastructure repairs. Sol required
+two model-local whole-`(task, arm)` repairs, both in the baseline arm. Source attempts, repair
+attempts, canonical outputs, and hashes were retained.
 
-The task card identifies two candidate defects rather than a reason to broaden the shelf:
+The revisions corrected the demonstrated content defects:
 
-- **Finite known values:** `options-and-arguments` steered C10 and the C24 capstone toward a custom
-  validator instead of the package's `AcceptOnlyFromAmong` surface. The custom C10 solutions rejected
-  bad input correctly, but the source task's runtime assertion recognized only the package-generated
-  "`not recognized`" message, so it collapsed a working alternative from `Satisfies` to `Fails`.
-  C20 also pulled `options-and-arguments` consistently but the 3.x-specific skill inconsistently.
-- **Equivalent current command composition:** two Sol C08 runs used valid collection initializers
-  (`Subcommands = { ... }` or the command collection initializer) rather than the exact
-  `Subcommands.Add` spelling. Behavior passed; only the convention-tier grader failed. This is an
-  evaluator-fidelity caveat, not evidence that the produced CLIs were broken.
+- C10 now reaches 5/5 on Luna, 2/5 on Terra, and 5/5 on Sol; the satisfy-tier contract accepts any
+  clear parse-time rejection while the fidelity tier still requires `AcceptOnlyFromAmong`.
+- C20 now moves 0/5 → 5/5 on Luna, 0/5 → 5/5 on Terra, and 2/5 → 5/5 on Sol. The 3.x skill activated
+  in every grounded trial, and every trial used the comparer-aware finite-value API.
+- C24 now reaches 5/5 grounded on all three models.
+
+The remaining apparent Sol loss is not a behavioral regression. All loss mass comes from C07/C08
+implementations that built, ran, and produced the required output while using supported collection
+initializers (`new RootCommand { command }` or `Subcommands = { ... }`) instead of the exact
+`Subcommands.Add` spelling required by the convention grader. The next evaluation revision should
+forbid the removed `AddCommand` API rather than require one valid current spelling.
+
+C15 exposes a second evaluator-design caveat. Most agents used a typed `Option<int>` plus an
+option-level validator, reported the range error through `AddError`, and passed both behavior checks.
+That is a sound implementation of the prompt's range constraint, but it remains at `Satisfies`
+because the task is named and graded as a `CustomParser` task without requiring a genuinely custom
+syntax. The next suite revision should use a task whose raw syntax actually requires custom parsing.
 
 The natural-activation cards support these per-skill dispositions:
 
 | Skill | Disposition | Evidence |
 | --- | --- | --- |
-| `system-commandline` | **Revise** | Strong Luna/Terra return, but no Sol return and shared IET ×1.27 on Sol; narrow the base to its core contract and routing |
-| `system-commandline-options-and-arguments` | **Revise** | Pulled 66/74/74 times, including 44–52% of non-primary trials; finite-value guidance obscures the 3.x route and the simpler case-sensitive API |
-| `system-commandline-net-3x-additions` | **Revise** | Strong +0.533/+0.400/+0.333 target-family reliability, but only 4/10/13 of 15 target pulls and weak C20 reliability |
-| `system-commandline-subcommands-and-help` | **Ship** | Luna and Terra reach 25/25 with large return and low off-target pull; Sol's apparent C08 loss is valid alternate current syntax |
-| `system-commandline-actions-and-invocation` | **Ship** | Grounded reaches 10/10 target runs for every model and adds Terra/Sol reliability; the dedicated-action contract remains distinct |
-| `system-commandline-beta-to-ga-migration` | **Ship** | Grounded reaches 10/10 for every model, with 0/110 off-target pulls and material Luna/Terra efficiency gains |
+| `system-commandline` | **Revise** | Strong Luna/Terra return but no Sol reliability gain; target Total-IET is ×1.15/×1.17/×1.46. Narrow the base to the smallest core contract before proposing it upstream |
+| `system-commandline-options-and-arguments` | **Ship** | Target reliability improves +0.280/+0.320/+0.000 with Total-IET ×0.82/×0.98/×0.99. The apparent C15 fidelity misses are sound validator solutions to an underspecified custom-parser task |
+| `system-commandline-net-3x-additions` | **Ship** | Grounded reaches 15/15 on every model; reliability improves +0.667/+0.800/+0.400 with Total-IET ×0.78/×0.65/×0.78 and no target or off-target harm |
+| `system-commandline-subcommands-and-help` | **Ship** | Strong Luna/Terra gains with Total-IET ×0.85/×0.73; Sol is effectively behavior-neutral once valid collection initializers are recognized |
+| `system-commandline-actions-and-invocation` | **Revise** | Reliability improves +0.300/+0.200/+0.200, but target Total-IET is ×1.09/×1.32/×1.53. Reduce the skill to the unique action and invocation claims before upstream |
+| `system-commandline-beta-to-ga-migration` | **Ship** | Grounded reaches 10/10 on every model, with zero off-target pulls and Total-IET ×0.80/×0.63/×0.85 |
 
-These are candidate-level decisions, not an upstream-ready certificate. Revise the three named
-skills, correct the C10 satisfy-tier assertion so it accepts any clear parse-time rejection, and
-remeasure the changed shelf before opening the upstream pull request.
+The per-skill decision is therefore to propose four skills upstream and hold back the base and
+actions skills for a later, smaller revision. The complete local shelf remains useful evidence, but
+its aggregate economics must not be presented as the upstream ship decision.
 
 The previous stable-2.0.10 CT-18 Haiku result remains supporting evidence: it produced a large return
 gain and no baseline-only productive task, but predated explicit Delivers grading, used only six
@@ -185,9 +194,9 @@ guidance. Do not claim a general reliability improvement or economic certificati
 1. **Markout now has the strongest current instrument**, and its fresh active-suite card is
    return-positive and do-no-harm clean, but the economic interval upper bound (×1.02) misses the
    ×0.80 certification threshold.
-2. **System.CommandLine now has production-identity OpenAI/Vally evidence**: Luna and Terra have
-   strong return, while Sol exposes base-shelf cost and fidelity regressions that must be revised
-   before upstream.
+2. **System.CommandLine now has revised production-identity OpenAI/Vally evidence**: four skills are
+   ready for an upstream proposal; the base and actions skills remain local until their cost is
+   reduced. Sol's recorded loss mass is an exact-spelling grader defect, not broken behavior.
 3. **System.Text.Json has selective rather than general value**: its current retrieval-equivalent
    card is return-positive and do-no-harm clean, but reliability is unestablished and economics fail.
 
