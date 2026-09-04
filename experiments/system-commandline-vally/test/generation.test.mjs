@@ -57,3 +57,17 @@ test("translation separates user-visible ends from API means", async () => {
   assert.ok(satisfies.every((grader) => grader.type === "run-command"));
   assert.ok(delivers.some((grader) => grader.type === "file-not-contains"));
 });
+
+test("adapts stderr regex checks into deterministic Vally graders", async () => {
+  const spec = parse(await readFile(
+    path.join(root, "generated", "eval.gpt-5.6-luna.yaml"),
+    "utf8"
+  ));
+  const c10 = spec.stimuli.find((stimulus) => stimulus.tags["task-id"] === "C10");
+  const stderr = c10.graders.find((grader) =>
+    grader.name.endsWith("-stderr-matches")
+  );
+  assert.equal(stderr.type, "run-command");
+  assert.match(stderr.config.command, /2>&1 1>\/dev\/null \| grep -E/);
+  assert.equal(stderr.config.expected_exit_code, 0);
+});

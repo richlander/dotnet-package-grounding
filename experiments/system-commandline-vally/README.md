@@ -17,7 +17,7 @@ those model-specific results and deliberately computes no pooled metrics.
 ## Pinned candidate
 
 - Skills and CT-24 source: `richlander/dotnet-package-skills` at
-  `bac0194ab5f0f4ef414ec21a06ad1e1ba7665200`
+  `d43a0f8fa69767df307dedf166e56c7c72d19b6a`
 - System.CommandLine: `3.0.0-preview.7.26381.103`
 - .NET SDK: `10.0.300`
 - Vally: `0.13.0`, source commit
@@ -50,6 +50,11 @@ Classification is reconstructed from named grader results:
 - all satisfies and delivers pass → `Delivers`.
 
 Only deterministic `completed`, `run-command`, and `file-not-contains` graders are admitted.
+
+Vally 0.13's command grader supports regex matching for stdout but only substring matching for
+stderr. The adapter preserves source assertions that require stderr regex alternatives by emitting
+two named deterministic graders: one checks the original command's exit code, and one replays the
+command with stderr piped to `grep -E`. Judge output participates in neither check.
 
 ## Commands
 

@@ -154,7 +154,7 @@ function translateScenario(scenario, scenarioIndex) {
     },
     graders: [
       { type: "completed", name: "harness/completed" },
-      ...(scenario.assertions ?? []).map((assertion, assertionIndex) =>
+      ...(scenario.assertions ?? []).flatMap((assertion, assertionIndex) =>
         translateAssertion(taskId, assertion, assertionIndex)
       )
     ]
@@ -170,14 +170,14 @@ function translateAssertion(taskId, assertion, assertionIndex) {
   const name = `${tier}/${number}-${assertionName(assertion)}`;
 
   if (assertion.type === "file_not_contains") {
-    return {
+    return [{
       type: "file-not-contains",
       name,
       config: {
         path: assertion.path,
         value: assertion.value
       }
-    };
+    }];
   }
   if (assertion.type !== "run_command_and_assert") {
     throw new Error(`${taskId}: unsupported assertion type '${assertion.type}'`);
@@ -197,11 +197,30 @@ function translateAssertion(taskId, assertion, assertionIndex) {
   }
   if (assertion.expected_std_error_matches !== undefined) {
     if (/[[\]().*+?{}\\|^$]/.test(assertion.expected_std_error_matches)) {
-      throw new Error(`${taskId}: Vally 0.13 has no stderr regex support for '${assertion.expected_std_error_matches}'`);
+      const stderrCommand = [
+        assertion.command_to_run,
+        ...commandArguments(assertion.command_to_run, assertion.command_arguments)
+      ].map(shellQuote).join(" ");
+      return [
+        { type: "run-command", name, config },
+        {
+          type: "run-command",
+          name: `${name}-stderr-matches`,
+          config: {
+            command: `${stderrCommand} 2>&1 1>/dev/null | grep -E -- ${shellQuote(assertion.expected_std_error_matches)}`,
+            expected_exit_code: 0,
+            timeout: duration(assertion.command_timeout)
+          }
+        }
+      ];
     }
     config.stderr_contains = assertion.expected_std_error_matches;
   }
-  return { type: "run-command", name, config };
+  return [{ type: "run-command", name, config }];
+}
+
+function shellQuote(value) {
+  return `'${String(value).replaceAll("'", "'\"'\"'")}'`;
 }
 
 function commandArguments(command, value) {
